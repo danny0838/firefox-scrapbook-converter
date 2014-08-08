@@ -164,10 +164,10 @@ function convert_enex2sb(input, output) {
 
             function parseEnexContent(data) {
                 var html = false;
-                var xmlDoc = loadXML(data);
+                var htmlDoc = loadHTML(data);
 
                 try {
-                    var ennote = xmlDoc.childNodes[1];
+                    var ennote = htmlDoc.getElementsByTagName("en-note")[0];
                     html = '<!DOCTYPE html>\n'
                         + '<html>\n'
                         + '<head>\n'
@@ -198,6 +198,11 @@ function loadXMLFile(file) {
 function loadXML(str) {
     var parser = new DOMParser();
     return parser.parseFromString(str, "text/xml");
+}
+
+function loadHTML(str) {
+    var parser = new DOMParser();
+    return parser.parseFromString(str, "text/html");
 }
 
 function getUniqueDir(dir, name) {
