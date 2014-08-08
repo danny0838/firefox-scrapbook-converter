@@ -149,9 +149,18 @@ function convert_enex2sb(input, output) {
                 item.source = note.getElementsByTagName("source-url")[0].textContent;
             } catch(ex){}
 
+            // tags
+            try {
+                var tags = note.getElementsByTagName("tag");
+                for (var i=0, I=tags.length; i<I; i++) {
+                    var tag = tags[i];
+                    item.comment += "<tag>" + tag.innerHTML + "</tag>";
+                }
+            } catch(ex){}
+
             // attributes
             try {
-                item.comment = note.getElementsByTagName("note-attributes")[0].innerHTML;
+                item.comment += note.getElementsByTagName("note-attributes")[0].innerHTML;
             } catch(ex){}
 
             // resources
