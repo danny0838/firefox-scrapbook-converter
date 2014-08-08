@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://mozapps/content/preferences/preferences.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
+
+<!--locale-->
+<!DOCTYPE prefwindow SYSTEM "chrome://sbconv/locale/prefsDialog.dtd">
+
+<prefwindow id="sbconvPrefWindow"
+            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+            title="&window.title;"
+            width="500"
+            height="400">
+
+    <!--JavaScript-->
+    <script type="application/x-javascript" src="chrome://sbconv/content/prefsDialog.js" />
+
+    <prefpane id="pane1" label="">
+        <preferences>
+            <preference id="pref_inputPath" name="extensions.scrapbook.converter.inputPath" type="string"/>
+            <preference id="pref_outputPath" name="extensions.scrapbook.converter.outputPath" type="string"/>
+        </preferences>
+
+        <groupbox>
+            <caption label="&options;"/>
+            <hbox>
+                <label>&input;</label>
+                <textbox id="inputPath" preference="pref_inputPath" flex="1"/>
+                <button id="inputPick" class="dialog" label="&pick;" oncommand="return onInputBrowse();"/>
+            </hbox>
+            <hbox>
+                <label>&output;</label>
+                <textbox id="outputPath" preference="pref_outputPath" flex="1"/>
+                <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
+            </hbox>
+        </groupbox>
+        <button label="&action.from.enex;" oncommand="convert('enex2sb');" />
+    </prefpane>
+
+</prefwindow>
+

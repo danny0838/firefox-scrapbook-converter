@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!--locale-->
+<!DOCTYPE overlay SYSTEM "chrome://sbconv/locale/scrapbookOverlay.dtd">
+
+<overlay id="sbconvSidebarOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <menu id="sbAddOns" hidden="false">
+        <menupopup id="sbAddOnsPopup">
+            <menuitem id="sbconvOptionsMenu" 
+                      label="&options;" 
+                      oncommand="window.openDialog('chrome://sbconv/content/prefsDialog.xul','ScrapBook:Converter:Options','chrome,toolbar,centerscreen,modal');"/>
+        </menupopup>
+    </menu>
+</overlay>
