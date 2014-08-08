@@ -258,6 +258,21 @@ function convert_enex2sb(input, output) {
                         // remove the old node
                         node.parentNode.removeChild(node);
                     }
+                    // -- en-crypt
+                    var nodes = ennote.getElementsByTagName("en-crypt");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        // new node in replace of the old one
+                        var node2 = htmlDoc.createElement("INPUT");
+                        node2.setAttribute("data-evernote-cipher", node.getAttribute("cipher"));
+                        node2.setAttribute("data-evernote-length", node.getAttribute("length"));
+                        node2.setAttribute("data-evernote-hint", node.getAttribute("hint"));
+                        node2.setAttribute("data-evernote-crypt", node.textContent);
+                        node2.setAttribute("value", "Evernote Crypt");
+                        node.parentNode.insertBefore(node2, node);
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
 
                     // set output html
                     html = '<!DOCTYPE html>\n'
