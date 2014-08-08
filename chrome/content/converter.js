@@ -168,6 +168,29 @@ function convert_enex2sb(input, output) {
 
                 try {
                     var ennote = htmlDoc.getElementsByTagName("en-note")[0];
+                    // handle Evernote special objects
+                    // -- en-todo
+                    var nodes = ennote.getElementsByTagName("en-todo");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        // new node in replace of the old one
+                        var node2 = htmlDoc.createElement("INPUT");
+                        node2.setAttribute("type", "checkbox");
+                        node2.setAttribute("data-sb-obj", "todo");
+                        if (node.getAttribute("checked")=="true") node2.setAttribute("checked", "checked");
+                        node.parentNode.insertBefore(node2, node);
+                        // Fix DOMParser misprocess
+                        // Firefox DOMParser cannot read unknown tags correctly and they are extended to the tail
+                        // eg. <div><en-todo/>blah</div> will be <div><en-todo>blah</en-todo></div>
+                        var childs = node.childNodes;
+                        while (childs.length) {
+                            node.parentNode.insertBefore(childs[0], node);
+                        }
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
+
+                    // set output html
                     html = '<!DOCTYPE html>\n'
                         + '<html>\n'
                         + '<head>\n'
