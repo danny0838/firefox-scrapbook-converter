@@ -108,6 +108,8 @@ function convert_enex2sb(input, output) {
 
         function parseNote(note) {
             var item = sbCommonUtils.newItem();
+            var resHash2FileName = {};
+            var resHash2Mime = {};
 
             // basic meta data
             item.type = "notex";
@@ -118,8 +120,14 @@ function convert_enex2sb(input, output) {
                 item.title = note.getElementsByTagName("title")[0].textContent;
             } catch(ex){}
 
+            // set paths
             var destDir = getUniqueDir(output, item.title);
             print("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
+            // -- create index.dat and index.html beforehand to prevent overwrite
+            var indexDat = destDir.clone(); indexDat.append("index.dat");
+            sbCommonUtils.writeFile(indexDat, "", "UTF-8", true);
+            var indexHTML = destDir.clone(); indexHTML.append("index.html");
+            sbCommonUtils.writeFile(indexHTML, "", "UTF-8", true);
 
             // create
             try {
@@ -141,13 +149,47 @@ function convert_enex2sb(input, output) {
                 item.source = note.getElementsByTagName("source-url")[0].textContent;
             } catch(ex){}
 
+            // resources
+            var ress = note.getElementsByTagName("resource");
+            for (var i=0, I=ress.length; i<I; i++) {
+                var res = ress[i];
+                try {
+                    var data = res.getElementsByTagName("data")[0];
+                    var encoding = data.getAttribute("encoding");
+                    // we only support base64 currently
+                    if (encoding == "base64") {
+                        var data_base64 = data.textContent;
+                        var data_bin = window.atob(data_base64)
+                        var mime = res.getElementsByTagName("mime")[0].textContent;
+                        // var width = (function(){
+                            // try{return res.getElementsByTagName("width")[0].textContent;} catch(ex){}
+                        // })();
+                        // var height = (function(){
+                            // try{return res.getElementsByTagName("height")[0].textContent;} catch(ex){}
+                        // })();
+                        var attributes = res.getElementsByTagName("resource-attributes")[0];
+                        var filename = (function(){
+                            try{return attributes.getElementsByTagName("file-name")[0].textContent;} catch(ex){}
+                        })();
+                        var resFile = getUniqueFile(destDir, filename);
+                        var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
+                        ostream.init(resFile, -1, 0666, 0);
+                        ostream.write(data_bin, data_bin.length);
+                        ostream.close();
+                        var hash = hex_md5(data_bin);
+                        resHash2FileName[hash] = resFile.leafName;
+                        resHash2Mime[hash] = mime;
+                    }
+                } catch(ex){
+                    console.debug(ex);
+                }
+            }
+
             // content
             var content = parseEnexContent(note.getElementsByTagName("content")[0].firstChild.data);
             
             // output
-            var indexDat = destDir.clone(); indexDat.append("index.dat");
             sbCommonUtils.writeIndexDat(item, indexDat);
-            var indexHTML = destDir.clone(); indexHTML.append("index.html");
             sbCommonUtils.writeFile(indexHTML, content, "UTF-8", true);
 
             function parseEnexTime(time) {
@@ -182,6 +224,33 @@ function convert_enex2sb(input, output) {
                         // Fix DOMParser misprocess
                         // Firefox DOMParser cannot read unknown tags correctly and they are extended to the tail
                         // eg. <div><en-todo/>blah</div> will be <div><en-todo>blah</en-todo></div>
+                        var childs = node.childNodes;
+                        while (childs.length) {
+                            node.parentNode.insertBefore(childs[0], node);
+                        }
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
+                    // -- en-media
+                    var nodes = ennote.getElementsByTagName("en-media");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        // new node in replace of the old one
+                        var hash = node.getAttribute("hash");
+                        var mime = resHash2Mime[hash];
+                        if (mime.indexOf("image/") == 0) {
+                            var node2 = htmlDoc.createElement("IMG");
+                            node2.setAttribute("src", resHash2FileName[hash]);
+                            node2.setAttribute("alt", resHash2FileName[hash]);
+                            node.parentNode.insertBefore(node2, node);
+                        }
+                        else {
+                            var node2 = htmlDoc.createElement("A");
+                            node2.setAttribute("href", resHash2FileName[hash]);
+                            node2.textContent = resHash2FileName[hash];
+                            node.parentNode.insertBefore(node2, node);
+                        }
+                        // Fix DOMParser misprocess
                         var childs = node.childNodes;
                         while (childs.length) {
                             node.parentNode.insertBefore(childs[0], node);
@@ -241,4 +310,18 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
+}
+
+function getUniqueFile(dir, name) {
+    var name = sbCommonUtils.validateFileName(name) || "untitled";
+    var num = 0, destFile, fileName;
+    do {
+        fileName = name;
+        if ( num > 0 ) fileName += "[" + num + "]";
+        destFile = dir.clone();
+        destFile.append(fileName);
+        num++;
+    }
+    while ( destFile.exists() );
+    return destFile;
 }
