@@ -149,6 +149,11 @@ function convert_enex2sb(input, output) {
                 item.source = note.getElementsByTagName("source-url")[0].textContent;
             } catch(ex){}
 
+            // attributes
+            try {
+                item.comment = note.getElementsByTagName("note-attributes")[0].innerHTML;
+            } catch(ex){}
+
             // resources
             var ress = note.getElementsByTagName("resource");
             for (var i=0, I=ress.length; i<I; i++) {
