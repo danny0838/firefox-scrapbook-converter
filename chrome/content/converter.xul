@@ -13,7 +13,6 @@
     <script type="application/x-javascript" src="chrome://sbconv/content/converter.js" />
 
 	<vbox style="padding:2px;" flex="2">
-		<progressmeter id="sbconvConverterProgress" mode="determined" value="0" />
         <textbox id="sbconvConverterStatus" multiline="true" flex="2" readonly="true" />
 	</vbox>
 </window>
