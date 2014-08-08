@@ -62,14 +62,15 @@ function convert_enex2sb(input, output) {
     print("output directory: " + output.path);
     print("");
     var files = input.directoryEntries;
+    var file = null;
     filesNext();
 
     function filesNext() {
         while (files.hasMoreElements()) {
-            var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+            file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
             if (!file.isFile()) continue;
             print("converting file: '" + file.path + "'");
-            parseEnex(loadXML(file));
+            parseEnex(loadXMLFile(file));
             return;
         }
         // finished
@@ -117,26 +118,37 @@ function convert_enex2sb(input, output) {
                 item.title = note.getElementsByTagName("title")[0].textContent;
             } catch(ex){}
 
+            var destDir = getUniqueDir(output, item.title);
+            print("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
+
             // create
             try {
                 item.create = parseEnexTime(note.getElementsByTagName("created")[0].textContent);
+                if (!item.id && item.create) item.id = item.create;
             } catch(ex){}
 
             // modify
             try {
                 item.modify = parseEnexTime(note.getElementsByTagName("updated")[0].textContent);
+                if (!item.id && item.modify) item.id = item.modify;
             } catch(ex){}
+
+            // create an id if none
+            if (!item.id) item.id = sbCommonUtils.getTimeStamp();
 
             // source
             try {
                 item.source = note.getElementsByTagName("source-url")[0].textContent;
             } catch(ex){}
+
+            // content
+            var content = parseEnexContent(note.getElementsByTagName("content")[0].firstChild.data);
             
             // output
-            var destDir = getUniqueDir(output, item.title);
-            print("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
             var indexDat = destDir.clone(); indexDat.append("index.dat");
             sbCommonUtils.writeIndexDat(item, indexDat);
+            var indexHTML = destDir.clone(); indexHTML.append("index.html");
+            sbCommonUtils.writeFile(indexHTML, content, "UTF-8", true);
 
             function parseEnexTime(time) {
                 if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
@@ -149,13 +161,43 @@ function convert_enex2sb(input, output) {
                 }
                 return false;
             }
+
+            function parseEnexContent(data) {
+                var html = false;
+                var xmlDoc = loadXML(data);
+
+                try {
+                    var ennote = xmlDoc.childNodes[1];
+                    html = '<!DOCTYPE html>\n'
+                        + '<html>\n'
+                        + '<head>\n'
+                        + '  <meta charset="UTF-8">\n'
+                        + '  <title data-sb-obj="title">' + item.title + '</title>\n'
+                        + '</head>\n'
+                        + '<body' + (ennote.hasAttribute("style") ? ' style="' + ennote.getAttribute("style") + '"' : "") + '>' + ennote.innerHTML + '</body>\n'
+                        + '</html>\n';
+                } catch(ex){
+                    console.debug(ex);
+                }
+
+                if (html === false) {
+                    print("ERROR: cannot read en-note data and export the original html instead");
+                    html = data;
+                }
+
+                return html;
+            }
         }
     }
 }
 
-function loadXML(file) {
+function loadXMLFile(file) {
+    return loadXML(sbCommonUtils.convertToUnicode(sbCommonUtils.readFile(file), "UTF-8"));
+}
+
+function loadXML(str) {
     var parser = new DOMParser();
-    return parser.parseFromString(sbCommonUtils.convertToUnicode(sbCommonUtils.readFile(file), "UTF-8"), "text/xml");
+    return parser.parseFromString(str, "text/xml");
 }
 
 function getUniqueDir(dir, name) {
