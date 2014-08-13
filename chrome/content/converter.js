@@ -480,8 +480,25 @@ function convert_html2sb(input, output, includeSubdir) {
     function parseHtmlPack(file) {
         // load html file
         var content = sbConvCommon.readFile(file);
-        var tryHtmlDoc = loadHTML(content);
-        var charset = tryHtmlDoc.characterSet;
+        var tryHtmlDoc = loadHTML(content).documentElement;
+
+        // -- charset
+        var charset = "UTF-8";
+        try {
+            var metas = tryHtmlDoc.getElementsByTagName("meta");
+            for (var i=0; i<metas.length; i++) {
+                var meta = metas[i];
+				if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
+					meta.getAttribute("http-equiv").toLowerCase() == "content-type" && 
+					meta.getAttribute("content").match(/^[^;]*;\s*charset=(.*)$/i) ) {
+                    charset = RegExp.$1;
+				}
+				else if ( meta.hasAttribute("charset") ) {
+                    charset = meta.getAttribute("charset");
+                }
+            }
+        } catch(ex){}
+
         var htmlDoc = loadHTML(sbConvCommon.convertToUnicode(content, charset)).documentElement;
         
         // create item
