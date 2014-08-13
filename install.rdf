@@ -9,9 +9,9 @@
 		<em:version>1.0.0</em:version>
 
 		<em:name>ScrapBook X File Converter</em:name>
-		<em:description>Converts ScrapBook X data from and to other formats.</em:description>
+		<em:description>Converts ScrapBook data from and to other formats.</em:description>
 		<em:creator>Danny Lin</em:creator>
-		<em:homepageURL></em:homepageURL>
+		<em:homepageURL>https://github.com/danny0838/firefox-scrapbook-converter</em:homepageURL>
 		<em:iconURL>chrome://sbconv/skin/sbconv.png</em:iconURL>
 		<em:optionsURL>chrome://sbconv/content/prefsDialog.xul</em:optionsURL>
 
