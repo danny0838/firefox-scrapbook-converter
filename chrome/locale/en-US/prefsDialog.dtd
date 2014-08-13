@@ -1,0 +1,11 @@
+<!ENTITY window.title "ScrapBook File Converter">
+
+<!ENTITY options "Options">
+<!ENTITY pick "Browse...">
+<!ENTITY input "Input:">
+<!ENTITY output "Output:">
+<!ENTITY includeSubdir "Include subfolders">
+
+<!ENTITY action.enex2sb "Convert .enex to ScrapBook data">
+<!ENTITY action.maf2sb "Convert .maff to ScrapBook data">
+<!ENTITY action.html2sb "Convert HTML to ScrapBook data">
