@@ -479,13 +479,13 @@ function convert_html2sb(input, output, includeSubdir) {
 
     function parseHtmlPack(file) {
         // load html file
-        var content = sbConvCommon.readFile(file);
-        var tryHtmlDoc = loadHTML(content).documentElement;
+        var htmlTxt = sbConvCommon.readFile(file);
+        var htmlDoc = loadHTML(htmlTxt).documentElement;
 
         // -- charset
         var charset = "UTF-8";
         try {
-            var metas = tryHtmlDoc.getElementsByTagName("meta");
+            var metas = htmlDoc.getElementsByTagName("meta");
             for (var i=0; i<metas.length; i++) {
                 var meta = metas[i];
 				if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
@@ -499,7 +499,8 @@ function convert_html2sb(input, output, includeSubdir) {
             }
         } catch(ex){}
 
-        var htmlDoc = loadHTML(sbConvCommon.convertToUnicode(content, charset)).documentElement;
+        htmlTxt = sbConvCommon.convertToUnicode(htmlTxt, charset);
+        htmlDoc = loadHTML(htmlTxt).documentElement;
         
         // create item
         var item = sbConvCommon.newItem();
