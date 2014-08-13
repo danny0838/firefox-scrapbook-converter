@@ -53,6 +53,9 @@ function convert(data) {
         case "maf2sb":
             convert_maf2sb(input, output, data.includeSubdir);
             break;
+        case "html2sb":
+            convert_html2sb(input, output, data.includeSubdir);
+            break;
         default:
             print("ERROR: unknown method.");
             break;
@@ -441,6 +444,95 @@ function convert_maf2sb(input, output, includeSubdir) {
     }
 }
 
+function convert_html2sb(input, output, includeSubdir) {
+    print("convert method: HTML --> ScrapBook format");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("include sub-directory: " + (includeSubdir ? "yes" : "no"));
+    print("");
+    var files = getDescHtmlFiles(input, includeSubdir);
+    var file = null;
+    var subPath = null;
+    filesNext();
+
+    function filesNext() {
+        while (files.length) {
+            file = files.shift();
+            if ( !(file.exists() && file.isFile()) ) continue;
+            print("converting file: '" + file.path + "'");
+            subPath = getSubPath(input, file);
+            subPath.pop();
+            subPath = subPath.join("\t");
+            parseHtmlPack(file);
+            // next file (async)
+            setTimeout(filesNext, 0);
+            return;
+        }
+        // finished
+        filesFinish();
+    }
+
+    function filesFinish() {
+        print("");
+        print("done.");
+    }
+
+    function parseHtmlPack(file) {
+        // load html file
+        var content = sbConvCommon.readFile(file);
+        var tryHtmlDoc = loadHTML(content);
+        var charset = tryHtmlDoc.characterSet;
+        var htmlDoc = loadHTML(sbConvCommon.convertToUnicode(content, charset)).documentElement;
+        
+        // create item
+        var item = sbConvCommon.newItem();
+
+        // -- title
+        try {
+            item.title = htmlDoc.getElementsByTagName("title")[0].textContent;
+        } catch(ex){}
+
+        // -- time
+        var time = parseHtmlPackTime(file.lastModifiedTime);
+        item.id = item.create = item.modify = time;
+
+        // -- char
+        item.chars = charset;
+        
+        // -- folder
+        item.folder = subPath;
+
+        // output
+        var destDir = getUniqueDir(output, item.title);
+        print("exporting html: '" + item.title + "' --> '" + destDir.leafName + "'");
+        var indexDat = destDir.clone(); indexDat.append("index.dat");
+        sbConvCommon.writeIndexDat(item, indexDat);
+        file.copyTo(destDir, "index.html");
+
+        // -- support folder files
+        copySupportFolder();
+
+        function parseHtmlPackTime(time) {
+            var date = new Date(time);
+            return sbConvCommon.getTimeStamp(date);
+        }
+
+        function copySupportFolder() {
+            var filename = file.leafName;
+            var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
+            if (support.exists()) {
+                support.copyTo(destDir, support.leafName);
+                return;
+            }
+            var support = file.parent; support.append(filename.replace(/\.\w+$/, "_files"));
+            if (support.exists()) {
+                support.copyTo(destDir, support.leafName);
+                return;
+            }
+        }
+    }
+}
+
 function loadXMLFile(file) {
     return loadXML(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
 }
@@ -466,6 +558,35 @@ function getDescFiles(aFolder, aIncludeSubdir) {
             }
             else {
                 result.push(file);
+            }
+        }
+    }
+    return result;
+}
+
+/**
+ * similar to getDescFiles, but only gets html files and skips looking into the support folders
+ */
+function getDescHtmlFiles(aFolder, aIncludeSubdir) {
+    var dirs = [aFolder], result = [], forbidden = {};
+    for (var i=0; i<dirs.length; i++) {
+        if (forbidden[dirs[i].path]) continue;  // skip looking into support folders
+        var files = dirs[i].directoryEntries;
+        while (files.hasMoreElements()) {
+            var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if (file.isDirectory() && aIncludeSubdir) {
+                dirs.push(file);
+            }
+            else {
+                var filename = file.leafName;
+                if (filename.match(/\.(x?html|htm|xht)$/i)) {
+                    result.push(file);
+                    // add support folder names to the forbidden list
+                    var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
+                    forbidden[support.path] = true;
+                    var support = file.parent; support.append(filename.replace(/\.\w+$/, "_files"));
+                    forbidden[support.path] = true;
+                }
             }
         }
     }
