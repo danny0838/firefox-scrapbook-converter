@@ -17,8 +17,8 @@
 
     <prefpane id="pane1" label="">
         <preferences>
-            <preference id="pref_inputPath" name="extensions.scrapbook.converter.inputPath" type="string"/>
-            <preference id="pref_outputPath" name="extensions.scrapbook.converter.outputPath" type="string"/>
+            <preference id="pref_inputPath" name="extensions.scrapbook.addon.converter.inputPath" type="string"/>
+            <preference id="pref_outputPath" name="extensions.scrapbook.addon.converter.outputPath" type="string"/>
         </preferences>
 
         <groupbox>
