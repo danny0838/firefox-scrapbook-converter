@@ -50,6 +50,9 @@ function convert(data) {
         case "enex2sb":
             convert_enex2sb(input, output);
             break;
+        case "maf2sb":
+            convert_maf2sb(input, output);
+            break;
         default:
             print("ERROR: unknown method.");
             break;
@@ -327,6 +330,103 @@ function convert_enex2sb(input, output) {
     }
 }
 
+function convert_maf2sb(input, output) {
+    print("convert method: .maff --> ScrapBook format");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("");
+    var files = input.directoryEntries;
+    var file = null;
+    filesNext();
+
+    function filesNext() {
+        while (files.hasMoreElements()) {
+            file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if (!file.isFile()) continue;
+            print("converting file: '" + file.path + "'");
+            parseMaf(file);
+            return;
+        }
+        // finished
+        filesFinish();
+    }
+
+    function filesFinish() {
+        print("");
+        print("done.");
+    }
+
+    function parseMaf(file) {
+        var tmpDir = getUniqueDir(output, ".tmp_" + file.leafName);
+        try {
+            extractZip(file, tmpDir);
+        } catch(ex) {
+            // not zip or corrupted zip
+            print("skip invalid maff: '" + file.path + "'");
+            pagesFinish();
+            return;
+        }
+        var pageDirs = tmpDir.directoryEntries;
+        pagesNext();
+
+        function pagesNext() {
+            if (pageDirs.hasMoreElements()) {
+                var pageDir = pageDirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+                parseMafPage(pageDir);
+                // next page (async)
+                setTimeout(pagesNext, 0);
+            }
+            else {
+                pagesFinish();
+            }
+        }
+
+        function pagesFinish() {
+            tmpDir.remove(true);
+            // next file (async)
+            setTimeout(filesNext, 0);
+        }
+
+        function parseMafPage(pageDir) {
+            // read RDF data
+            var rdfFile = pageDir.clone(); rdfFile.append("index.rdf");
+            var ds = new MaffDataSource();
+            var res = ds.resources;
+            ds.loadFromFile(rdfFile);
+
+            // create item
+            var indexLeafName = ds.getMafProperty(res.indexFileName) || "index.html";
+            if (indexLeafName !== "index.html") {
+                print("ERROR: maff page with index file other than index.html is not supported");
+                return;
+            }
+            var item = sbConvCommon.newItem();
+            item.title = ds.getMafProperty(res.title);
+            item.source = ds.getMafProperty(res.originalUrl);
+            item.chars = ds.getMafProperty(res.charset);
+            item.id = parseMafTime(ds.getMafProperty(res.archiveTime));
+            item.create = item.modify = item.id;
+
+            var indexDat = pageDir.clone(); indexDat.append("index.dat");
+            sbConvCommon.writeIndexDat(item, indexDat);
+
+            // output
+            var destDir = getUniqueDir(output, item.title);
+            print("exporting page: '" + item.title + "' --> '" + destDir.leafName + "'");
+            var pageDirFiles = pageDir.directoryEntries;
+            while (pageDirFiles.hasMoreElements()) {
+                var pageDirFile = pageDirFiles.getNext().QueryInterface(Components.interfaces.nsIFile);
+                pageDirFile.moveTo(destDir, pageDirFile.leafName);
+            }
+
+            function parseMafTime(time) {
+                var date = new Date(time);
+                return sbConvCommon.getTimeStamp(date);
+            }
+        }
+    }
+}
+
 function loadXMLFile(file) {
     return loadXML(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
 }
@@ -367,4 +467,39 @@ function getUniqueFile(dir, name) {
     }
     while ( destFile.exists() );
     return destFile;
+}
+
+/* borrowed from Firefox addon UnZIP */
+function extractZip(aZipFile, aDir) {
+    var zipReader = Components.classes["@mozilla.org/libjar/zip-reader;1"].createInstance(Components.interfaces.nsIZipReader);
+
+    // open the zip
+    zipReader.open(aZipFile);
+
+    // create directories first
+    var entries = zipReader.findEntries("*/");
+    while (entries.hasMore()) {
+        var entryName = entries.getNext();
+        var target = getTargetFile(aDir, entryName);
+        if (!target.exists()) {
+            target.create(aDir.DIRECTORY_TYPE, 0700);
+        }
+    }
+
+    // create files
+    entries = zipReader.findEntries(null);
+    while (entries.hasMore()) {
+        var entryName = entries.getNext();
+        var target = getTargetFile(aDir, entryName);
+        if (target.exists()) continue;  // a directory previously created
+        zipReader.extract(entryName, target);
+    }
+
+    function getTargetFile(aDir, entry) {
+        var target = aDir.clone();
+        entry.split("/").forEach(function(aPart) {
+            target.append(aPart);
+        });
+        return target;
+    }
 }
