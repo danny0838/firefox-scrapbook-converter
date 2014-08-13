@@ -66,7 +66,7 @@ function convert_enex2sb(input, output, includeSubdir) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
-    print("include sub-directory: " + (includeSubdir ? "yes" : "no"));
+    print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
@@ -345,7 +345,7 @@ function convert_maf2sb(input, output, includeSubdir) {
     print("convert method: .maff --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
-    print("include sub-directory: " + (includeSubdir ? "yes" : "no"));
+    print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
@@ -448,7 +448,7 @@ function convert_html2sb(input, output, includeSubdir) {
     print("convert method: HTML --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
-    print("include sub-directory: " + (includeSubdir ? "yes" : "no"));
+    print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("");
     var files = getDescHtmlFiles(input, includeSubdir);
     var file = null;
