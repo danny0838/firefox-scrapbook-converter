@@ -514,6 +514,13 @@ function convert_html2sb(input, output, includeSubdir) {
         var time = parseHtmlPackTime(file.lastModifiedTime);
         item.id = item.create = item.modify = time;
 
+        // -- source
+        if ( htmlTxt.match(/<!-- saved from url=\((\d+)\)(.*?) -->/i) ) {
+            if ( RegExp.$2.length == parseInt(RegExp.$1, 10) ) {
+                item.source = RegExp.$2;
+            }
+        }
+
         // -- char
         item.chars = charset;
         
