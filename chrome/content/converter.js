@@ -506,7 +506,7 @@ function convert_html2sb(input, output, includeSubdir) {
 
         // -- title
         try {
-            item.title = htmlDoc.getElementsByTagName("title")[0].textContent;
+            item.title = file.leafName.replace(/\.\w+$/, "");
         } catch(ex){}
 
         // -- time
