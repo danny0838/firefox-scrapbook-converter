@@ -83,10 +83,17 @@ function convert_enex2sb(input, output) {
     }
 
     function parseEnex(xmlDoc) {
-        var notesDOM = xmlDoc.getElementsByTagName("note");
-        var notes = [];
-        for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
-        notesNext();
+        // check if it's enex, skip if not
+        if (xmlDoc.documentElement.nodeName == "en-export") {
+            var notesDOM = xmlDoc.getElementsByTagName("note");
+            var notes = [];
+            for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
+            notesNext();
+        }
+        else {
+            print("skip invalid enex: '" + file.path + "'");
+            notesFinish();
+        }
 
         function notesNext() {
             var note = notes.shift();
