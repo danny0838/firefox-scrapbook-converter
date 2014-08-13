@@ -51,6 +51,10 @@
             var s = dd.getSeconds();   if ( s < 10 ) s = "0" + s;
             return y.toString() + m.toString() + d.toString() + h.toString() + i.toString() + s.toString();
         },
+        
+        convertFilePathToURL : function(aFilePath) {
+            return oSBCommon.convertFilePathToURL(aFilePath);
+        },
 
         convertToUnicode : function(aString, aCharset) {
             return oSBCommon.convertToUnicode(aString, aCharset);
