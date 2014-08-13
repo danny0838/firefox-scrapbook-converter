@@ -66,6 +66,7 @@ function convert_enex2sb(input, output, includeSubdir) {
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
+    var subPath = null;
     filesNext();
 
     function filesNext() {
@@ -73,6 +74,9 @@ function convert_enex2sb(input, output, includeSubdir) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
             print("converting file: '" + file.path + "'");
+            subPath = getSubPath(input, file);
+            subPath.pop();
+            subPath = subPath.join("\t");
             parseEnex(loadXMLFile(file));
             return;
         }
@@ -165,6 +169,9 @@ function convert_enex2sb(input, output, includeSubdir) {
                 item.source = source;
                 sourceObj.parentNode.removeChild(sourceObj);
             } catch(ex){}
+
+            // folder
+            item.folder = subPath;
 
             // tags
             try {
@@ -337,6 +344,7 @@ function convert_maf2sb(input, output, includeSubdir) {
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
+    var subPath = null;
     filesNext();
 
     function filesNext() {
@@ -344,6 +352,9 @@ function convert_maf2sb(input, output, includeSubdir) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
             print("converting file: '" + file.path + "'");
+            subPath = getSubPath(input, file);
+            subPath.pop();
+            subPath = subPath.join("\t");
             parseMaf(file);
             return;
         }
@@ -406,6 +417,7 @@ function convert_maf2sb(input, output, includeSubdir) {
             item.chars = ds.getMafProperty(res.charset);
             item.id = parseMafTime(ds.getMafProperty(res.archiveTime));
             item.create = item.modify = item.id;
+            item.folder = subPath;
 
             var indexDat = pageDir.clone(); indexDat.append("index.dat");
             sbConvCommon.writeIndexDat(item, indexDat);
@@ -454,6 +466,19 @@ function getDescFiles(aFolder, aIncludeSubdir) {
                 result.push(file);
             }
         }
+    }
+    return result;
+}
+
+/**
+ * Gets the subPath from the aBaseFolder, return an array or false if error
+ */
+function getSubPath(aBaseFolder, aFile) {
+    var refFile = aFile, result = [];
+    while (!refFile.equals(aBaseFolder)) {
+        result.unshift(refFile.leafName);
+        refFile = refFile.parent;
+        if (!refFile.exists()) return false;
     }
     return result;
 }
