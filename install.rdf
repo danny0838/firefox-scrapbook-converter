@@ -12,7 +12,7 @@
 		<em:description>Converts ScrapBook X data from and to other formats.</em:description>
 		<em:creator>Danny Lin</em:creator>
 		<em:homepageURL></em:homepageURL>
-		<em:iconURL>chrome://scrapbook/skin/main_32.png</em:iconURL>
+		<em:iconURL>chrome://sbconv/skin/sbconv.png</em:iconURL>
 		<em:optionsURL>chrome://sbconv/content/prefsDialog.xul</em:optionsURL>
 
 		<em:targetApplication>

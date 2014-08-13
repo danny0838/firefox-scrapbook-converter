@@ -7,8 +7,10 @@
 
     <menu id="sbAddOns" hidden="false">
         <menupopup id="sbAddOnsPopup">
-            <menuitem id="sbconvOptionsMenu" 
-                      label="&options;" 
+            <menuitem id="sbconvOptionsMenu"
+                      class="menuitem-iconic"
+                      label="&options;"
+                      image="chrome://sbconv/skin/sbconv.png"
                       oncommand="window.openDialog('chrome://sbconv/content/prefsDialog.xul','ScrapBook:Converter:Options','chrome,toolbar,centerscreen,modal');"/>
         </menupopup>
     </menu>

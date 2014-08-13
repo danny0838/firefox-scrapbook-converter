@@ -1,5 +1,6 @@
 overlay chrome://scrapbook/content/scrapbook.xul	chrome://sbconv/content/scrapbookOverlay.xul
 content	sbconv	chrome/content/
+skin	sbconv	classic/1.0	chrome/skin/
 
 locale	sbconv	en-US	chrome/locale/en-US/
 locale	sbconv	zh-TW	chrome/locale/zh-TW/
