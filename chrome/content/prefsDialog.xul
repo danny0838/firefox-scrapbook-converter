@@ -34,7 +34,7 @@
                 <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
             </hbox>
         </groupbox>
-        <button label="&action.from.enex;" oncommand="convert('enex2sb');" />
+        <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
     </prefpane>
 
 </prefwindow>
