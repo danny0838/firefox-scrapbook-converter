@@ -48,10 +48,10 @@ function convert(data) {
     // call the convert method
     switch (data.method) {
         case "enex2sb":
-            convert_enex2sb(input, output);
+            convert_enex2sb(input, output, data.includeSubdir);
             break;
         case "maf2sb":
-            convert_maf2sb(input, output);
+            convert_maf2sb(input, output, data.includeSubdir);
             break;
         default:
             print("ERROR: unknown method.");
@@ -59,19 +59,19 @@ function convert(data) {
     }
 }
 
-function convert_enex2sb(input, output) {
+function convert_enex2sb(input, output, includeSubdir) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("");
-    var files = input.directoryEntries;
+    var files = getDescFiles(input, includeSubdir);
     var file = null;
     filesNext();
 
     function filesNext() {
-        while (files.hasMoreElements()) {
-            file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if (!file.isFile()) continue;
+        while (files.length) {
+            file = files.shift();
+            if ( !(file.exists() && file.isFile()) ) continue;
             print("converting file: '" + file.path + "'");
             parseEnex(loadXMLFile(file));
             return;
@@ -330,19 +330,19 @@ function convert_enex2sb(input, output) {
     }
 }
 
-function convert_maf2sb(input, output) {
+function convert_maf2sb(input, output, includeSubdir) {
     print("convert method: .maff --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("");
-    var files = input.directoryEntries;
+    var files = getDescFiles(input, includeSubdir);
     var file = null;
     filesNext();
 
     function filesNext() {
-        while (files.hasMoreElements()) {
-            file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if (!file.isFile()) continue;
+        while (files.length) {
+            file = files.shift();
+            if ( !(file.exists() && file.isFile()) ) continue;
             print("converting file: '" + file.path + "'");
             parseMaf(file);
             return;
@@ -439,6 +439,23 @@ function loadXML(str) {
 function loadHTML(str) {
     var parser = new DOMParser();
     return parser.parseFromString(str, "text/html");
+}
+
+function getDescFiles(aFolder, aIncludeSubdir) {
+    var dirs = [aFolder], result = [];
+    for (var i=0; i<dirs.length; i++) {
+        var files = dirs[i].directoryEntries;
+        while (files.hasMoreElements()) {
+            var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if (file.isDirectory() && aIncludeSubdir) {
+                dirs.push(file);
+            }
+            else {
+                result.push(file);
+            }
+        }
+    }
+    return result;
 }
 
 function getUniqueDir(dir, name) {

@@ -21,6 +21,7 @@ function convert(method) {
         method: method,
         input: document.getElementById("inputPath").value,
         output: document.getElementById("outputPath").value,
+        includeSubdir: document.getElementById("includeSubdir").checked,
     };
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

@@ -19,6 +19,7 @@
         <preferences>
             <preference id="pref_inputPath" name="extensions.scrapbook.addon.converter.inputPath" type="string"/>
             <preference id="pref_outputPath" name="extensions.scrapbook.addon.converter.outputPath" type="string"/>
+            <preference id="pref_includeSubdir" name="extensions.scrapbook.addon.converter.includeSubdir" type="bool"/>
         </preferences>
 
         <groupbox>
@@ -32,6 +33,9 @@
                 <label>&output;</label>
                 <textbox id="outputPath" preference="pref_outputPath" flex="1"/>
                 <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
+            </hbox>
+            <hbox>
+                <checkbox id="includeSubdir" label="&includeSubdir;" preference="pref_includeSubdir" />
             </hbox>
         </groupbox>
         <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
