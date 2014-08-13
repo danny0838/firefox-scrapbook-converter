@@ -15,6 +15,7 @@
     <!-- JavaScript -->
 	<script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
 	<script type="application/x-javascript" src="chrome://sbconv/content/lib/md5.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/common.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/converter.js" />
 
     <!-- keys -->

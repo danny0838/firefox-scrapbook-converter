@@ -107,7 +107,7 @@ function convert_enex2sb(input, output) {
         }
 
         function parseNote(note) {
-            var item = sbCommonUtils.newItem();
+            var item = sbConvCommon.newItem();
             var resHash2FileName = {};
             var resHash2Mime = {};
 
@@ -125,9 +125,9 @@ function convert_enex2sb(input, output) {
             print("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
             // -- create index.dat and index.html beforehand to prevent overwrite
             var indexDat = destDir.clone(); indexDat.append("index.dat");
-            sbCommonUtils.writeFile(indexDat, "", "UTF-8", true);
+            sbConvCommon.writeFile(indexDat, "", "UTF-8", true);
             var indexHTML = destDir.clone(); indexHTML.append("index.html");
-            sbCommonUtils.writeFile(indexHTML, "", "UTF-8", true);
+            sbConvCommon.writeFile(indexHTML, "", "UTF-8", true);
 
             // create
             try {
@@ -142,7 +142,7 @@ function convert_enex2sb(input, output) {
             } catch(ex){}
 
             // create an id if none
-            if (!item.id) item.id = sbCommonUtils.getTimeStamp();
+            if (!item.id) item.id = sbConvCommon.getTimeStamp();
 
             // source
             try {
@@ -205,8 +205,8 @@ function convert_enex2sb(input, output) {
             var content = parseEnexContent(note.getElementsByTagName("content")[0].firstChild.data);
             
             // output
-            sbCommonUtils.writeIndexDat(item, indexDat);
-            sbCommonUtils.writeFile(indexHTML, content, "UTF-8", true);
+            sbConvCommon.writeIndexDat(item, indexDat);
+            sbConvCommon.writeFile(indexHTML, content, "UTF-8", true);
 
             function parseEnexTime(time) {
                 if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
@@ -215,7 +215,7 @@ function convert_enex2sb(input, output) {
                         parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
                     );
                     var date = new Date(date.valueOf() - date.getTimezoneOffset() * 60 * 1000);
-                    return sbCommonUtils.getTimeStamp(date);
+                    return sbConvCommon.getTimeStamp(date);
                 }
                 return false;
             }
@@ -316,7 +316,7 @@ function convert_enex2sb(input, output) {
 }
 
 function loadXMLFile(file) {
-    return loadXML(sbCommonUtils.convertToUnicode(sbCommonUtils.readFile(file), "UTF-8"));
+    return loadXML(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
 }
 
 function loadXML(str) {
@@ -330,7 +330,7 @@ function loadHTML(str) {
 }
 
 function getUniqueDir(dir, name) {
-    var name = sbCommonUtils.validateFileName(name).substring(0, 60) || "untitled";
+    var name = sbConvCommon.validateFileName(name).substring(0, 60) || "untitled";
     name = name.replace(/\./g, "");
     var num = 0, destDir, dirName;
     do {
@@ -345,7 +345,7 @@ function getUniqueDir(dir, name) {
 }
 
 function getUniqueFile(dir, name) {
-    var name = sbCommonUtils.validateFileName(name) || "untitled";
+    var name = sbConvCommon.validateFileName(name) || "untitled";
     var num = 0, destFile, fileName;
     do {
         fileName = name;
