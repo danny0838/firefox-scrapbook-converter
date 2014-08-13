@@ -343,7 +343,6 @@ function loadHTML(str) {
 
 function getUniqueDir(dir, name) {
     var name = sbConvCommon.validateFileName(name).substring(0, 60) || "untitled";
-    name = name.replace(/\./g, "");
     var num = 0, destDir, dirName;
     do {
         dirName = name;
