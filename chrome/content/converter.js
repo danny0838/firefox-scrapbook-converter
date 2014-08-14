@@ -280,7 +280,8 @@ function convert_enex2sb(input, output, includeSubdir) {
                         var node = nodes[i];
                         var mime = node.getAttribute("type");
                         var hash = node.getAttribute("hash");
-                        var filename = resHash2Data[hash].filename;
+                        var metadata = resHash2Data[hash];
+                        var filename = metadata.filename;
                         // new node in replace of the old one
                         if (mime.indexOf("image/") == 0) {
                             var node2 = htmlDoc.createElement("IMG");
@@ -297,6 +298,14 @@ function convert_enex2sb(input, output, includeSubdir) {
                         ["align", "alt", "longdesc", "height", "width", "border", "hspace", "vspace", "usemap", "style", "title", "lang", "xml:lang", "dir"].forEach(function(attr){
                             if (node.hasAttribute(attr)) node2.setAttribute(attr, node.getAttribute(attr));
                         }, this);
+                        for (var j in metadata) {
+                            if (j != "filename" && j != "attributes") {
+                                node2.setAttribute("data-evernote-" + j, metadata[j]);
+                            }
+                        }
+                        for (var j in metadata.attributes) {
+                            node2.setAttribute("data-evernote-attributes-" + j, metadata.attributes[j]);
+                        }
                         // Fix DOMParser misprocess
                         var childs = node.childNodes;
                         while (childs.length) {
