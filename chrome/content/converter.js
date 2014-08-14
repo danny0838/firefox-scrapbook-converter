@@ -126,8 +126,7 @@ function convert_enex2sb(input, output, includeSubdir) {
 
         function parseNote(note) {
             var item = sbConvCommon.newItem();
-            var resHash2FileName = {};
-            var resHash2Mime = {};
+            var resHash2Data = {};
 
             // basic meta data
             item.type = "notex";
@@ -199,29 +198,31 @@ function convert_enex2sb(input, output, includeSubdir) {
                     var data = res.getElementsByTagName("data")[0];
                     var encoding = data.getAttribute("encoding");
                     // we only support base64 currently
-                    if (encoding == "base64") {
-                        var data_base64 = data.textContent;
-                        var data_bin = window.atob(data_base64)
-                        var mime = res.getElementsByTagName("mime")[0].textContent;
-                        // var width = (function(){
-                            // try{return res.getElementsByTagName("width")[0].textContent;} catch(ex){}
-                        // })();
-                        // var height = (function(){
-                            // try{return res.getElementsByTagName("height")[0].textContent;} catch(ex){}
-                        // })();
-                        var attributes = res.getElementsByTagName("resource-attributes")[0];
-                        var filename = (function(){
-                            try{return attributes.getElementsByTagName("file-name")[0].textContent;} catch(ex){}
-                        })();
-                        var resFile = getUniqueFile(destDir, filename);
-                        var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-                        ostream.init(resFile, -1, 0666, 0);
-                        ostream.write(data_bin, data_bin.length);
-                        ostream.close();
-                        var hash = hex_md5(data_bin);
-                        resHash2FileName[hash] = resFile.leafName;
-                        resHash2Mime[hash] = mime;
-                    }
+                    if (encoding != "base64") continue;
+
+                    // read sub elements and store them in metadata
+                    var metadata = { attributes: {} };
+                    ["mime", "width", "height"].forEach(function(meta){
+                        try { metadata[meta] = res.getElementsByTagName(meta)[0].textContent; } catch(ex){}
+                    }, this);
+                    var attributes = res.getElementsByTagName("resource-attributes")[0];
+                    ["file-name", "source-url", "timestamp ", "latitude", "longitude", "altitude", "camera-make", "camera-model", "attachment", "application-data"].forEach(function(meta){
+                        try { metadata.attributes[meta] = attributes.getElementsByTagName(meta)[0].textContent; } catch(ex){}
+                    }, this);
+
+                    // calculate the resource hash
+                    var data_base64 = data.textContent;
+                    var data_bin = window.atob(data_base64);
+                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"]);
+                    var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
+                    ostream.init(resFile, -1, 0666, 0);
+                    ostream.write(data_bin, data_bin.length);
+                    ostream.close();
+                    var hash = hex_md5(data_bin);
+
+                    // store the hash-metadata table
+                    metadata.filename = resFile.leafName;
+                    resHash2Data[hash] = metadata;
                 } catch(ex){
                     console.debug(ex);
                 }
@@ -277,19 +278,20 @@ function convert_enex2sb(input, output, includeSubdir) {
                     var nodes = ennote.getElementsByTagName("en-media");
                     for (var i=nodes.length-1; i>=0; i--) {
                         var node = nodes[i];
-                        // new node in replace of the old one
+                        var mime = node.getAttribute("type");
                         var hash = node.getAttribute("hash");
-                        var mime = resHash2Mime[hash];
+                        var filename = resHash2Data[hash].filename;
+                        // new node in replace of the old one
                         if (mime.indexOf("image/") == 0) {
                             var node2 = htmlDoc.createElement("IMG");
-                            node2.setAttribute("src", resHash2FileName[hash]);
-                            node2.setAttribute("alt", resHash2FileName[hash]);
+                            node2.setAttribute("src", filename);
+                            node2.setAttribute("alt", filename);
                             node.parentNode.insertBefore(node2, node);
                         }
                         else {
                             var node2 = htmlDoc.createElement("A");
-                            node2.setAttribute("href", resHash2FileName[hash]);
-                            node2.textContent = resHash2FileName[hash];
+                            node2.setAttribute("href", filename);
+                            node2.textContent = filename;
                             node.parentNode.insertBefore(node2, node);
                         }
                         // Fix DOMParser misprocess
