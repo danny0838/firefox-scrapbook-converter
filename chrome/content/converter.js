@@ -324,7 +324,7 @@ function convert_enex2sb(input, output, includeSubdir) {
                         + '  <meta charset="UTF-8">\n'
                         + '  <title data-sb-obj="title">' + item.title + '</title>\n'
                         + '</head>\n'
-                        + '<body' + (ennote.hasAttribute("style") ? ' style="' + ennote.getAttribute("style") + '"' : "") + '>' + ennote.innerHTML + '</body>\n'
+                        + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
                         + '</html>\n';
                 } catch(ex){
                     console.debug(ex);
@@ -337,6 +337,25 @@ function convert_enex2sb(input, output, includeSubdir) {
 
                 return html;
             }
+        }
+
+        /**
+         * reads data from aNode and returns a new node in string
+         */
+        function nodeToTag(aNode, aTagName, aAllowedAttrs) {
+            if (!aTagName) aTagName = aNode.tagName;
+            aTagName = aTagName.toLowerCase();
+            if (!aAllowedAttrs) aAllowedAttrs = [];
+
+            var tag = "<" + aTagName;
+            for ( var i=0; i<aNode.attributes.length; i++ ) {
+console.debug(aNode.attributes[i].name);
+                if (aAllowedAttrs.indexOf(aNode.attributes[i].name) !== -1) {
+                    tag += ' ' + aNode.attributes[i].name + '="' + sbConvCommon.escapeHTML(aNode.attributes[i].value) + '"';
+                }
+            }
+            tag += ">" + aNode.innerHTML + "</" + aTagName + ">";
+            return tag;
         }
     }
 }
