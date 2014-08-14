@@ -632,7 +632,7 @@ function getSubPath(aBaseFolder, aFile) {
 }
 
 function getUniqueDir(dir, name) {
-    var name = sbConvCommon.validateFileName(name).substring(0, 60) || "untitled";
+    var name = name ? sbConvCommon.validateFileName(name).substring(0, 60) : "untitled";
     name = name.replace(/\.+$/, "");
     var num = 0, destDir, dirName;
     do {
@@ -647,7 +647,7 @@ function getUniqueDir(dir, name) {
 }
 
 function getUniqueFile(dir, name) {
-    var name = sbConvCommon.validateFileName(name) || "untitled";
+    var name = name ? sbConvCommon.validateFileName(name) : "untitled";
     var num = 0, destFile, fileName;
     do {
         fileName = name;
