@@ -92,6 +92,14 @@
             return aName;
         },
 
+        escapeHTML : function(aStr, aNoDoubleQuotes, aSingleQuotes, aNoAmp) {
+            if (!aNoAmp) aStr = aStr.replace(/&/g, "&amp;");
+            aStr = aStr.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            if (!aNoDoubleQuotes) aStr = aStr.replace(/"/g, "&quot;");
+            if (aSingleQuotes) aStr = aStr.replace(/'/g, "&apos;");
+            return aStr;
+        },
+
         getBoolPref : function(aName, aDefaultValue) {
             try {
                 return PREF.getBoolPref(aName);

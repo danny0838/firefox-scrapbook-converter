@@ -126,8 +126,7 @@ function convert_enex2sb(input, output, includeSubdir) {
 
         function parseNote(note) {
             var item = sbConvCommon.newItem();
-            var resHash2FileName = {};
-            var resHash2Mime = {};
+            var resHash2Data = {};
 
             // basic meta data
             item.type = "notex";
@@ -164,7 +163,8 @@ function convert_enex2sb(input, output, includeSubdir) {
 
             // source
             try {
-                var sourceObj = note.getElementsByTagName("source-url")[0];
+                var noteAttributesObj = note.getElementsByTagName("note-attributes")[0];
+                var sourceObj = noteAttributesObj.getElementsByTagName("source-url")[0];
                 var source = sourceObj.textContent;
                 // Evernote uses a blizzard url format for local files, fix it
                 if (source.match(/^file:\/\/(.*)$/i)) {
@@ -199,29 +199,31 @@ function convert_enex2sb(input, output, includeSubdir) {
                     var data = res.getElementsByTagName("data")[0];
                     var encoding = data.getAttribute("encoding");
                     // we only support base64 currently
-                    if (encoding == "base64") {
-                        var data_base64 = data.textContent;
-                        var data_bin = window.atob(data_base64)
-                        var mime = res.getElementsByTagName("mime")[0].textContent;
-                        // var width = (function(){
-                            // try{return res.getElementsByTagName("width")[0].textContent;} catch(ex){}
-                        // })();
-                        // var height = (function(){
-                            // try{return res.getElementsByTagName("height")[0].textContent;} catch(ex){}
-                        // })();
-                        var attributes = res.getElementsByTagName("resource-attributes")[0];
-                        var filename = (function(){
-                            try{return attributes.getElementsByTagName("file-name")[0].textContent;} catch(ex){}
-                        })();
-                        var resFile = getUniqueFile(destDir, filename);
-                        var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
-                        ostream.init(resFile, -1, 0666, 0);
-                        ostream.write(data_bin, data_bin.length);
-                        ostream.close();
-                        var hash = hex_md5(data_bin);
-                        resHash2FileName[hash] = resFile.leafName;
-                        resHash2Mime[hash] = mime;
-                    }
+                    if (encoding != "base64") continue;
+
+                    // read sub elements and store them in metadata
+                    var metadata = { attributes: {} };
+                    ["mime", "width", "height"].forEach(function(meta){
+                        try { metadata[meta] = res.getElementsByTagName(meta)[0].textContent; } catch(ex){}
+                    }, this);
+                    var attributes = res.getElementsByTagName("resource-attributes")[0];
+                    ["file-name", "source-url", "timestamp ", "latitude", "longitude", "altitude", "camera-make", "camera-model", "attachment", "application-data"].forEach(function(meta){
+                        try { metadata.attributes[meta] = attributes.getElementsByTagName(meta)[0].textContent; } catch(ex){}
+                    }, this);
+
+                    // calculate the resource hash
+                    var data_base64 = data.textContent;
+                    var data_bin = window.atob(data_base64);
+                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"]);
+                    var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
+                    ostream.init(resFile, -1, 0666, 0);
+                    ostream.write(data_bin, data_bin.length);
+                    ostream.close();
+                    var hash = hex_md5(data_bin);
+
+                    // store the hash-metadata table
+                    metadata.filename = resFile.leafName;
+                    resHash2Data[hash] = metadata;
                 } catch(ex){
                     console.debug(ex);
                 }
@@ -277,20 +279,33 @@ function convert_enex2sb(input, output, includeSubdir) {
                     var nodes = ennote.getElementsByTagName("en-media");
                     for (var i=nodes.length-1; i>=0; i--) {
                         var node = nodes[i];
-                        // new node in replace of the old one
+                        var mime = node.getAttribute("type");
                         var hash = node.getAttribute("hash");
-                        var mime = resHash2Mime[hash];
+                        var metadata = resHash2Data[hash];
+                        var filename = metadata.filename;
+                        // new node in replace of the old one
                         if (mime.indexOf("image/") == 0) {
                             var node2 = htmlDoc.createElement("IMG");
-                            node2.setAttribute("src", resHash2FileName[hash]);
-                            node2.setAttribute("alt", resHash2FileName[hash]);
+                            node2.setAttribute("src", filename);
+                            node2.setAttribute("alt", filename);
                             node.parentNode.insertBefore(node2, node);
                         }
                         else {
                             var node2 = htmlDoc.createElement("A");
-                            node2.setAttribute("href", resHash2FileName[hash]);
-                            node2.textContent = resHash2FileName[hash];
+                            node2.setAttribute("href", filename);
+                            node2.textContent = filename;
                             node.parentNode.insertBefore(node2, node);
+                        }
+                        ["align", "alt", "longdesc", "height", "width", "border", "hspace", "vspace", "usemap", "style", "title", "lang", "xml:lang", "dir"].forEach(function(attr){
+                            if (node.hasAttribute(attr)) node2.setAttribute(attr, node.getAttribute(attr));
+                        }, this);
+                        for (var j in metadata) {
+                            if (j != "filename" && j != "attributes") {
+                                node2.setAttribute("data-evernote-" + j, metadata[j]);
+                            }
+                        }
+                        for (var j in metadata.attributes) {
+                            node2.setAttribute("data-evernote-attributes-" + j, metadata.attributes[j]);
                         }
                         // Fix DOMParser misprocess
                         var childs = node.childNodes;
@@ -306,11 +321,11 @@ function convert_enex2sb(input, output, includeSubdir) {
                         var node = nodes[i];
                         // new node in replace of the old one
                         var node2 = htmlDoc.createElement("IMG");
-                        node2.setAttribute("alt", node.textContent);  // crypted data string
                         node2.setAttribute("title", "Evernote Crypt");
-                        node2.setAttribute("data-evernote-hint", node.getAttribute("hint"));
-                        node2.setAttribute("data-evernote-cipher", node.getAttribute("cipher"));
-                        node2.setAttribute("data-evernote-length", node.getAttribute("length"));
+                        node2.setAttribute("alt", node.textContent);  // crypted data string
+                        ["hint", "cipher", "length"].forEach(function(attr){
+                            if (node.hasAttribute(attr)) node2.setAttribute("data-evernote-" + attr, node.getAttribute(attr));
+                        }, this);
                         node2.setAttribute("src", "data:image/gif;base64,R0lGODlhXQASAPcBAIODg////+Dg4Kurq+Li4uTk5LKysp+fn7u7u8/Pz62trd7e3tvb25eXl+fn59jY2MTExMjIyMzMzICAgKioqJubm6SkpNLS0vDw8NXV1ZCQkLq6uurq6u/v7+zs7Le3t6+vr4WFhYuLi4yMjH5+ftra2t/f38XFxYiIiJmZmZWVlYeHh+bm5tnZ2Xx8fIaGhunp6fT09OHh4To6Otzc3NbW1jg4ODY2Nu3t7e7u7uPj48HBwaamppiYmCgoKL+/v1VVVTMzM+vr67m5uYGBgcfHx8rKytHR0cPDw2tra3BwcN3d3VlZWfv7+29vbyUlJYKCgmJiYoSEhIqKiri4uJqamomJiXl5ebCwsAICAnd3dwMDA8nJydTU1KOjo7GxsaWlpdPT0+jo6BoaGpGRka6urtDQ0F9fX2hoaHR0dJSUlGFhYaCgoMLCwpycnE1NTZOTk87OzkpKShsbG2pqapaWllhYWBgYGKmpqXt7ey8vL9fX1/39/ff396Ghoc3NzXV1dfPz8/7+/r29vT8/P7W1tTIyMnh4eGBgYGlpaURERKysrEhISDk5ORISEh8fH3Z2dn19fY2NjXNzc21tbQkJCU5OTgUFBV1dXQ4ODnp6el5eXh0dHTc3N2ZmZpKSkiAgIMvLyy0tLSQkJBYWFr6+vgsLC/X19cbGxjU1NQ8PD1tbW/Ly8vHx8ba2to+Pj2RkZEtLSwgICHJycjExMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAEALAAAAABdABIAAAj/AAMIFOhhgxspABIqXMiwocOHECNKhCjFzQYPAzMGaLKhTgQWgjSKHEmypMmTKEcKYhGhzoYmGlvw2NAHA4wCLAoU0OFAJ0+dJsTozHCzQAIOOo8mRWqUqdKmS6NCnfr0CFMaPXVqLQADQ58NPFoM9PCCRiAdBGSwIEBgx4YfaTmwpSGXABccbDfkYPuhA1+/BPr+HRwYsODChA/rZRvKA1sZbCOz1cGKxgscAqkUwSFAgIkCApYA2UJaDmgBDIR0NsJZQKEOnUFgiD1bgGzauG3Xvq07N28ssAX88ND5gYPOyJPDKEIlAIweHRYsWFJAOhRHPMzwIAVpAQMP0rvk/3AxQcmE83QwLHDh5PwEJy6kJ3HfPn4G8uXPu6iBgbz580mox557SuQh3QMsSKfggtJ50IAQQ1zAAAMlEDBhCUAcAoMMrbwQywMeTBhGDgxogMIBKEKhwYRaoHiAFAeseIQGKIaAogZHYEDjCy5egUGJPKL4wooMHOIijCtewMKELcgw4ZNQQrDBAS08UIMAD1gpAxAN1CDGA2wwIkSWZuCQJREKpLmCAik8UEQKaU6RZgpcYACnCGkqkAcGD6SAZ5oitPmAC3ni2SYXcCpgxZxGsJBlFLJUckkWlMqR5aUNvNBCGCZkkAGnM4xxhyqmZHLHGDNkEAcOniKhAgUUTP8Aqwo/dPCqrLAqgUEGKhABKwVEqODpLL9CQYGwrsJq7LE72EoBCb9e4YCnCdDwBiiPcDJHI3F46ukeU7yQwBIXXGAGDReM4YMPT4zyxLpz/CFEuTvkoIEFV1igLyw4XKDBJPpakIYG5XoSMCAWEOzKvRZooa8GH9jbcMBo5OBvGgFrQvAFESxwwQmK0KJHJxuUa/IRVnzSRQIJ/FECy08YEsTMMxvyhBgs7+BBAiMA4mIiI7C8ys8HBD3ACCjSgeIIA3iAdBIubrLzCFCjmETQCWDiIiVFJ1CKCSxLMMQMqXjB8tkJQNDAIF9IYMQDErjtww10132DD3HvAEPcaFT/4HcUFaAggR8o+I2I3yj4wUHhh/sNBAcSoLCG3xWsIbgEQFAOuOBsFF4B4IEbIEDcEewhQQ8hxK163F8MAQMcJ2QQQQSodKGHDbjnboMoEfzAUgRlhNBAA2cMH0IPLAhvx/ANvOFABCEsPzwTIcxuCfNMNFA96tMb34ADwmc//BkEzP5DDbOnr34ERcABQwAfDAIBBG0cAQEAhMygv/6EkPCDAPMDAQsc4IAhxICAZdABBByggAMyMAbzU8ApCNhAB0CADA6soAPIwJMHUrAAC9TgEAIxv0I8YH5ImJ8KVUiB5gRACCEYABWMgAAEyIAPGuEDAWpQwwHIoIZqEEAN0q1gghquoIgIWMECjCjEJCLxiDV8wRKMSAMjLtGJRkSiJK4IhgfUcAM1DGMYBxACjAhEJl7AggFAAAEDrBEJbiyDBNwIBga4kQw0cCMRSuBGEvDRAH7sox0B+cdAGiASLehjDfqYSEL28Y97dKMaHuDGL7jxkm7EQg/CohGOTKEHixjAAPDwAVHiYQOiBAMERFmFIojyFScQpQhiOYBZypKWtqwlLld5tDaIcgRIuKUwj0ZLFexAlMhMphdSMIWXkKQgVZiINKdJzWo6pAoX0UhAAAA7");  // crypt image
                         node.parentNode.insertBefore(node2, node);
                         // remove the old node
@@ -324,7 +339,7 @@ function convert_enex2sb(input, output, includeSubdir) {
                         + '  <meta charset="UTF-8">\n'
                         + '  <title data-sb-obj="title">' + item.title + '</title>\n'
                         + '</head>\n'
-                        + '<body' + (ennote.hasAttribute("style") ? ' style="' + ennote.getAttribute("style") + '"' : "") + '>' + ennote.innerHTML + '</body>\n'
+                        + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
                         + '</html>\n';
                 } catch(ex){
                     console.debug(ex);
@@ -337,6 +352,25 @@ function convert_enex2sb(input, output, includeSubdir) {
 
                 return html;
             }
+        }
+
+        /**
+         * reads data from aNode and returns a new node in string
+         */
+        function nodeToTag(aNode, aTagName, aAllowedAttrs) {
+            if (!aTagName) aTagName = aNode.tagName;
+            aTagName = aTagName.toLowerCase();
+            if (!aAllowedAttrs) aAllowedAttrs = [];
+
+            var tag = "<" + aTagName;
+            for ( var i=0; i<aNode.attributes.length; i++ ) {
+console.debug(aNode.attributes[i].name);
+                if (aAllowedAttrs.indexOf(aNode.attributes[i].name) !== -1) {
+                    tag += ' ' + aNode.attributes[i].name + '="' + sbConvCommon.escapeHTML(aNode.attributes[i].value) + '"';
+                }
+            }
+            tag += ">" + aNode.innerHTML + "</" + aTagName + ">";
+            return tag;
         }
     }
 }
@@ -632,7 +666,7 @@ function getSubPath(aBaseFolder, aFile) {
 }
 
 function getUniqueDir(dir, name) {
-    var name = sbConvCommon.validateFileName(name).substring(0, 60) || "untitled";
+    var name = name ? sbConvCommon.validateFileName(name).substring(0, 60) : "untitled";
     name = name.replace(/\.+$/, "");
     var num = 0, destDir, dirName;
     do {
@@ -647,7 +681,7 @@ function getUniqueDir(dir, name) {
 }
 
 function getUniqueFile(dir, name) {
-    var name = sbConvCommon.validateFileName(name) || "untitled";
+    var name = name ? sbConvCommon.validateFileName(name) : "untitled";
     var num = 0, destFile, fileName;
     do {
         fileName = name;
