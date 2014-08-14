@@ -1,3 +1,12 @@
+ScrapBook X File Converter 1.0.1
+----------------
+
+- UPDATE: No more use preferences to remember the last used values.
+- UPDATE: [enex2sb] Tranalates attributes from <en-note> and <en-media> into corresponding attributes.
+- UPDATE: [enex2sb] Tranalates metadata in <resource> to data-evernote-* attributes.
+- FIXED: [enex2sb] Mistakingly tranalate <source-url> in <resource> as the source url if there is no <source-url> in <note-attributes>.
+
+
 ScrapBook X File Converter 1.0.0
 ----------------
 
