@@ -1,17 +1,20 @@
 /* options */
 function onInputBrowse() {
-    return pickFolder("pref_inputPath");
+    return pickFolder("inputPath");
 }
 
 function onOutputBrowse() {
-    return pickFolder("pref_outputPath");
+    return pickFolder("outputPath");
 }
 
 function pickFolder(targetId) {
     var FP = Components.classes['@mozilla.org/filepicker;1'].createInstance(Components.interfaces.nsIFilePicker);
     FP.init(window, null, FP.modeGetFolder);
     if ( FP.show() != FP.returnOK ) return false;
-    document.getElementById(targetId).value = FP.file.path;
+    var targetElem = document.getElementById(targetId);
+    targetElem.value = FP.file.path;
+    targetElem.setAttribute("value", targetElem.value);
+    // document.persist(targetElem, "value");
     return true;
 }
 

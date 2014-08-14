@@ -16,26 +16,20 @@
     <script type="application/x-javascript" src="chrome://sbconv/content/prefsDialog.js" />
 
     <prefpane id="pane1" label="">
-        <preferences>
-            <preference id="pref_inputPath" name="extensions.scrapbook.addon.converter.inputPath" type="string"/>
-            <preference id="pref_outputPath" name="extensions.scrapbook.addon.converter.outputPath" type="string"/>
-            <preference id="pref_includeSubdir" name="extensions.scrapbook.addon.converter.includeSubdir" type="bool"/>
-        </preferences>
-
         <groupbox>
             <caption label="&options;"/>
             <hbox>
                 <label>&input;</label>
-                <textbox id="inputPath" preference="pref_inputPath" flex="1"/>
+                <textbox id="inputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);"/>
                 <button id="inputPick" class="dialog" label="&pick;" oncommand="return onInputBrowse();"/>
             </hbox>
             <hbox>
                 <label>&output;</label>
-                <textbox id="outputPath" preference="pref_outputPath" flex="1"/>
+                <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
                 <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
             </hbox>
             <hbox>
-                <checkbox id="includeSubdir" label="&includeSubdir;" preference="pref_includeSubdir" />
+                <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked"  />
             </hbox>
         </groupbox>
         <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
