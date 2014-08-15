@@ -683,11 +683,11 @@ function getUniqueDir(dir, name) {
 }
 
 function getUniqueFile(dir, name) {
-    var name = name ? sbConvCommon.validateFileName(name) : "untitled";
+    var name = name ? sbConvCommon.validateFileName(name) : "untitled.dat";
+    var LR = sbConvCommon.splitFileName(name);
     var num = 0, destFile, fileName;
     do {
-        fileName = name;
-        if ( num > 0 ) fileName += "[" + num + "]";
+        fileName = ( num > 0 ) ? LR[0] + "[" + num + "]." + LR[1] : name;
         destFile = dir.clone();
         destFile.append(fileName);
         num++;

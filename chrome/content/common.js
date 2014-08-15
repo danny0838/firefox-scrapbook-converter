@@ -59,6 +59,10 @@
         convertToUnicode : function(aString, aCharset) {
             return oSBCommon.convertToUnicode(aString, aCharset);
         },
+        
+        splitFileName : function(aFileName) {
+            return oSBCommon.splitFileName(aFileName);
+        },
 
         validateFileName : function(aFileName) {
             return oSBCommon.validateFileName(aFileName);
