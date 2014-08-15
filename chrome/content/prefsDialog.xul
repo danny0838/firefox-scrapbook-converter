@@ -29,6 +29,7 @@
                 <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
             </hbox>
             <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked" checked="true" />
+            <checkbox id="includeFileName" label="&includeFileName;" persist="checked" checked="true" />
         </groupbox>
         <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
         <button label="&action.maf2sb;" oncommand="convert('maf2sb');" />

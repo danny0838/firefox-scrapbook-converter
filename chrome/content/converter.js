@@ -48,10 +48,10 @@ function convert(data) {
     // call the convert method
     switch (data.method) {
         case "enex2sb":
-            convert_enex2sb(input, output, data.includeSubdir);
+            convert_enex2sb(input, output, data.includeSubdir, data.includeFileName);
             break;
         case "maf2sb":
-            convert_maf2sb(input, output, data.includeSubdir);
+            convert_maf2sb(input, output, data.includeSubdir, data.includeFileName);
             break;
         case "html2sb":
             convert_html2sb(input, output, data.includeSubdir);
@@ -62,12 +62,12 @@ function convert(data) {
     }
 }
 
-function convert_enex2sb(input, output, includeSubdir) {
+function convert_enex2sb(input, output, includeSubdir, includeFileName) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
-    print("");
+    print("include filename: " + (includeFileName ? "yes" : "no"));
     var files = getDescFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
@@ -79,7 +79,7 @@ function convert_enex2sb(input, output, includeSubdir) {
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.enex/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
-            subPath.pop();
+            if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
             parseEnex(loadXMLFile(file));
             return;
@@ -374,11 +374,12 @@ function convert_enex2sb(input, output, includeSubdir) {
     }
 }
 
-function convert_maf2sb(input, output, includeSubdir) {
+function convert_maf2sb(input, output, includeSubdir, includeFileName) {
     print("convert method: .maff --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
+    print("include filename: " + (includeFileName ? "yes" : "no"));
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
@@ -391,7 +392,7 @@ function convert_maf2sb(input, output, includeSubdir) {
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.maff/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
-            subPath.pop();
+            if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
             parseMaf(file);
             return;

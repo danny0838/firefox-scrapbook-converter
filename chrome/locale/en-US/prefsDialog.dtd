@@ -5,6 +5,7 @@
 <!ENTITY input "Input:">
 <!ENTITY output "Output:">
 <!ENTITY includeSubdir "Include subfolders">
+<!ENTITY includeFileName "Add file name to item folder path">
 
 <!ENTITY action.enex2sb "Convert .enex to ScrapBook data">
 <!ENTITY action.maf2sb "Convert .maff to ScrapBook data">

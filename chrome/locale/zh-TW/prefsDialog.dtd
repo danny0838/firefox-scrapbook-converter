@@ -5,6 +5,7 @@
 <!ENTITY input "輸入:">
 <!ENTITY output "輸出:">
 <!ENTITY includeSubdir "包括子資料夾">
+<!ENTITY includeFileName "將檔名加入匯入資料夾路徑">
 
 <!ENTITY action.enex2sb "將 .enex 轉為 ScrapBook 資料格式">
 <!ENTITY action.maf2sb "將 .maff 轉為 ScrapBook 資料格式">
