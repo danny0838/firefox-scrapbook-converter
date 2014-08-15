@@ -1,3 +1,16 @@
+ScrapBook X File Converter 1.0.2
+----------------
+
+- NEW: Added option "Add file name to item folder path".
+- NEW: Added option "Automatically adjust ID to prevent duplicate".
+- UPDATE: "Convert HTML" now also converts files into ScrapBook data items.
+- UPDATE: Untitled Evernote files now use "Image.*" (bmp, jpg, gif, png, tif, svg) or "Attachment.dat" as the default file name.
+- UPDATE: Skips files without .enex/.maff extension in the corresponding conversion tasks.
+- FIXED: Pages whose title has trailing spaces causes the conversion task to freeze.
+- FIXED: Adjusted the lastModifiedTime of the output files to prevent an auto-update of item modify time on viewing them.
+- FIXED: Remove an obsolete test message.
+
+
 ScrapBook X File Converter 1.0.1
 ----------------
 
