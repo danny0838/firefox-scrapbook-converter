@@ -64,6 +64,14 @@
             return oSBCommon.splitFileName(aFileName);
         },
 
+        escapeFileName : function(aString) {
+            return ("escapeFileName" in oSBCommon) ? oSBCommon.escapeFileName(aString) : escapeFileName(aString);
+
+            function escapeFileName(aString) {
+                return aString.replace(/[#]+|(?:%[0-9A-Fa-f]{2})+/g, function(m){return encodeURIComponent(m);});
+            }
+        },
+
         validateFileName : function(aFileName) {
             return oSBCommon.validateFileName(aFileName);
         },

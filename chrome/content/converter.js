@@ -495,11 +495,20 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
-            print("converting file: '" + file.path + "'");
-            subPath = getSubPath(input, file);
-            subPath.pop();
-            subPath = subPath.join("\t");
-            parseHtmlPack(file);
+            if (file.leafName.match(/\.(x?html|htm|xht)$/i)) {
+                print("converting HTML pack: '" + file.path + "'");
+                subPath = getSubPath(input, file);
+                subPath.pop();
+                subPath = subPath.join("\t");
+                parseHtmlPack(file);
+            }
+            else {
+                print("converting file: '" + file.path + "'");
+                subPath = getSubPath(input, file);
+                subPath.pop();
+                subPath = subPath.join("\t");
+                parseFile(file);
+            }
             // next file (async)
             setTimeout(filesNext, 0);
             return;
@@ -593,6 +602,49 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
             }
         }
     }
+
+    function parseFile(file) {
+        // create item
+        var item = sbConvCommon.newItem();
+
+        // -- title
+        try {
+            item.title = file.leafName.replace(/\.\w+$/, "");
+        } catch(ex){}
+
+        // -- time
+        var time = parseFileTime(file.lastModifiedTime);
+        item.id = item.create = item.modify = time;
+        if (uniqueId) item.id = getUniqueId(item.id);
+
+        // -- type
+        item.type = "file";
+
+        // -- icon
+        item.icon = "moz-icon://" + sbConvCommon.escapeFileName(file.leafName) + "?size=16";
+
+        // -- char
+        // @TODO: detect charset of text files?
+        item.chars = "UTF-8";
+
+        // -- folder
+        item.folder = subPath;
+
+        // output
+        var destDir = getUniqueDir(output, item.title);
+        print("exporting file: '" + item.title + "' --> '" + destDir.leafName + "'");
+        var indexDat = destDir.clone(); indexDat.append("index.dat");
+        sbConvCommon.writeIndexDat(item, indexDat);
+        file.copyTo(destDir, file.leafName);
+        var indexHtml = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(file.leafName)) + '"></head><body></body></html>';
+        var indexHtmlFile = destDir.clone(); indexHtmlFile.append("index.html");
+        sbConvCommon.writeFile(indexHtmlFile, indexHtml, "UTF-8", true);
+
+        function parseFileTime(time) {
+            var date = new Date(time);
+            return sbConvCommon.getTimeStamp(date);
+        }
+    }
 }
 
 function loadXMLFile(file) {
@@ -640,9 +692,9 @@ function getDescHtmlFiles(aFolder, aIncludeSubdir) {
                 dirs.push(file);
             }
             else {
+                result.push(file);
                 var filename = file.leafName;
                 if (filename.match(/\.(x?html|htm|xht)$/i)) {
-                    result.push(file);
                     // add support folder names to the forbidden list
                     var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
                     forbidden[support.path] = true;
