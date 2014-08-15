@@ -1,6 +1,7 @@
 ScrapBook X File Converter 1.0.2
 ----------------
 
+- COMPATIBLE WITH: ScrapBook X 1.12.0a24.
 - NEW: Added option "Add file name to item folder path".
 - NEW: Added option "Automatically adjust ID to prevent duplicate".
 - UPDATE: "Convert HTML" now also converts files into ScrapBook data items.
