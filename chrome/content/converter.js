@@ -48,13 +48,13 @@ function convert(data) {
     // call the convert method
     switch (data.method) {
         case "enex2sb":
-            convert_enex2sb(input, output, data.includeSubdir, data.includeFileName);
+            convert_enex2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
         case "maf2sb":
-            convert_maf2sb(input, output, data.includeSubdir, data.includeFileName);
+            convert_maf2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
         case "html2sb":
-            convert_html2sb(input, output, data.includeSubdir);
+            convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         default:
             print("ERROR: unknown method.");
@@ -62,12 +62,13 @@ function convert(data) {
     }
 }
 
-function convert_enex2sb(input, output, includeSubdir, includeFileName) {
+function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("include filename: " + (includeFileName ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     var files = getDescFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
@@ -149,17 +150,16 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName) {
             // create
             try {
                 item.create = parseEnexTime(note.getElementsByTagName("created")[0].textContent);
-                if (!item.id && item.create) item.id = item.create;
             } catch(ex){}
 
             // modify
             try {
                 item.modify = parseEnexTime(note.getElementsByTagName("updated")[0].textContent);
-                if (!item.id && item.modify) item.id = item.modify;
             } catch(ex){}
 
-            // create an id if none
-            if (!item.id) item.id = sbConvCommon.getTimeStamp();
+            // id
+            item.id = item.create || item.modify || sbConvCommon.getTimeStamp();
+            if (uniqueId) item.id = getUniqueId(item.id);
 
             // source
             try {
@@ -374,12 +374,13 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName) {
     }
 }
 
-function convert_maf2sb(input, output, includeSubdir, includeFileName) {
+function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .maff --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("include filename: " + (includeFileName ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
@@ -454,8 +455,8 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName) {
             item.title = ds.getMafProperty(res.title);
             item.source = ds.getMafProperty(res.originalUrl);
             item.chars = ds.getMafProperty(res.charset);
-            item.id = parseMafTime(ds.getMafProperty(res.archiveTime));
-            item.create = item.modify = item.id;
+            item.id = item.create = item.modify = parseMafTime(ds.getMafProperty(res.archiveTime));
+            if (uniqueId) item.id = getUniqueId(item.id);
             item.folder = subPath;
 
             var indexDat = pageDir.clone(); indexDat.append("index.dat");
@@ -478,11 +479,12 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName) {
     }
 }
 
-function convert_html2sb(input, output, includeSubdir) {
+function convert_html2sb(input, output, includeSubdir, uniqueId) {
     print("convert method: HTML --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
     var files = getDescHtmlFiles(input, includeSubdir);
     var file = null;
@@ -547,6 +549,7 @@ function convert_html2sb(input, output, includeSubdir) {
         // -- time
         var time = parseHtmlPackTime(file.lastModifiedTime);
         item.id = item.create = item.modify = time;
+        if (uniqueId) item.id = getUniqueId(item.id);
 
         // -- source
         if ( htmlTxt.match(/<!-- saved from url=\((\d+)\)(.*?) -->/i) ) {
@@ -663,6 +666,14 @@ function getSubPath(aBaseFolder, aFile) {
         if (!refFile.exists()) return false;
     }
     return result;
+}
+
+function getUniqueId(id) {
+    if (!arguments.callee.hash) arguments.callee.hash = {};
+    var result = parseInt(id, 10);
+    while (arguments.callee.hash[result]) result++;
+    arguments.callee.hash[result] = true;
+    return result.toString();
 }
 
 function getUniqueDir(dir, name) {
