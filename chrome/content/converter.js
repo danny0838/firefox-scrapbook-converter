@@ -76,7 +76,7 @@ function convert_enex2sb(input, output, includeSubdir) {
     function filesNext() {
         while (files.length) {
             file = files.shift();
-            if ( !(file.exists() && file.isFile()) ) continue;
+            if ( !(file.exists() && file.isFile() && file.leafName.match(/\.enex/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             subPath.pop();
@@ -388,7 +388,7 @@ function convert_maf2sb(input, output, includeSubdir) {
     function filesNext() {
         while (files.length) {
             file = files.shift();
-            if ( !(file.exists() && file.isFile()) ) continue;
+            if ( !(file.exists() && file.isFile() && file.leafName.match(/\.maff/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             subPath.pop();
