@@ -219,6 +219,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                     ostream.init(resFile, -1, 0666, 0);
                     ostream.write(data_bin, data_bin.length);
                     ostream.close();
+                    if (item.modify) resFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
                     var hash = hex_md5(data_bin);
 
                     // store the hash-metadata table
@@ -235,6 +236,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             // output
             sbConvCommon.writeIndexDat(item, indexDat);
             sbConvCommon.writeFile(indexHTML, content, "UTF-8", true);
+            if (item.modify) indexHTML.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
 
             function parseEnexTime(time) {
                 if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
@@ -639,6 +641,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         var indexHtml = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(file.leafName)) + '"></head><body></body></html>';
         var indexHtmlFile = destDir.clone(); indexHtmlFile.append("index.html");
         sbConvCommon.writeFile(indexHtmlFile, indexHtml, "UTF-8", true);
+        if (item.modify) indexHtmlFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
 
         function parseFileTime(time) {
             var date = new Date(time);

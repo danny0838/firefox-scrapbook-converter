@@ -51,6 +51,17 @@
             var s = dd.getSeconds();   if ( s < 10 ) s = "0" + s;
             return y.toString() + m.toString() + d.toString() + h.toString() + i.toString() + s.toString();
         },
+
+        getLastModifiedTime : function(aTimeStamp) {
+            if (aTimeStamp.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)) {
+                var dd = new Date(
+                    parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
+                    parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
+                );
+                return dd.getTime();
+            }
+            return false;
+        },
         
         convertFilePathToURL : function(aFilePath) {
             return oSBCommon.convertFilePathToURL(aFilePath);
