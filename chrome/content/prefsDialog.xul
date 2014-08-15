@@ -28,9 +28,7 @@
                 <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
                 <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
             </hbox>
-            <hbox>
-                <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked"  />
-            </hbox>
+            <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked" />
         </groupbox>
         <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
         <button label="&action.maf2sb;" oncommand="convert('maf2sb');" />
