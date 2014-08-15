@@ -364,7 +364,6 @@ function convert_enex2sb(input, output, includeSubdir) {
 
             var tag = "<" + aTagName;
             for ( var i=0; i<aNode.attributes.length; i++ ) {
-console.debug(aNode.attributes[i].name);
                 if (aAllowedAttrs.indexOf(aNode.attributes[i].name) !== -1) {
                     tag += ' ' + aNode.attributes[i].name + '="' + sbConvCommon.escapeHTML(aNode.attributes[i].value) + '"';
                 }
