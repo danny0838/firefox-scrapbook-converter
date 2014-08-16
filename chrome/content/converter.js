@@ -48,13 +48,13 @@ function convert(data) {
     // call the convert method
     switch (data.method) {
         case "enex2sb":
-            convert_enex2sb(input, output, data.includeSubdir);
+            convert_enex2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
         case "maf2sb":
-            convert_maf2sb(input, output, data.includeSubdir);
+            convert_maf2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
         case "html2sb":
-            convert_html2sb(input, output, data.includeSubdir);
+            convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         default:
             print("ERROR: unknown method.");
@@ -62,12 +62,13 @@ function convert(data) {
     }
 }
 
-function convert_enex2sb(input, output, includeSubdir) {
+function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
-    print("");
+    print("include filename: " + (includeFileName ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     var files = getDescFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
@@ -76,10 +77,10 @@ function convert_enex2sb(input, output, includeSubdir) {
     function filesNext() {
         while (files.length) {
             file = files.shift();
-            if ( !(file.exists() && file.isFile()) ) continue;
+            if ( !(file.exists() && file.isFile() && file.leafName.match(/\.enex/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
-            subPath.pop();
+            if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
             parseEnex(loadXMLFile(file));
             return;
@@ -149,17 +150,16 @@ function convert_enex2sb(input, output, includeSubdir) {
             // create
             try {
                 item.create = parseEnexTime(note.getElementsByTagName("created")[0].textContent);
-                if (!item.id && item.create) item.id = item.create;
             } catch(ex){}
 
             // modify
             try {
                 item.modify = parseEnexTime(note.getElementsByTagName("updated")[0].textContent);
-                if (!item.id && item.modify) item.id = item.modify;
             } catch(ex){}
 
-            // create an id if none
-            if (!item.id) item.id = sbConvCommon.getTimeStamp();
+            // id
+            item.id = item.create || item.modify || sbConvCommon.getTimeStamp();
+            if (uniqueId) item.id = getUniqueId(item.id);
 
             // source
             try {
@@ -214,11 +214,12 @@ function convert_enex2sb(input, output, includeSubdir) {
                     // calculate the resource hash
                     var data_base64 = data.textContent;
                     var data_bin = window.atob(data_base64);
-                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"]);
+                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"], metadata["mime"]);
                     var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
                     ostream.init(resFile, -1, 0666, 0);
                     ostream.write(data_bin, data_bin.length);
                     ostream.close();
+                    if (item.modify) resFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
                     var hash = hex_md5(data_bin);
 
                     // store the hash-metadata table
@@ -235,6 +236,7 @@ function convert_enex2sb(input, output, includeSubdir) {
             // output
             sbConvCommon.writeIndexDat(item, indexDat);
             sbConvCommon.writeFile(indexHTML, content, "UTF-8", true);
+            if (item.modify) indexHTML.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
 
             function parseEnexTime(time) {
                 if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
@@ -284,7 +286,7 @@ function convert_enex2sb(input, output, includeSubdir) {
                         var metadata = resHash2Data[hash];
                         var filename = metadata.filename;
                         // new node in replace of the old one
-                        if (mime.indexOf("image/") == 0) {
+                        if (mime && mime.match(/image\/(bmp|jpeg|gif|png|svg)/)) {
                             var node2 = htmlDoc.createElement("IMG");
                             node2.setAttribute("src", filename);
                             node2.setAttribute("alt", filename);
@@ -364,7 +366,6 @@ function convert_enex2sb(input, output, includeSubdir) {
 
             var tag = "<" + aTagName;
             for ( var i=0; i<aNode.attributes.length; i++ ) {
-console.debug(aNode.attributes[i].name);
                 if (aAllowedAttrs.indexOf(aNode.attributes[i].name) !== -1) {
                     tag += ' ' + aNode.attributes[i].name + '="' + sbConvCommon.escapeHTML(aNode.attributes[i].value) + '"';
                 }
@@ -372,14 +373,41 @@ console.debug(aNode.attributes[i].name);
             tag += ">" + aNode.innerHTML + "</" + aTagName + ">";
             return tag;
         }
+
+        function getUniqueFile(dir, name, mime) {
+            if (name) {
+                var name = sbConvCommon.validateFileName(name);
+            }
+            else {
+                if (mime && mime.match(/image\/(\w+)/i)) {
+                    var ext = RegExp.$1;
+                    if (ext == "jpeg") ext = "jpg";
+                    else if (ext == "tiff") ext = "tif";
+                    var name = "Image." + ext;
+                }
+                else var name = "Attachment.dat";
+            }
+            var LR = sbConvCommon.splitFileName(name);
+            var num = 0, destFile, fileName;
+            do {
+                fileName = ( num > 0 ) ? LR[0] + "[" + num + "]." + LR[1] : name;
+                destFile = dir.clone();
+                destFile.append(fileName);
+                num++;
+            }
+            while ( destFile.exists() );
+            return destFile;
+        }
     }
 }
 
-function convert_maf2sb(input, output, includeSubdir) {
+function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .maff --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
+    print("include filename: " + (includeFileName ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
     var files = getDescFiles(input, includeSubdir);
     var file = null;
@@ -389,10 +417,10 @@ function convert_maf2sb(input, output, includeSubdir) {
     function filesNext() {
         while (files.length) {
             file = files.shift();
-            if ( !(file.exists() && file.isFile()) ) continue;
+            if ( !(file.exists() && file.isFile() && file.leafName.match(/\.maff/i)) ) continue;
             print("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
-            subPath.pop();
+            if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
             parseMaf(file);
             return;
@@ -454,8 +482,8 @@ function convert_maf2sb(input, output, includeSubdir) {
             item.title = ds.getMafProperty(res.title);
             item.source = ds.getMafProperty(res.originalUrl);
             item.chars = ds.getMafProperty(res.charset);
-            item.id = parseMafTime(ds.getMafProperty(res.archiveTime));
-            item.create = item.modify = item.id;
+            item.id = item.create = item.modify = parseMafTime(ds.getMafProperty(res.archiveTime));
+            if (uniqueId) item.id = getUniqueId(item.id);
             item.folder = subPath;
 
             var indexDat = pageDir.clone(); indexDat.append("index.dat");
@@ -478,11 +506,12 @@ function convert_maf2sb(input, output, includeSubdir) {
     }
 }
 
-function convert_html2sb(input, output, includeSubdir) {
+function convert_html2sb(input, output, includeSubdir, uniqueId) {
     print("convert method: HTML --> ScrapBook format");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
+    print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
     var files = getDescHtmlFiles(input, includeSubdir);
     var file = null;
@@ -493,11 +522,20 @@ function convert_html2sb(input, output, includeSubdir) {
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
-            print("converting file: '" + file.path + "'");
-            subPath = getSubPath(input, file);
-            subPath.pop();
-            subPath = subPath.join("\t");
-            parseHtmlPack(file);
+            if (file.leafName.match(/\.(x?html|htm|xht)$/i)) {
+                print("converting HTML pack: '" + file.path + "'");
+                subPath = getSubPath(input, file);
+                subPath.pop();
+                subPath = subPath.join("\t");
+                parseHtmlPack(file);
+            }
+            else {
+                print("converting file: '" + file.path + "'");
+                subPath = getSubPath(input, file);
+                subPath.pop();
+                subPath = subPath.join("\t");
+                parseFile(file);
+            }
             // next file (async)
             setTimeout(filesNext, 0);
             return;
@@ -547,6 +585,7 @@ function convert_html2sb(input, output, includeSubdir) {
         // -- time
         var time = parseHtmlPackTime(file.lastModifiedTime);
         item.id = item.create = item.modify = time;
+        if (uniqueId) item.id = getUniqueId(item.id);
 
         // -- source
         if ( htmlTxt.match(/<!-- saved from url=\((\d+)\)(.*?) -->/i) ) {
@@ -588,6 +627,50 @@ function convert_html2sb(input, output, includeSubdir) {
                 support.copyTo(destDir, support.leafName);
                 return;
             }
+        }
+    }
+
+    function parseFile(file) {
+        // create item
+        var item = sbConvCommon.newItem();
+
+        // -- title
+        try {
+            item.title = file.leafName.replace(/\.\w+$/, "");
+        } catch(ex){}
+
+        // -- time
+        var time = parseFileTime(file.lastModifiedTime);
+        item.id = item.create = item.modify = time;
+        if (uniqueId) item.id = getUniqueId(item.id);
+
+        // -- type
+        item.type = "file";
+
+        // -- icon
+        item.icon = "moz-icon://" + sbConvCommon.escapeFileName(file.leafName) + "?size=16";
+
+        // -- char
+        // @TODO: detect charset of text files?
+        item.chars = "UTF-8";
+
+        // -- folder
+        item.folder = subPath;
+
+        // output
+        var destDir = getUniqueDir(output, item.title);
+        print("exporting file: '" + item.title + "' --> '" + destDir.leafName + "'");
+        var indexDat = destDir.clone(); indexDat.append("index.dat");
+        sbConvCommon.writeIndexDat(item, indexDat);
+        file.copyTo(destDir, file.leafName);
+        var indexHtml = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(file.leafName)) + '"></head><body></body></html>';
+        var indexHtmlFile = destDir.clone(); indexHtmlFile.append("index.html");
+        sbConvCommon.writeFile(indexHtmlFile, indexHtml, "UTF-8", true);
+        if (item.modify) indexHtmlFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
+
+        function parseFileTime(time) {
+            var date = new Date(time);
+            return sbConvCommon.getTimeStamp(date);
         }
     }
 }
@@ -637,9 +720,9 @@ function getDescHtmlFiles(aFolder, aIncludeSubdir) {
                 dirs.push(file);
             }
             else {
+                result.push(file);
                 var filename = file.leafName;
                 if (filename.match(/\.(x?html|htm|xht)$/i)) {
-                    result.push(file);
                     // add support folder names to the forbidden list
                     var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
                     forbidden[support.path] = true;
@@ -665,9 +748,20 @@ function getSubPath(aBaseFolder, aFile) {
     return result;
 }
 
+function getUniqueId(id) {
+    if (!arguments.callee.hash) arguments.callee.hash = {};
+    var result = parseInt(id, 10);
+    while (arguments.callee.hash[result]) result++;
+    arguments.callee.hash[result] = true;
+    return result.toString();
+}
+
 function getUniqueDir(dir, name) {
     var name = name ? sbConvCommon.validateFileName(name).substring(0, 60) : "untitled";
-    name = name.replace(/\.+$/, "");
+
+    // filter out invalid folder names (may create a folder in a different name)
+    name = name.replace(/^[\s]+/, "").replace(/[.\s]+$/, "");
+
     var num = 0, destDir, dirName;
     do {
         dirName = name;
@@ -678,20 +772,6 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
-}
-
-function getUniqueFile(dir, name) {
-    var name = name ? sbConvCommon.validateFileName(name) : "untitled";
-    var num = 0, destFile, fileName;
-    do {
-        fileName = name;
-        if ( num > 0 ) fileName += "[" + num + "]";
-        destFile = dir.clone();
-        destFile.append(fileName);
-        num++;
-    }
-    while ( destFile.exists() );
-    return destFile;
 }
 
 /* borrowed from Firefox addon UnZIP */
