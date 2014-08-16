@@ -286,7 +286,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         var metadata = resHash2Data[hash];
                         var filename = metadata.filename;
                         // new node in replace of the old one
-                        if (mime.indexOf("image/") == 0) {
+                        if (mime && mime.match(/image\/(bmp|jpeg|gif|png|svg)/)) {
                             var node2 = htmlDoc.createElement("IMG");
                             node2.setAttribute("src", filename);
                             node2.setAttribute("alt", filename);
