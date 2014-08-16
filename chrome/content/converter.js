@@ -214,7 +214,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                     // calculate the resource hash
                     var data_base64 = data.textContent;
                     var data_bin = window.atob(data_base64);
-                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"]);
+                    var resFile = getUniqueFile(destDir, metadata["attributes"]["file-name"], metadata["mime"]);
                     var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
                     ostream.init(resFile, -1, 0666, 0);
                     ostream.write(data_bin, data_bin.length);
@@ -372,6 +372,31 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
             tag += ">" + aNode.innerHTML + "</" + aTagName + ">";
             return tag;
+        }
+
+        function getUniqueFile(dir, name, mime) {
+            if (name) {
+                var name = sbConvCommon.validateFileName(name);
+            }
+            else {
+                if (mime && mime.match(/image\/(\w+)/i)) {
+                    var ext = RegExp.$1;
+                    if (ext == "jpeg") ext = "jpg";
+                    else if (ext == "tiff") ext = "tif";
+                    var name = "Image." + ext;
+                }
+                else var name = "Attachment.dat";
+            }
+            var LR = sbConvCommon.splitFileName(name);
+            var num = 0, destFile, fileName;
+            do {
+                fileName = ( num > 0 ) ? LR[0] + "[" + num + "]." + LR[1] : name;
+                destFile = dir.clone();
+                destFile.append(fileName);
+                num++;
+            }
+            while ( destFile.exists() );
+            return destFile;
         }
     }
 }
@@ -747,20 +772,6 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
-}
-
-function getUniqueFile(dir, name) {
-    var name = name ? sbConvCommon.validateFileName(name) : "untitled.dat";
-    var LR = sbConvCommon.splitFileName(name);
-    var num = 0, destFile, fileName;
-    do {
-        fileName = ( num > 0 ) ? LR[0] + "[" + num + "]." + LR[1] : name;
-        destFile = dir.clone();
-        destFile.append(fileName);
-        num++;
-    }
-    while ( destFile.exists() );
-    return destFile;
 }
 
 /* borrowed from Firefox addon UnZIP */
