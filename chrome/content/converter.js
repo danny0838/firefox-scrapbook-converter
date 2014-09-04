@@ -333,6 +333,15 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         // remove the old node
                         node.parentNode.removeChild(node);
                     }
+					// -- span (highlight)
+                    var nodes = ennote.getElementsByTagName("span");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+						if (!node.hasAttribute("style") || !node.getAttribute("style").match(/(-evernote-highlight:\s*true;)/i)) continue;
+						node.setAttribute("style", node.getAttribute("style").replace(RegExp.$1, ""));
+						node.setAttribute("class", "linemarker-marked-line");
+						node.setAttribute("data-sb-obj", "linemarker");
+					}
 
                     // set output html
                     html = '<!DOCTYPE html>\n'
