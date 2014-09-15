@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.3
+----------------
+
+- UPDATE: Now converts Evernote highlights into ScrapBook highlights.
+
+
 ScrapBook X File Converter 1.0.2
 ----------------
 
