@@ -232,7 +232,10 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 
             // content
             var content = parseEnexContent(note.getElementsByTagName("content")[0].firstChild.data);
-            
+
+			// wrap the metadata
+			if (item.comment) item.comment = "<evernote>" + item.comment + "</evernote>";
+
             // output
             sbConvCommon.writeIndexDat(item, indexDat);
             sbConvCommon.writeFile(indexHTML, content, "UTF-8", true);
