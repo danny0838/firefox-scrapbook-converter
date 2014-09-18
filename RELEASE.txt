@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.4
+----------------
+
+- UPDATE: Now wraps Evernote metadata in a <evernote> tag.
+
+
 ScrapBook X File Converter 1.0.3
 ----------------
 
