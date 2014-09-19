@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.5
+----------------
+
+- FIXED: Large enex files were always identified as invalid.
+
+
 ScrapBook X File Converter 1.0.4
 ----------------
 
