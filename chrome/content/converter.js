@@ -96,7 +96,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 
     function parseEnex(xmlDoc) {
         // check if it's enex, skip if not
-        if (xmlDoc.documentElement.nodeName == "en-export") {
+        if (xmlDoc && xmlDoc.documentElement.nodeName == "en-export") {
             var notesDOM = xmlDoc.getElementsByTagName("note");
             var notes = [];
             for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
@@ -688,12 +688,10 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
 }
 
 function loadXMLFile(file) {
-    return loadXML(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
-}
-
-function loadXML(str) {
-    var parser = new DOMParser();
-    return parser.parseFromString(str, "text/xml");
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", sbConvCommon.convertFilePathToURL(file.path), false);
+    xhr.send();
+    return xhr.responseXML;
 }
 
 function loadHTML(str) {
