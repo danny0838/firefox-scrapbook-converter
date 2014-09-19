@@ -233,8 +233,8 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             // content
             var content = parseEnexContent(note.getElementsByTagName("content")[0].firstChild.data);
 
-			// wrap the metadata
-			if (item.comment) item.comment = "<evernote>" + item.comment + "</evernote>";
+            // wrap the metadata
+            if (item.comment) item.comment = "<evernote>" + item.comment + "</evernote>";
 
             // output
             sbConvCommon.writeIndexDat(item, indexDat);
@@ -336,15 +336,15 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         // remove the old node
                         node.parentNode.removeChild(node);
                     }
-					// -- span (highlight)
+                    // -- span (highlight)
                     var nodes = ennote.getElementsByTagName("span");
                     for (var i=nodes.length-1; i>=0; i--) {
                         var node = nodes[i];
-						if (!node.hasAttribute("style") || !node.getAttribute("style").match(/(-evernote-highlight:\s*true;)/i)) continue;
-						node.setAttribute("style", node.getAttribute("style").replace(RegExp.$1, ""));
-						node.setAttribute("class", "linemarker-marked-line");
-						node.setAttribute("data-sb-obj", "linemarker");
-					}
+                        if (!node.hasAttribute("style") || !node.getAttribute("style").match(/(-evernote-highlight:\s*true;)/i)) continue;
+                        node.setAttribute("style", node.getAttribute("style").replace(RegExp.$1, ""));
+                        node.setAttribute("class", "linemarker-marked-line");
+                        node.setAttribute("data-sb-obj", "linemarker");
+                    }
 
                     // set output html
                     html = '<!DOCTYPE html>\n'
@@ -572,12 +572,12 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
             var metas = htmlDoc.getElementsByTagName("meta");
             for (var i=0; i<metas.length; i++) {
                 var meta = metas[i];
-				if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
-					meta.getAttribute("http-equiv").toLowerCase() == "content-type" && 
-					meta.getAttribute("content").match(/^[^;]*;\s*charset=(.*)$/i) ) {
+                if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
+                    meta.getAttribute("http-equiv").toLowerCase() == "content-type" && 
+                    meta.getAttribute("content").match(/^[^;]*;\s*charset=(.*)$/i) ) {
                     charset = RegExp.$1;
-				}
-				else if ( meta.hasAttribute("charset") ) {
+                }
+                else if ( meta.hasAttribute("charset") ) {
                     charset = meta.getAttribute("charset");
                 }
             }
