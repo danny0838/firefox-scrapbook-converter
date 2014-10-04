@@ -1,3 +1,10 @@
+ScrapBook X File Converter 1.0.6
+----------------
+
+- UPDATE: Add mobile viewport definition for converted note pages in Evernote -> ScrapBook.
+- FIXED: Self-closing HTML tags are not correctly converted in Evernote -> ScrapBook.
+
+
 ScrapBook X File Converter 1.0.5
 ----------------
 
