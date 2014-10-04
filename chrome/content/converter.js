@@ -254,6 +254,12 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
 
             function parseEnexContent(data) {
+                // replace invalid HTML format <badtag /> with <badtag></badtag>
+                data = data.replace(/<(([^\s>]+)(?: [^>]+)?)\/>/g, function(){
+                    if ( ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"].indexOf(arguments[2].toLowerCase()) !== -1 ) return arguments[0];
+                    return "<" + arguments[1] + "></" + arguments[2] + ">";
+                });
+
                 var html = false;
                 var htmlDoc = loadHTML(data);
 
@@ -270,13 +276,6 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         node2.setAttribute("data-sb-obj", "todo");
                         if (node.getAttribute("checked")=="true") node2.setAttribute("checked", "checked");
                         node.parentNode.insertBefore(node2, node);
-                        // Fix DOMParser misprocess
-                        // Firefox DOMParser cannot read unknown tags correctly and they are extended to the tail
-                        // eg. <div><en-todo/>blah</div> will be <div><en-todo>blah</en-todo></div>
-                        var childs = node.childNodes;
-                        while (childs.length) {
-                            node.parentNode.insertBefore(childs[0], node);
-                        }
                         // remove the old node
                         node.parentNode.removeChild(node);
                     }
@@ -311,11 +310,6 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         }
                         for (var j in metadata.attributes) {
                             node2.setAttribute("data-evernote-attributes-" + j, metadata.attributes[j]);
-                        }
-                        // Fix DOMParser misprocess
-                        var childs = node.childNodes;
-                        while (childs.length) {
-                            node.parentNode.insertBefore(childs[0], node);
                         }
                         // remove the old node
                         node.parentNode.removeChild(node);
@@ -352,6 +346,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         + '<head>\n'
                         + '  <meta charset="UTF-8">\n'
                         + '  <title data-sb-obj="title">' + item.title + '</title>\n'
+                        + '  <meta name="viewport" content="width=device-width">\n'
                         + '</head>\n'
                         + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
                         + '</html>\n';
