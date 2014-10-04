@@ -346,6 +346,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                         + '<head>\n'
                         + '  <meta charset="UTF-8">\n'
                         + '  <title data-sb-obj="title">' + item.title + '</title>\n'
+                        + '  <meta name="viewport" content="width=device-width">\n'
                         + '</head>\n'
                         + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
                         + '</html>\n';
