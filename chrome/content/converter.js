@@ -82,7 +82,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             subPath = getSubPath(input, file);
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
-            parseEnex(loadXMLFile(file));
+            loadXMLFile(file, parseEnex, this);
             return;
         }
         // finished
@@ -682,11 +682,17 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function loadXMLFile(file) {
+function loadXMLFile(file, callback, that) {
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", sbConvCommon.convertFilePathToURL(file.path), false);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+            if (xhr.status == 200) {
+                callback.call(that, xhr.responseXML);
+            }
+        }
+    }; 
+    xhr.open("GET", sbConvCommon.convertFilePathToURL(file.path), true);
     xhr.send();
-    return xhr.responseXML;
 }
 
 function loadHTML(str) {
