@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.7
+----------------
+
+- UPDATE: Evernote -> ScrapBook now works in an async way.
+
+
 ScrapBook X File Converter 1.0.6
 ----------------
 
