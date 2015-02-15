@@ -62,6 +62,12 @@ function convert(data) {
     }
 }
 
+function convert_finish() {
+	print("");
+	print("done.");
+	document.getElementById("sbconvConverterWindow").buttons = "accept";
+}
+
 function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .enex --> ScrapBook format");
     print("input directory: " + input.path);
@@ -90,8 +96,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     }
 
     function filesFinish() {
-        print("");
-        print("done.");
+		convert_finish();
     }
 
     function parseEnex(xmlDoc) {
@@ -437,8 +442,7 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId)
     }
 
     function filesFinish() {
-        print("");
-        print("done.");
+		convert_finish();
     }
 
     function parseMaf(file) {
@@ -552,8 +556,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 
     function filesFinish() {
-        print("");
-        print("done.");
+		convert_finish();
     }
 
     function parseHtmlPack(file) {

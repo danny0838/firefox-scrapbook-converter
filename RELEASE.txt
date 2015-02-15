@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.8
+----------------
+
+- UPDATE: Add a cancel/OK button to the conversion dialog.
+
+
 ScrapBook X File Converter 1.0.7
 ----------------
 
