@@ -7,16 +7,16 @@
 <dialog id="sbconvConverterWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&window.title;"
-		buttons="cancel"
+        buttons="cancel"
         onload="init();"
         width="600"
         height="450"
         persist="screenX screenY">
 
     <!-- JavaScript -->
-	<script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
-	<script type="application/x-javascript" src="chrome://sbconv/content/lib/md5.js" />
-	<script type="application/x-javascript" src="chrome://sbconv/content/lib/maf.js" />
+    <script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/lib/md5.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/lib/maf.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/common.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/converter.js" />
 
@@ -26,7 +26,7 @@
     </keyset>
 
     <!-- content -->
-	<vbox style="padding:2px;" flex="2">
+    <vbox style="padding:2px;" flex="2">
         <textbox id="sbconvConverterStatus" multiline="true" flex="2" readonly="true" />
-	</vbox>
+    </vbox>
 </dialog>
