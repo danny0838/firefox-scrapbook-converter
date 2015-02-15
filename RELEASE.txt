@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.9
+----------------
+
+- UPDATE: Internal code optimization.
+
+
 ScrapBook X File Converter 1.0.8
 ----------------
 
