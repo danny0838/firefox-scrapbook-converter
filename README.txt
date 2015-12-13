@@ -5,7 +5,7 @@ See also:
 Firefox addon page:
 http://addons.mozilla.org/firefox/addon/scrapbookx-converter/
 
-Documentation wiki / Downloads:
+Documentation wiki:
 http://github.com/danny0838/firefox-scrapbook-converter/wiki
 
 Project repository:
