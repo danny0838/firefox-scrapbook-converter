@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.13
+----------------
+
+- FIXED: Missing OK/Cancle button for the converter dialog on Mac OS.
+
+
 ScrapBook X File Converter 1.0.12
 ----------------
 
