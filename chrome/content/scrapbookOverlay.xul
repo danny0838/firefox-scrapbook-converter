@@ -11,7 +11,7 @@
                       class="menuitem-iconic"
                       label="&options;"
                       image="chrome://sbconv/skin/sbconv.png"
-                      oncommand="window.openDialog('chrome://sbconv/content/prefsDialog.xul','ScrapBook:Converter:Options','chrome,toolbar,centerscreen,modal');"/>
+                      oncommand="window.openDialog('chrome://sbconv/content/prefsDialog.xul','ScrapBook:Converter:Options','chrome,toolbar,centerscreen');"/>
         </menupopup>
     </menu>
 </overlay>
