@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.12
+----------------
+
+- UPDATE: Bumped version number due to some uploading issues in the AMO.
+
+
 ScrapBook X File Converter 1.0.10
 ----------------
 
