@@ -1,3 +1,10 @@
+ScrapBook X File Converter 1.0.10
+----------------
+
+- COMPATIBLE WITH: ScrapBook X 1.12.11, ScrapBook Plus 1.9.24.40b3, ScrapBook 1.5.13
+- UPDATE: Update reference links in the readme file.
+
+
 ScrapBook X File Converter 1.0.9
 ----------------
 
