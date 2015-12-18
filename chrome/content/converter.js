@@ -580,9 +580,6 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
                 }
             }
         } catch(ex){}
-
-        htmlTxt = sbConvCommon.convertToUnicode(htmlTxt, charset);
-        htmlDoc = loadHTML(htmlTxt).documentElement;
         
         // create item
         var item = sbConvCommon.newItem();
@@ -600,7 +597,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         // -- source
         if ( htmlTxt.match(/<!-- saved from url=\((\d+)\)(.*?) -->/i) ) {
             if ( RegExp.$2.length == parseInt(RegExp.$1, 10) ) {
-                item.source = RegExp.$2;
+                item.source = sbConvCommon.convertToUnicode(RegExp.$2, charset);
             }
         }
 
