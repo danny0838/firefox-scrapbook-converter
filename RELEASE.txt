@@ -1,3 +1,9 @@
+ScrapBook X File Converter 1.0.14
+----------------
+
+- FIXED: Cannot correctly detect "saved from url=" if non-UTF-8 encoding chars are contained.
+
+
 ScrapBook X File Converter 1.0.13
 ----------------
 
