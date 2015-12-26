@@ -9,3 +9,4 @@
 <!ENTITY sb2enex.importIndexHTML "匯入 index.html 內容">
 <!ENTITY sb2enex.importCommentMetadata "匯入評註中的 &lt;evernote&gt; 元資料">
 <!ENTITY sb2enex.importSourcePack "匯入原始資料包">
+<!ENTITY sb2enex.mergeOutput "合併匯出為一個檔案">

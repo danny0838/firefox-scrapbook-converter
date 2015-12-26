@@ -32,6 +32,7 @@ function convert(method) {
     elem = document.getElementById("sb2enex_importIndexHTML"); if (elem) data["sb2enex_importIndexHTML"] = elem.checked;
     elem = document.getElementById("sb2enex_importCommentMetadata"); if (elem) data["sb2enex_importCommentMetadata"] = elem.checked;
     elem = document.getElementById("sb2enex_importSourcePack"); if (elem) data["sb2enex_importSourcePack"] = elem.checked;
+    elem = document.getElementById("sb2enex_mergeOutput"); if (elem) data["sb2enex_mergeOutput"] = elem.checked;
 
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

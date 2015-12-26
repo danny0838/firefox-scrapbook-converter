@@ -9,3 +9,4 @@
 <!ENTITY sb2enex.importIndexHTML "Import the content of index.html">
 <!ENTITY sb2enex.importCommentMetadata "Import metadata from &lt;evernote&gt; in the comment">
 <!ENTITY sb2enex.importSourcePack "Import source data pack">
+<!ENTITY sb2enex.mergeOutput "Merge output into one file">

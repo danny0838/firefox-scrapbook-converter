@@ -37,4 +37,5 @@
     <checkbox id="sb2enex_importIndexHTML" label="&sb2enex.importIndexHTML;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
     <checkbox id="sb2enex_importCommentMetadata" label="&sb2enex.importCommentMetadata;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
     <checkbox id="sb2enex_importSourcePack" label="&sb2enex.importSourcePack;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="sb2enex_mergeOutput" label="&sb2enex.mergeOutput;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>
