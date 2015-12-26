@@ -34,5 +34,6 @@
         <checkbox id="sb2enex_addTags" label="&sb2enex.addTags;" persist="checked" checked="true" />
         <textbox id="sb2enex_addTagsValue" flex="1" value="ScrapBook" persist="value" onchange="this.setAttribute('value', this.value);" />
     </hbox>
+    <checkbox id="sb2enex_importCommentMetadata" label="&sb2enex.importCommentMetadata;" persist="checked" checked="true" />
     <checkbox id="sb2enex_importSourcePack" label="&sb2enex.importSourcePack;" persist="checked" checked="true" />
 </dialog>

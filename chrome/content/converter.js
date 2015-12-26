@@ -57,7 +57,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importSourcePack);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack);
             break;
         default:
             print("ERROR: unknown method.");
@@ -685,11 +685,12 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output, addTags, importSourcePack) {
+function convert_sb2enex(input, output, addTags, importCommentMetadata, importSourcePack) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
+    print("import metadata from comment: " + (importCommentMetadata ? "yes" : "no"));
     print("import source data pack: " + (importSourcePack ? "yes" : "no"));
     print("");
 
@@ -741,8 +742,8 @@ function convert_sb2enex(input, output, addTags, importSourcePack) {
         var enNoteElem = enNoteDoc.documentElement;
 
         // prepare evernote attributes
-        if (item.comment.match(/(<evernote>.*?<\/evernote>)/)) {
-            var attrDoc = loadXML(RegExp.$1);
+        if (importCommentMetadata && item.comment.match(/(<evernote>.*?<\/evernote>)/)) {
+            var importAttrDoc = loadXML(RegExp.$1);
         }
 
         // en-export
@@ -771,8 +772,8 @@ function convert_sb2enex(input, output, addTags, importSourcePack) {
         noteElem.appendChild(elem);
 
         // -- tag
-        if (attrDoc) {
-            var tags = attrDoc.getElementsByTagName("tag");
+        if (importAttrDoc) {
+            var tags = importAttrDoc.getElementsByTagName("tag");
             while (tags.length) {
                 var tag = tags[0];
                 var elem = enExportDoc.createElement("tag");
@@ -796,8 +797,8 @@ function convert_sb2enex(input, output, addTags, importSourcePack) {
         var attributes = enExportDoc.createElement("note-attributes");
         var overwriteSourceUrl = false;
         var overwriteSourceApplication = false;
-        if (attrDoc) {
-            var tags = attrDoc.getElementsByTagName("*");
+        if (importAttrDoc) {
+            var tags = importAttrDoc.getElementsByTagName("*");
             for (var i=0, I=tags.length; i<I; ++i) {
                 var tag = tags[i];
                 switch (tag.nodeName) {

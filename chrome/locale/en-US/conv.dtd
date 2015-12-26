@@ -6,4 +6,5 @@
 <!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
 
 <!ENTITY sb2enex.addTags "Add tag (separated with comma)">
+<!ENTITY sb2enex.importCommentMetadata "Import metadata from &lt;evernote&gt; in the comment">
 <!ENTITY sb2enex.importSourcePack "Import source data pack">
