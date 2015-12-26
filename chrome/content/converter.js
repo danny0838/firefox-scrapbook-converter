@@ -740,6 +740,11 @@ function convert_sb2enex(input, output, addTags) {
         var enExportDoc = loadXML(enExport);
         var note = enExportDoc.documentElement.getElementsByTagName("note")[0];
 
+        // prepare evernote attributes
+        if (item.comment.match(/(<evernote>.*?<\/evernote>)/)) {
+            var attrDoc = loadXML(RegExp.$1);
+        }
+
         // en-export
         var enExportElem = enExportDoc.documentElement;
         enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
@@ -766,6 +771,16 @@ function convert_sb2enex(input, output, addTags) {
         note.appendChild(elem);
 
         // -- tag
+        if (attrDoc) {
+            var tags = attrDoc.getElementsByTagName("tag");
+            while (tags.length) {
+                var tag = tags[0];
+                var elem = enExportDoc.createElement("tag");
+                elem.textContent = tag.textContent;
+                note.appendChild(elem);
+                tag.parentNode.removeChild(tag);
+            }
+        }
         if (addTags) {
             var tags = addTags.split(",");
             for (var i=0, I=tags.length; i<I;++i) {
@@ -779,14 +794,41 @@ function convert_sb2enex(input, output, addTags) {
 
         // -- note-attributes
         var attributes = enExportDoc.createElement("note-attributes");
+        var overwriteSourceUrl = false;
+        var overwriteSourceApplication = false;
+        if (attrDoc) {
+            var tags = attrDoc.getElementsByTagName("*");
+            for (var i=0, I=tags.length; i<I; ++i) {
+                var tag = tags[i];
+                switch (tag.nodeName) {
+                    case "source-url":
+                        overwriteSourceUrl = true;
+                        break;
+                    case "source-application":
+                        overwriteSourceApplication = true;
+                        break;
+                    case "source":
+                        break;
+                    default:
+                        continue;
+                }
+                var elem = enExportDoc.createElement(tag.nodeName);
+                elem.textContent = tag.textContent;
+                attributes.appendChild(elem);
+            }
+        }
         // ---- source-url
-        var elem = enExportDoc.createElement("source-url");
-        elem.textContent = item.source || "";
-        attributes.appendChild(elem);
+        if (!overwriteSourceUrl) {
+            var elem = enExportDoc.createElement("source-url");
+            elem.textContent = item.source || "";
+            attributes.appendChild(elem);
+        }
         // ---- source-application
-        var elem = enExportDoc.createElement("source-application");
-        elem.textContent = "ScrapBook";
-        attributes.appendChild(elem);
+        if (!overwriteSourceApplication) {
+            var elem = enExportDoc.createElement("source-application");
+            elem.textContent = "ScrapBook";
+            attributes.appendChild(elem);
+        }
         // ----
         note.appendChild(attributes);
 
