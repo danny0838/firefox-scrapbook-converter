@@ -1,4 +1,3 @@
-/* options */
 function onInputBrowse() {
     return pickFolder("inputPath");
 }
@@ -18,15 +17,12 @@ function pickFolder(targetId) {
     return true;
 }
 
-/* convert */
 function convert(method) {
-    var data = {
-        method: method,
-        input: document.getElementById("inputPath").value,
-        output: document.getElementById("outputPath").value,
-        includeSubdir: document.getElementById("includeSubdir").checked,
-        includeFileName: document.getElementById("includeFileName").checked,
-        uniqueId: document.getElementById("uniqueId").checked,
-    };
+    var data = { method: method }, elem;
+    elem = document.getElementById("inputPath"); if (elem) data["input"] = elem.value;
+    elem = document.getElementById("outputPath"); if (elem) data["output"] = elem.value;
+    elem = document.getElementById("includeSubdir"); if (elem) data["includeSubdir"] = elem.checked;
+    elem = document.getElementById("includeFileName"); if (elem) data["includeFileName"] = elem.checked;
+    elem = document.getElementById("uniqueId"); if (elem) data["uniqueId"] = elem.checked;
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

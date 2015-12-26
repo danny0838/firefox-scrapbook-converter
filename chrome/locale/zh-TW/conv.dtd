@@ -1,0 +1,6 @@
+<!ENTITY pick "瀏覽...">
+<!ENTITY input "輸入:">
+<!ENTITY output "輸出:">
+<!ENTITY includeSubdir "包括子資料夾">
+<!ENTITY includeFileName "將檔名加入匯入資料夾路徑">
+<!ENTITY uniqueId "自動調整 ID 以避免重複">

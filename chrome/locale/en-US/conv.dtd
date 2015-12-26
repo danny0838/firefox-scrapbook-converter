@@ -1,0 +1,6 @@
+<!ENTITY pick "Browse...">
+<!ENTITY input "Input:">
+<!ENTITY output "Output:">
+<!ENTITY includeSubdir "Include subfolders">
+<!ENTITY includeFileName "Add file name to item folder path">
+<!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
