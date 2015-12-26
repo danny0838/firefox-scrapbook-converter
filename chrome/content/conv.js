@@ -29,6 +29,7 @@ function convert(method) {
     if (elem && elem.checked) {
         if (elem) data["sb2enex_addTags"] = document.getElementById("sb2enex_addTagsValue").value;
     }
+    elem = document.getElementById("sb2enex_folderAsTag"); if (elem) data["sb2enex_folderAsTag"] = elem.checked;
     elem = document.getElementById("sb2enex_importIndexHTML"); if (elem) data["sb2enex_importIndexHTML"] = elem.checked;
     elem = document.getElementById("sb2enex_importCommentMetadata"); if (elem) data["sb2enex_importCommentMetadata"] = elem.checked;
     elem = document.getElementById("sb2enex_importSourcePack"); if (elem) data["sb2enex_importSourcePack"] = elem.checked;

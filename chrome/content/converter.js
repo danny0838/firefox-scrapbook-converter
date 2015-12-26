@@ -57,7 +57,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.sb2enex_mergeOutput);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.sb2enex_mergeOutput);
             break;
         default:
             print("ERROR: unknown method.");
@@ -685,12 +685,13 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output, addTags, importIndexHTML, importCommentMetadata, importSourcePack, mergeOutput) {
+function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePack, mergeOutput) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
     print("import index.html: " + (importIndexHTML ? "yes" : "no"));
+    print("write folder to tag: " + (folderAsTag ? "yes" : "no"));
     print("import metadata from comment: " + (importCommentMetadata ? "yes" : "no"));
     print("import source data pack: " + (importSourcePack ? "yes" : "no"));
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
@@ -797,6 +798,14 @@ function convert_sb2enex(input, output, addTags, importIndexHTML, importCommentM
             for (var i=0, I=tags.length; i<I;++i) {
                 var tag = tags[i].replace(/^ +/, "").replace(/ +$/, "");
                 if (!tag) continue;
+                var elem = enExportDoc.createElement("tag");
+                elem.textContent = tag;
+                noteElem.appendChild(elem);
+            }
+        }
+        if (folderAsTag) {
+            var tag = item.folder.replace(/,/g, "_").replace(/\t/g, "/").replace(/^ +/, "").replace(/ +$/, "");
+            if (tag) {
                 var elem = enExportDoc.createElement("tag");
                 elem.textContent = tag;
                 noteElem.appendChild(elem);
