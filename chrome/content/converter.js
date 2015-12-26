@@ -724,16 +724,19 @@ function convert_sb2enex(input, output, addTags, importCommentMetadata, importSo
         print("converting ScrapBook data: '" + dir.path + "'");
         var item = sbConvCommon.parseIndexDat(indexData);
 
-        // prepare xml Doc
+        // en-export
         var enExport = '<?xml version="1.0" encoding="UTF-8"?>\n'
             + '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export2.dtd">\n'
             + '<en-export>\n'
             + '<note></note></en-export>';
         var enExportDoc = loadXML(enExport);
         var enExportElem = enExportDoc.documentElement;
+        enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
+        enExportElem.setAttribute("application", "ScrapBook X Converter");
+        enExportElem.setAttribute("version", "1.0.x");
         var noteElem = enExportElem.getElementsByTagName("note")[0];
 
-        // prepare <note> content
+        // en-note
         var enNote = '<?xml version="1.0" encoding="UTF-8"?>\n'
             + '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">\n'
             + '\n'
@@ -746,18 +749,12 @@ function convert_sb2enex(input, output, addTags, importCommentMetadata, importSo
             var importAttrDoc = loadXML(RegExp.$1);
         }
 
-        // en-export
-        var enExportElem = enExportDoc.documentElement;
-        enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
-        enExportElem.setAttribute("application", "ScrapBook X Converter");
-        enExportElem.setAttribute("version", "1.0.x");
-
         // -- title
         var elem = enExportDoc.createElement("title");
         elem.textContent = item.title;
         noteElem.appendChild(elem);
 
-        // -- content (placeholder)
+        // -- content
         var contentElem = enExportDoc.createElement("content");
         noteElem.appendChild(contentElem);
 
