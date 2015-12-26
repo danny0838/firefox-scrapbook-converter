@@ -57,7 +57,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack);
             break;
         default:
             print("ERROR: unknown method.");
@@ -685,11 +685,12 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output, addTags, importCommentMetadata, importSourcePack) {
+function convert_sb2enex(input, output, addTags, importIndexHTML, importCommentMetadata, importSourcePack) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
+    print("import index.html: " + (importIndexHTML ? "yes" : "no"));
     print("import metadata from comment: " + (importCommentMetadata ? "yes" : "no"));
     print("import source data pack: " + (importSourcePack ? "yes" : "no"));
     print("");
@@ -830,6 +831,11 @@ function convert_sb2enex(input, output, addTags, importCommentMetadata, importSo
         // ----
         noteElem.appendChild(attributes);
 
+        // import main content
+        if (importIndexHTML) {
+            parseScrapBookContent(indexFile, item, enNoteDoc, enNoteElem, enExportDoc, noteElem);
+        }
+
         // import source pack
         if (importSourcePack) {
             var zipFile = output.clone();
@@ -880,7 +886,116 @@ function convert_sb2enex(input, output, addTags, importCommentMetadata, importSo
         destFile.append(dir.leafName + ".enex");
         sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
         print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+    }
+
+    function parseScrapBookContent(indexFile, item, enNoteDoc, enNoteElem, enExportDoc, noteElem) {
+        var allowedElems = ["a", "abbr", "acronym", "address", "area", "b", "bdo", "big", "blockquote", "br", "caption", "center", "cite", "code", "col", "colgroup", "dd", "del", "dfn", "div", "dl", "dt", "em", "font", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd", "li", "map", "ol", "p", "pre", "q", "s", "samp", "small", "span", "strike", "strong", "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "title", "tr", "tt", "u", "ul", "var", "xmp"];
+        var prohibitedElems = ["applet", "base", "basefont", "bgsound", "blink", "body", "button", "dir", "embed", "fieldset", "form", "frame", "frameset", "head", "html", "iframe", "ilayer", "input", "isindex", "label", "layer,", "legend", "link", "marquee", "menu", "meta", "noframes", "noscript", "object", "optgroup", "option", "param", "plaintext", "script", "select", "style", "textarea", "xml"];
+        var prohibitedAttrs = ["id", "class", "onclick", "ondblclick", "on*", "accesskey", "data", "dynsrc", "tabindex"];
+
+        allowedElems = listMakeRegExp(allowedElems);
+        prohibitedElems = listMakeRegExp(prohibitedElems);
+        prohibitedAttrs = listMakeRegExp(prohibitedAttrs);
         
+        var html = sbConvCommon.readFile(indexFile);
+        var charset = item.chars || "UTF-8";
+        html = sbConvCommon.convertToUnicode(html, charset);
+        var htmlDoc = loadHTML(html);
+        var body = htmlDoc.body;
+        if (!body) return;
+
+        // parse elements
+        var elems = htmlDoc.getElementsByTagName("*");
+        for (var i=elems.length-1; i>=0; i--) {
+            var elem = elems[i];
+            switch (elem.nodeName) {
+                case "HTML":
+                    continue;
+                case "HEAD":
+                    continue;
+                case "BODY":
+                    continue;
+                case "IMG":
+                    var attrs = elem.attributes;
+                    for (var k=attrs.length-1; k>=0; k--) {
+                        var attr = attrs[k];
+                        if (attr.name.match(prohibitedAttrs)) elem.removeAttribute(attr.name);
+                    }
+                    var file = getFileFromUrl(elem.getAttribute("src"));
+                    if (!file) continue;
+                    var mime = sbConvCommon.getFileMime(file) || "image/jpeg";
+                    var data = readBinary(file);
+                    var data_b64 = window.btoa(data);
+                    var data_hash = hex_md5(data);
+
+                    var mediaElem = enNoteDoc.createElement("en-media");
+                    mediaElem.setAttribute("hash", data_hash);
+                    mediaElem.setAttribute("type", mime);
+                    var attrs = elem.attributes;
+                    for (var k=attrs.length-1; k>=0; k--) {
+                        var attr = attrs[k];
+                        if (["hash", "type", "src", "srcset"].indexOf(attr.name) === -1) {
+                            mediaElem.setAttribute(attr.name, attr.value);
+                        }
+                    }
+                    elem.parentNode.insertBefore(mediaElem, elem);
+                    elem.parentNode.removeChild(elem);
+
+                    var resourceElem = enExportDoc.createElement("resource");
+                    // ---- data
+                    var el = enExportDoc.createElement("data");
+                    el.setAttribute("encoding", "base64");
+                    el.textContent = data_b64;
+                    resourceElem.appendChild(el);
+                    // ---- mime
+                    var el = enExportDoc.createElement("mime");
+                    el.textContent = mime;
+                    resourceElem.appendChild(el);
+                    // ---- resource-attributes
+                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
+                    // ------ file-name
+                    var el = enExportDoc.createElement("file-name");
+                    el.textContent = file.leafName;
+                    resourceAttributes.appendChild(el);
+                    // ------
+                    resourceElem.appendChild(resourceAttributes);
+                    noteElem.appendChild(resourceElem);
+                    continue;
+            }
+
+            // general process
+            if (!elem.nodeName.match(allowedElems)) {
+                elem.parentNode.removeChild(elem);
+                continue;
+            }
+            if (elem.nodeName.match(prohibitedElems)) {
+                elem.parentNode.removeChild(elem);
+                continue;
+            }
+            var attrs = elem.attributes;
+            for (var k=attrs.length-1; k>=0; k--) {
+                var attr = attrs[k];
+                if (attr.name.match(prohibitedAttrs)) elem.removeAttribute(attr.name);
+            }
+        }
+        var elems = body.childNodes;
+        for (var i=0; i<elems.length; i++) {
+            enNoteElem.appendChild(elems[i].cloneNode(true));
+        }
+        
+        function listMakeRegExp(list) {
+            var join = list.join("|");
+            join = join.replace(/\*/g, ".*")
+            return new RegExp("^" + "(" + join + ")" + "$", "i");
+        }
+
+        function getFileFromUrl(url) {
+            var base = sbConvCommon.convertFilePathToURL(indexFile.parent.path);
+            var url = sbConvCommon.resolveURL(base, url);
+            var file = sbConvCommon.convertURLToFile(url);
+            if ( !(file && file.exists() && file.isFile()) ) return false;
+            return file;
+        }
     }
 
     function parseScrapBookTime(time) {

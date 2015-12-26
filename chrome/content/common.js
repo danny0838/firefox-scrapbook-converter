@@ -68,6 +68,14 @@
         convertFilePathToURL : function(aFilePath) {
             return oSBCommon.convertFilePathToURL(aFilePath);
         },
+        
+        resolveURL : function(aBaseURL, aRelURL) {
+            return oSBCommon.resolveURL(aBaseURL, aRelURL);
+        },
+
+        convertURLToFile : function(aURLString) {
+            return oSBCommon.convertURLToFile(aURLString);
+        },
 
         convertToUnicode : function(aString, aCharset) {
             return oSBCommon.convertToUnicode(aString, aCharset);
@@ -99,6 +107,16 @@
 
         parseIndexDat : function(aFile) {
             return oSBTrade.parseIndexDat(aFile);
+        },
+
+        getFileMime : function(aFile) {
+            if (oSBCommon.getFileMime) return oSBCommon.getFileMime(aFile);
+            try {
+                var MIME = Components.classes["@mozilla.org/mime;1"].getService(Components.interfaces.nsIMIMEService);
+                return MIME.getTypeFromFile(aFile);
+            }
+            catch(ex) {}
+            return false;
         },
 
         /* custom */
