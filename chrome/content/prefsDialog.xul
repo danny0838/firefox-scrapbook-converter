@@ -35,6 +35,7 @@
         <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
         <button label="&action.maf2sb;" oncommand="convert('maf2sb');" />
         <button label="&action.html2sb;" oncommand="convert('html2sb');" />
+        <button label="&action.sb2enex;" oncommand="convert('sb2enex');" />
     </prefpane>
 
 </prefwindow>

@@ -56,6 +56,9 @@ function convert(data) {
         case "html2sb":
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
+        case "sb2enex":
+            convert_sb2enex(input, output);
+            break;
         default:
             print("ERROR: unknown method.");
             break;
@@ -682,6 +685,187 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
+function convert_sb2enex(input, output) {
+    print("convert method: ScrapBook format --> .enex");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("");
+
+    var dirs = input.directoryEntries;
+    dirsNext();
+
+    function dirsNext() {
+        while (dirs.hasMoreElements()) {
+            var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if ( !(dir.exists() && dir.isDirectory()) ) continue;
+            var indexFile = dir.clone();
+            indexFile.append("index.html");
+            if ( !(indexFile.exists() && indexFile.isFile()) ) continue;
+            var indexData = dir.clone();
+            indexData.append("index.dat");
+            if ( !(indexData.exists() && indexData.isFile()) ) continue;
+            parseScrapBook(dir, indexFile, indexData);
+            // next dir (async)
+            setTimeout(dirsNext, 0);
+            return;
+        }
+        // finished
+        dirsFinish();
+    }
+
+    function dirsFinish() {
+        convert_finish();
+    }
+    
+    function parseScrapBook(dir, indexFile, indexData) {
+        print("converting ScrapBook data: '" + dir.path + "'");
+        var item = sbConvCommon.parseIndexDat(indexData);
+
+        // prepare zip file
+        var zipFile = output.clone();
+        zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
+        makeZip(dir, zipFile);
+        if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
+        var data = readBinary(zipFile);
+        var data_b64 = window.btoa(data);
+        var data_hash = hex_md5(data);
+        zipFile.remove(true);
+
+        // prepare xml Doc
+        var enExport = '<?xml version="1.0" encoding="UTF-8"?>\n'
+            + '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export2.dtd">\n'
+            + '<en-export>\n'
+            + '<note></note></en-export>';
+        var enExportDoc = loadXML(enExport);
+        var note = enExportDoc.documentElement.getElementsByTagName("note")[0];
+
+        // en-export
+        var enExportElem = enExportDoc.documentElement;
+        enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
+        enExportElem.setAttribute("application", "ScrapBook X Converter");
+        enExportElem.setAttribute("version", "1.0.x");
+
+        // -- title
+        var elem = enExportDoc.createElement("title");
+        elem.textContent = item.title;
+        note.appendChild(elem);
+
+        // -- content (placeholder)
+        var contentElem = enExportDoc.createElement("content");
+        note.appendChild(contentElem);
+
+        // -- created
+        var elem = enExportDoc.createElement("created");
+        elem.textContent = parseScrapBookTime(item.create || "");
+        note.appendChild(elem);
+
+        // -- updated
+        var elem = enExportDoc.createElement("updated");
+        elem.textContent = parseScrapBookTime(item.modify || "");
+        note.appendChild(elem);
+
+        // -- tag
+        var elem = enExportDoc.createElement("tag");
+        elem.textContent = "ScrapBook";
+        note.appendChild(elem);
+
+        // -- note-attributes
+        var attributes = enExportDoc.createElement("note-attributes");
+        // ---- source-url
+        var elem = enExportDoc.createElement("source-url");
+        elem.textContent = item.source || "";
+        attributes.appendChild(elem);
+        // ---- source-application
+        var elem = enExportDoc.createElement("source-application");
+        elem.textContent = "ScrapBook";
+        attributes.appendChild(elem);
+        // ----
+        note.appendChild(attributes);
+
+        // -- resource
+        var resource = enExportDoc.createElement("resource");
+        // ---- data
+        var elem = enExportDoc.createElement("data");
+        elem.setAttribute("encoding", "base64");
+        elem.textContent = data_b64;
+        resource.appendChild(elem);
+        // ---- mime
+        var elem = enExportDoc.createElement("mime");
+        elem.textContent = "application/zip";
+        resource.appendChild(elem);
+        // ---- resource-attributes
+        var resourceAttributes = enExportDoc.createElement("resource-attributes");
+        // ------ file-name
+        var elem = enExportDoc.createElement("file-name");
+        elem.textContent = dir.leafName + ".zip";
+        resourceAttributes.appendChild(elem);
+        // ------ attachment
+        var elem = enExportDoc.createElement("attachment");
+        elem.textContent = "true";
+        resourceAttributes.appendChild(elem);
+        // ------
+        resource.appendChild(resourceAttributes);
+        // ----
+        note.appendChild(resource);
+
+        // content
+        var enNote = '<?xml version="1.0" encoding="UTF-8"?>\n'
+            + '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">\n'
+            + '\n'
+            + '<en-note></en-note>';
+        var enNoteDoc = loadXML(enNote);
+        var noteElem = enNoteDoc.documentElement;
+        // -- en-media
+        var elem = enNoteDoc.createElement("en-media");
+        elem.setAttribute("hash", data_hash);
+        elem.setAttribute("type", "text/html");
+        noteElem.appendChild(elem);
+        // --
+        contentElem.appendChild(enExportDoc.createCDATASection(XMLString(enNoteDoc)));
+
+        // output
+        var destFile = output.clone();
+        destFile.append(dir.leafName + ".enex");
+        sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
+        print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+        
+    }
+
+    function parseScrapBookTime(time) {
+        if (time.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)) {
+            var date = new Date(
+                parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
+                parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
+            );
+            var date = new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000);
+            var y = date.getFullYear();
+            var m = date.getMonth() + 1; if ( m < 10 ) m = "0" + m;
+            var d = date.getDate();      if ( d < 10 ) d = "0" + d;
+            var h = date.getHours();     if ( h < 10 ) h = "0" + h;
+            var i = date.getMinutes();   if ( i < 10 ) i = "0" + i;
+            var s = date.getSeconds();   if ( s < 10 ) s = "0" + s;
+            return y.toString() + m.toString() + d.toString() + "T" + h.toString() + i.toString() + s.toString() + "Z";
+        }
+        return false;
+    }
+
+    function readBinary(aFile) {
+        try {
+            var istream = Components.classes['@mozilla.org/network/file-input-stream;1'].createInstance(Components.interfaces.nsIFileInputStream);
+            istream.init(aFile, -1, -0, false);
+            var bstream = Components.classes["@mozilla.org/binaryinputstream;1"].createInstance(Components.interfaces.nsIBinaryInputStream);
+            bstream.setInputStream(istream);
+            var bytes = bstream.readBytes(bstream.available());
+            bstream.close();
+            istream.close();
+            return bytes;
+        }
+        catch(ex) {
+            return false;
+        }
+    }
+}
+
 function loadXMLFile(file, callback, that) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
@@ -693,6 +877,17 @@ function loadXMLFile(file, callback, that) {
     }; 
     xhr.open("GET", sbConvCommon.convertFilePathToURL(file.path), true);
     xhr.send();
+}
+
+function loadXML(str) {
+    var parser = new DOMParser();
+    return parser.parseFromString(str, "application/xml");
+}
+
+function XMLString(doc) {
+    var oSerializer = new XMLSerializer();
+    var sXML = oSerializer.serializeToString(doc);
+    return sXML;
 }
 
 function loadHTML(str) {
@@ -818,4 +1013,31 @@ function extractZip(aZipFile, aDir) {
         });
         return target;
     }
+}
+
+function makeZip(aDir, aZipFile) {
+    var zw = Components.classes['@mozilla.org/zipwriter;1'].createInstance(Components.interfaces.nsIZipWriter);
+    var pr = {PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04, PR_CREATE_FILE: 0x08, PR_APPEND: 0x10, PR_TRUNCATE: 0x20, PR_SYNC: 0x40, PR_EXCL: 0x80}; //https://developer.mozilla.org/en-US/docs/PR_Open#Parameters
+    zw.open(aZipFile, pr.PR_RDWR | pr.PR_CREATE_FILE | pr.PR_TRUNCATE); //PR_TRUNCATE overwrites if file exists //PR_CREATE_FILE creates file if it dne //PR_RDWR opens for reading and writing
+    
+    //recursviely add all
+    var pathBase = aDir.parent.path;
+    var dirArr = [aDir]; //adds dirs to this as it finds it
+    for (var i=0; i<dirArr.length; i++) {
+        // console.log('adding contents of dir['+i+']: ' + dirArr[i].leafName + ' PATH: ' + dirArr[i].path);
+        var dirEntries = dirArr[i].directoryEntries;
+        while (dirEntries.hasMoreElements()) {
+            var entry = dirEntries.getNext().QueryInterface(Components.interfaces.nsIFile); //entry is instance of nsiFile so here https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIFile
+            if (entry.isDirectory()) {
+               dirArr.push(entry);
+            }
+            var relPath = entry.path.replace(pathBase, ''); //need relative because we need to use this for telling addEntryFile where in the zip it should create it, and because zip is a copy of the directory
+            // console.log('+' + relPath); //makes it relative to directory the parent dir (dir[0]) so it can succesfully populate files with same names but different folders in this parent dir, needed because recursviely going through all dirs
+            var saveInZipAs = relPath.substr(1); //need to get ride of the first '\' forward slash at start otherwise it puts every file added in a folder of its own.
+            saveInZipAs = saveInZipAs.replace(/\\/g,'/'); //remember MUST use forward slash (/)
+            // console.log('--' + saveInZipAs);
+            zw.addEntryFile(saveInZipAs, Components.interfaces.nsIZipWriter.COMPRESSION_NONE, entry, false);
+        }
+    }
+    zw.close();
 }

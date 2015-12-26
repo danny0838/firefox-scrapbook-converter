@@ -9,6 +9,7 @@
         try { var oSBController = sbController; } catch(ex){}
         try { var oSBTree = sbTreeHandler; } catch(ex){}
         try { var oSBList = sbListHandler; } catch(ex){}
+        try { var oSBTrade = sbTradeService; } catch(ex){}
     }
     else if (typeof(ScrapBookUtils) == "object") {
         // ScrapBook X < 1.10, ScrapBook >= 1.4
@@ -17,6 +18,7 @@
         try { var oSBController = sbController; } catch(ex){}
         try { var oSBTree = sbTreeUI; } catch(ex){}
         try { var oSBList = null; } catch(ex){}
+        try { var oSBTrade = sbTradeService; } catch(ex){}
     }
 
     window.sbConvCommon = {
@@ -93,6 +95,10 @@
 
         writeIndexDat : function(aItem, aFile) {
             return oSBCommon.writeIndexDat(aItem, aFile);
+        },
+
+        parseIndexDat : function(aFile) {
+            return oSBTrade.parseIndexDat(aFile);
         },
 
         /* custom */
