@@ -57,7 +57,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_importSourcePack);
             break;
         default:
             print("ERROR: unknown method.");
@@ -685,11 +685,12 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output, addTags) {
+function convert_sb2enex(input, output, addTags, importSourcePack) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
+    print("import source data pack: " + (importSourcePack ? "yes" : "no"));
     print("");
 
     var dirs = input.directoryEntries;
@@ -722,23 +723,22 @@ function convert_sb2enex(input, output, addTags) {
         print("converting ScrapBook data: '" + dir.path + "'");
         var item = sbConvCommon.parseIndexDat(indexData);
 
-        // prepare zip file
-        var zipFile = output.clone();
-        zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
-        makeZip(dir, zipFile);
-        if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
-        var data = readBinary(zipFile);
-        var data_b64 = window.btoa(data);
-        var data_hash = hex_md5(data);
-        zipFile.remove(true);
-
         // prepare xml Doc
         var enExport = '<?xml version="1.0" encoding="UTF-8"?>\n'
             + '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export2.dtd">\n'
             + '<en-export>\n'
             + '<note></note></en-export>';
         var enExportDoc = loadXML(enExport);
-        var note = enExportDoc.documentElement.getElementsByTagName("note")[0];
+        var enExportElem = enExportDoc.documentElement;
+        var noteElem = enExportElem.getElementsByTagName("note")[0];
+
+        // prepare <note> content
+        var enNote = '<?xml version="1.0" encoding="UTF-8"?>\n'
+            + '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">\n'
+            + '\n'
+            + '<en-note></en-note>';
+        var enNoteDoc = loadXML(enNote);
+        var enNoteElem = enNoteDoc.documentElement;
 
         // prepare evernote attributes
         if (item.comment.match(/(<evernote>.*?<\/evernote>)/)) {
@@ -754,21 +754,21 @@ function convert_sb2enex(input, output, addTags) {
         // -- title
         var elem = enExportDoc.createElement("title");
         elem.textContent = item.title;
-        note.appendChild(elem);
+        noteElem.appendChild(elem);
 
         // -- content (placeholder)
         var contentElem = enExportDoc.createElement("content");
-        note.appendChild(contentElem);
+        noteElem.appendChild(contentElem);
 
         // -- created
         var elem = enExportDoc.createElement("created");
         elem.textContent = parseScrapBookTime(item.create || "");
-        note.appendChild(elem);
+        noteElem.appendChild(elem);
 
         // -- updated
         var elem = enExportDoc.createElement("updated");
         elem.textContent = parseScrapBookTime(item.modify || "");
-        note.appendChild(elem);
+        noteElem.appendChild(elem);
 
         // -- tag
         if (attrDoc) {
@@ -777,7 +777,7 @@ function convert_sb2enex(input, output, addTags) {
                 var tag = tags[0];
                 var elem = enExportDoc.createElement("tag");
                 elem.textContent = tag.textContent;
-                note.appendChild(elem);
+                noteElem.appendChild(elem);
                 tag.parentNode.removeChild(tag);
             }
         }
@@ -788,7 +788,7 @@ function convert_sb2enex(input, output, addTags) {
                 if (!tag) continue;
                 var elem = enExportDoc.createElement("tag");
                 elem.textContent = tag;
-                note.appendChild(elem);
+                noteElem.appendChild(elem);
             }
         }
 
@@ -830,50 +830,54 @@ function convert_sb2enex(input, output, addTags) {
             attributes.appendChild(elem);
         }
         // ----
-        note.appendChild(attributes);
+        noteElem.appendChild(attributes);
 
-        // -- resource
-        var resource = enExportDoc.createElement("resource");
-        // ---- data
-        var elem = enExportDoc.createElement("data");
-        elem.setAttribute("encoding", "base64");
-        elem.textContent = data_b64;
-        resource.appendChild(elem);
-        // ---- mime
-        var elem = enExportDoc.createElement("mime");
-        elem.textContent = "application/zip";
-        resource.appendChild(elem);
-        // ---- resource-attributes
-        var resourceAttributes = enExportDoc.createElement("resource-attributes");
-        // ------ file-name
-        var elem = enExportDoc.createElement("file-name");
-        elem.textContent = dir.leafName + ".zip";
-        resourceAttributes.appendChild(elem);
-        // ------ attachment
-        var elem = enExportDoc.createElement("attachment");
-        elem.textContent = "true";
-        resourceAttributes.appendChild(elem);
-        // ------
-        resource.appendChild(resourceAttributes);
-        // ----
-        note.appendChild(resource);
+        // import source pack
+        if (importSourcePack) {
+            var zipFile = output.clone();
+            zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
+            makeZip(dir, zipFile);
+            if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
+            var data = readBinary(zipFile);
+            var data_b64 = window.btoa(data);
+            var data_hash = hex_md5(data);
+            zipFile.remove(true);
 
-        // content
-        var enNote = '<?xml version="1.0" encoding="UTF-8"?>\n'
-            + '<!DOCTYPE en-note SYSTEM "http://xml.evernote.com/pub/enml2.dtd">\n'
-            + '\n'
-            + '<en-note></en-note>';
-        var enNoteDoc = loadXML(enNote);
-        var noteElem = enNoteDoc.documentElement;
-        // -- en-media
-        var elem = enNoteDoc.createElement("en-media");
-        elem.setAttribute("hash", data_hash);
-        elem.setAttribute("type", "text/html");
-        noteElem.appendChild(elem);
-        // --
-        contentElem.appendChild(enExportDoc.createCDATASection(XMLString(enNoteDoc)));
+            // -- resource
+            var resource = enExportDoc.createElement("resource");
+            // ---- data
+            var elem = enExportDoc.createElement("data");
+            elem.setAttribute("encoding", "base64");
+            elem.textContent = data_b64;
+            resource.appendChild(elem);
+            // ---- mime
+            var elem = enExportDoc.createElement("mime");
+            elem.textContent = "application/zip";
+            resource.appendChild(elem);
+            // ---- resource-attributes
+            var resourceAttributes = enExportDoc.createElement("resource-attributes");
+            // ------ file-name
+            var elem = enExportDoc.createElement("file-name");
+            elem.textContent = dir.leafName + ".zip";
+            resourceAttributes.appendChild(elem);
+            // ------ attachment
+            var elem = enExportDoc.createElement("attachment");
+            elem.textContent = "true";
+            resourceAttributes.appendChild(elem);
+            // ------
+            resource.appendChild(resourceAttributes);
+            // ----
+            noteElem.appendChild(resource);
+
+            // -- en-media
+            var elem = enNoteDoc.createElement("en-media");
+            elem.setAttribute("hash", data_hash);
+            elem.setAttribute("type", "text/html");
+            enNoteElem.appendChild(elem);
+        }
 
         // output
+        contentElem.appendChild(enExportDoc.createCDATASection(XMLString(enNoteDoc)));
         var destFile = output.clone();
         destFile.append(dir.leafName + ".enex");
         sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);

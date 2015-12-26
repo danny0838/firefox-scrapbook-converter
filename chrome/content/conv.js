@@ -29,6 +29,7 @@ function convert(method) {
     if (elem && elem.checked) {
         if (elem) data["sb2enex_addTags"] = document.getElementById("sb2enex_addTagsValue").value;
     }
+    elem = document.getElementById("sb2enex_importSourcePack"); if (elem) data["sb2enex_importSourcePack"] = elem.checked;
 
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

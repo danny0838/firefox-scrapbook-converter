@@ -6,3 +6,4 @@
 <!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
 
 <!ENTITY sb2enex.addTags "Add tag (separated with comma)">
+<!ENTITY sb2enex.importSourcePack "Import source data pack">
