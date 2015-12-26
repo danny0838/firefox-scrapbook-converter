@@ -5,4 +5,4 @@
 <!ENTITY includeFileName "將檔名加入匯入資料夾路徑">
 <!ENTITY uniqueId "自動調整 ID 以避免重複">
 
-<!ENTITY sb2enex.addTag "加入標籤">
+<!ENTITY sb2enex.addTags "加入標籤 (逗號分隔)">

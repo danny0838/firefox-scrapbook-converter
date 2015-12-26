@@ -25,9 +25,9 @@ function convert(method) {
     elem = document.getElementById("includeFileName"); if (elem) data["includeFileName"] = elem.checked;
     elem = document.getElementById("uniqueId"); if (elem) data["uniqueId"] = elem.checked;
 
-    elem = document.getElementById("sb2enex_addTag");
+    elem = document.getElementById("sb2enex_addTags");
     if (elem && elem.checked) {
-        if (elem) data["sb2enex_addTag"] = document.getElementById("sb2enex_addTagValue").value;
+        if (elem) data["sb2enex_addTags"] = document.getElementById("sb2enex_addTagsValue").value;
     }
 
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
