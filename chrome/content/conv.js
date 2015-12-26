@@ -24,5 +24,11 @@ function convert(method) {
     elem = document.getElementById("includeSubdir"); if (elem) data["includeSubdir"] = elem.checked;
     elem = document.getElementById("includeFileName"); if (elem) data["includeFileName"] = elem.checked;
     elem = document.getElementById("uniqueId"); if (elem) data["uniqueId"] = elem.checked;
+
+    elem = document.getElementById("sb2enex_addTag");
+    if (elem && elem.checked) {
+        if (elem) data["sb2enex_addTag"] = document.getElementById("sb2enex_addTagValue").value;
+    }
+
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

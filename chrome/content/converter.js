@@ -57,7 +57,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output);
+            convert_sb2enex(input, output, data.sb2enex_addTag);
             break;
         default:
             print("ERROR: unknown method.");
@@ -685,10 +685,11 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output) {
+function convert_sb2enex(input, output, addTag) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("add tag: " + (addTag || ""));
     print("");
 
     var dirs = input.directoryEntries;
@@ -765,9 +766,11 @@ function convert_sb2enex(input, output) {
         note.appendChild(elem);
 
         // -- tag
-        var elem = enExportDoc.createElement("tag");
-        elem.textContent = "ScrapBook";
-        note.appendChild(elem);
+        if (addTag) {
+            var elem = enExportDoc.createElement("tag");
+            elem.textContent = addTag;
+            note.appendChild(elem);
+        }
 
         // -- note-attributes
         var attributes = enExportDoc.createElement("note-attributes");

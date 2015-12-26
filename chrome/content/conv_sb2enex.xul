@@ -30,4 +30,8 @@
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
         <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
     </hbox>
+    <hbox>
+        <checkbox id="sb2enex_addTag" label="&sb2enex.addTag;" persist="checked" checked="true" />
+        <textbox id="sb2enex_addTagValue" flex="1" value="ScrapBook" persist="value" onchange="this.setAttribute('value', this.value);" />
+    </hbox>
 </dialog>
