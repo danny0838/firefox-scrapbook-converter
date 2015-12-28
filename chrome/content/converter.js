@@ -1001,10 +1001,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                 if (attr.name.match(prohibitedAttrs)) elem.removeAttribute(attr.name);
             }
         }
-        var elems = body.childNodes;
-        for (var i=0; i<elems.length; i++) {
-            enNoteElem.appendChild(elems[i].cloneNode(true));
-        }
+        copyNodeFromHtmlToXml(body, enNoteElem);
         
         function listMakeRegExp(list) {
             var join = list.join("|");
@@ -1052,6 +1049,30 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         }
         catch(ex) {
             return false;
+        }
+    }
+
+    // replicate the attributes and childNodes from sourceNode to targetNode
+    // no namespace, and use lower case name
+    function copyNodeFromHtmlToXml(sourceNode, targetNode) {
+        var attrs = sourceNode.attributes;
+        for (var i=0, I=attrs.length; i<I; i++) {
+            targetNode.setAttribute(attrs[i].name, attrs[i].value);
+        }
+        if (sourceNode.hasChildNodes()) {
+            var elems = sourceNode.childNodes;
+            for (var i=0, I=elems.length; i<I; i++) {
+                var elem = elems[i];
+                if (elem.nodeType === 1) {
+                    var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
+                    targetNode.appendChild(newElem);
+                    copyNodeFromHtmlToXml(elem, newElem);
+                }
+                else {
+                    var newElem = elem.cloneNode(true);
+                    targetNode.appendChild(newElem);
+                }
+            }
         }
     }
 }
