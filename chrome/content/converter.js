@@ -868,37 +868,40 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var data_hash = hex_md5(data);
             zipFile.remove(true);
 
-            // -- resource
+            // resource
             var resource = enExportDoc.createElement("resource");
-            // ---- data
+            // -- data
             var elem = enExportDoc.createElement("data");
             elem.setAttribute("encoding", "base64");
             elem.textContent = data_b64;
             resource.appendChild(elem);
-            // ---- mime
+            // -- mime
             var elem = enExportDoc.createElement("mime");
             elem.textContent = "application/zip";
             resource.appendChild(elem);
-            // ---- resource-attributes
+            // -- resource-attributes
             var resourceAttributes = enExportDoc.createElement("resource-attributes");
-            // ------ file-name
+            // ---- file-name
             var elem = enExportDoc.createElement("file-name");
             elem.textContent = dir.leafName + ".zip";
             resourceAttributes.appendChild(elem);
-            // ------ attachment
+            // ---- attachment
             var elem = enExportDoc.createElement("attachment");
             elem.textContent = "true";
             resourceAttributes.appendChild(elem);
-            // ------
-            resource.appendChild(resourceAttributes);
             // ----
+            resource.appendChild(resourceAttributes);
+            // --
             noteElem.appendChild(resource);
 
-            // -- en-media
+            // en-media and a simple box
+            var box = enNoteDoc.createElement("div");
+            box.setAttribute("style", "margin-top: 1em; border-top: 1px solid #000; padding: 1em;");
             var elem = enNoteDoc.createElement("en-media");
             elem.setAttribute("hash", data_hash);
             elem.setAttribute("type", "text/html");
-            enNoteElem.appendChild(elem);
+            box.appendChild(elem);
+            enNoteElem.appendChild(box);
         }
 
         // output
