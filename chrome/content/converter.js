@@ -834,9 +834,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             }
         }
         // ---- source-url
-        if (!overwriteSourceUrl) {
+        if (!overwriteSourceUrl && item.source) {
             var elem = enExportDoc.createElement("source-url");
-            elem.textContent = item.source || "";
+            elem.textContent = item.source;
             attributes.appendChild(elem);
         }
         // ---- source-application
