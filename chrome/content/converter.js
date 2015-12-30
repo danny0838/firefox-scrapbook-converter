@@ -174,7 +174,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                 var noteAttributesObj = note.getElementsByTagName("note-attributes")[0];
                 var sourceObj = noteAttributesObj.getElementsByTagName("source-url")[0];
                 var source = sourceObj.textContent;
-                // Evernote uses a blizzard url format for local files, fix it
+                // Evernote uses a bizard url format for local files, fix it
                 if (source.match(/^file:\/\/(.*)$/i)) {
                     source = sbConvCommon.convertFilePathToURL(RegExp.$1);
                 }
