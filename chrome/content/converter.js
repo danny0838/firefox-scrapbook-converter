@@ -817,7 +817,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         var overwriteSourceUrl = false;
         var overwriteSourceApplication = false;
         if (importAttrDoc) {
-            var tags = importAttrDoc.getElementsByTagName("*");
+            var tags = importAttrDoc.documentElement.childNodes;
             for (var i=0, I=tags.length; i<I; ++i) {
                 var tag = tags[i];
                 switch (tag.nodeName) {
@@ -827,10 +827,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     case "source-application":
                         overwriteSourceApplication = true;
                         break;
-                    case "source":
-                        break;
-                    default:
-                        continue;
                 }
                 var elem = enExportDoc.createElement(tag.nodeName);
                 elem.textContent = tag.textContent;
