@@ -998,6 +998,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     continue;
                 case "A":
                     // en-media
+                    if (!elem.hasAttribute("href")) break;
                     var href = elem.getAttribute("href");
                     var urlObj = sbConvCommon.convertURLToObject(href);
                     if (!(urlObj.scheme === "" && href === elem.getAttribute("title"))) break;
