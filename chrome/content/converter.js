@@ -944,7 +944,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         if (attr.name.match(prohibitedAttrs)) elem.removeAttribute(attr.name);
                     }
                     var file = getFileFromUrl(elem.getAttribute("src"));
-                    if (!file) continue;
+                    if (!file) break;
                     var mime = sbConvCommon.getFileMime(file) || "image/jpeg";
                     var data = readBinary(file);
                     var data_b64 = window.btoa(data);
