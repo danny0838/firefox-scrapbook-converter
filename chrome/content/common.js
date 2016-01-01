@@ -73,6 +73,10 @@
             return oSBCommon.resolveURL(aBaseURL, aRelURL);
         },
 
+        convertURLToObject : function(aURLString) {
+            return oSBCommon.convertURLToObject(aURLString);
+        },
+
         convertURLToFile : function(aURLString) {
             return oSBCommon.convertURLToFile(aURLString);
         },

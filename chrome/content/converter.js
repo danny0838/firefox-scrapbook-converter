@@ -983,6 +983,50 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     resourceElem.appendChild(resourceAttributes);
                     noteElem.appendChild(resourceElem);
                     continue;
+                case "A":
+                    var href = elem.getAttribute("href");
+                    var urlObj = sbConvCommon.convertURLToObject(href);
+                    if (!(urlObj.scheme === "" && href === elem.getAttribute("title"))) break;
+                    var file = getFileFromUrl(href);
+                    if (!file) break;
+                    var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
+                    var data = readBinary(file);
+                    var data_b64 = window.btoa(data);
+                    var data_hash = hex_md5(data);
+
+                    var mediaElem = enNoteDoc.createElement("en-media");
+                    mediaElem.setAttribute("hash", data_hash);
+                    mediaElem.setAttribute("type", mime);
+                    var attrs = elem.attributes;
+                    for (var k=attrs.length-1; k>=0; k--) {
+                        var attr = attrs[k];
+                        if (["hash", "type", "href"].indexOf(attr.name) === -1) {
+                            mediaElem.setAttribute(attr.name, attr.value);
+                        }
+                    }
+                    elem.parentNode.insertBefore(mediaElem, elem);
+                    elem.parentNode.removeChild(elem);
+
+                    var resourceElem = enExportDoc.createElement("resource");
+                    // ---- data
+                    var el = enExportDoc.createElement("data");
+                    el.setAttribute("encoding", "base64");
+                    el.textContent = data_b64;
+                    resourceElem.appendChild(el);
+                    // ---- mime
+                    var el = enExportDoc.createElement("mime");
+                    el.textContent = mime;
+                    resourceElem.appendChild(el);
+                    // ---- resource-attributes
+                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
+                    // ------ file-name
+                    var el = enExportDoc.createElement("file-name");
+                    el.textContent = file.leafName;
+                    resourceAttributes.appendChild(el);
+                    // ------
+                    resourceElem.appendChild(resourceAttributes);
+                    noteElem.appendChild(resourceElem);
+                    continue;
             }
 
             // general process
