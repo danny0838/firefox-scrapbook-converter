@@ -1001,7 +1001,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     if (!elem.hasAttribute("href")) break;
                     var href = elem.getAttribute("href");
                     var urlObj = sbConvCommon.convertURLToObject(href);
-                    if (!(urlObj.scheme === "" && href === elem.getAttribute("title"))) break;
+                    if (!(urlObj.scheme === "")) break;
                     var file = getFileFromUrl(href);
                     if (!file) break;
                     var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
