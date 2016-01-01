@@ -963,6 +963,42 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     var data_b64 = window.btoa(data);
                     var data_hash = hex_md5(data);
 
+                    // -- resource
+                    var resourceElem = enExportDoc.createElement("resource");
+                    // ---- data
+                    var el = enExportDoc.createElement("data");
+                    el.setAttribute("encoding", "base64");
+                    el.textContent = data_b64;
+                    resourceElem.appendChild(el);
+                    // ---- overwrite values
+                    if (!elem.hasAttribute("data-evernote-mime")) elem.setAttribute("data-evernote-mime", mime);
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name")) elem.setAttribute("data-evernote-attributes-file-name", file.leafName);
+                    // ---- resource childs
+                    ["mime", "width", "height"].forEach(function(meta){
+                        var metaInData = "data-evernote-" + meta;
+                        if (elem.hasAttribute(metaInData)) {
+                            var el = enExportDoc.createElement(meta);
+                            el.textContent = elem.getAttribute(metaInData);
+                            resourceElem.appendChild(el);
+                            elem.removeAttribute(metaInData);
+                        }
+                    }, this);
+                    // ---- resource-attributes childs
+                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
+                    ["file-name", "source-url", "timestamp ", "latitude", "longitude", "altitude", "camera-make", "camera-model", "attachment", "application-data"].forEach(function(meta){
+                        var metaInData = "data-evernote-attributes-" + meta;
+                        if (elem.hasAttribute(metaInData)) {
+                            var el = enExportDoc.createElement(meta);
+                            el.textContent = elem.getAttribute(metaInData);
+                            resourceAttributes.appendChild(el);
+                            elem.removeAttribute(metaInData);
+                        }
+                    }, this);
+                    // ----
+                    resourceElem.appendChild(resourceAttributes);
+                    noteElem.appendChild(resourceElem);
+
+                    // media
                     var mediaElem = enNoteDoc.createElement("en-media");
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
@@ -975,26 +1011,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     }
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
-
-                    var resourceElem = enExportDoc.createElement("resource");
-                    // ---- data
-                    var el = enExportDoc.createElement("data");
-                    el.setAttribute("encoding", "base64");
-                    el.textContent = data_b64;
-                    resourceElem.appendChild(el);
-                    // ---- mime
-                    var el = enExportDoc.createElement("mime");
-                    el.textContent = mime;
-                    resourceElem.appendChild(el);
-                    // ---- resource-attributes
-                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
-                    // ------ file-name
-                    var el = enExportDoc.createElement("file-name");
-                    el.textContent = file.leafName;
-                    resourceAttributes.appendChild(el);
-                    // ------
-                    resourceElem.appendChild(resourceAttributes);
-                    noteElem.appendChild(resourceElem);
                     continue;
                 case "A":
                     // en-media
@@ -1009,6 +1025,43 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     var data_b64 = window.btoa(data);
                     var data_hash = hex_md5(data);
 
+                    // -- resource
+                    var resourceElem = enExportDoc.createElement("resource");
+                    // ---- data
+                    var el = enExportDoc.createElement("data");
+                    el.setAttribute("encoding", "base64");
+                    el.textContent = data_b64;
+                    resourceElem.appendChild(el);
+                    // ---- overwrite values
+                    if (!elem.hasAttribute("data-evernote-mime")) elem.setAttribute("data-evernote-mime", mime);
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name")) elem.setAttribute("data-evernote-attributes-file-name", file.leafName);
+                    if (!elem.hasAttribute("data-evernote-attributes-attachment")) elem.setAttribute("data-evernote-attributes-attachment", "true");
+                    // ---- resource childs
+                    ["mime", "width", "height"].forEach(function(meta){
+                        var metaInData = "data-evernote-" + meta;
+                        if (elem.hasAttribute(metaInData)) {
+                            var el = enExportDoc.createElement(meta);
+                            el.textContent = elem.getAttribute(metaInData);
+                            resourceElem.appendChild(el);
+                            elem.removeAttribute(metaInData);
+                        }
+                    }, this);
+                    // ---- resource-attributes childs
+                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
+                    ["file-name", "source-url", "timestamp ", "latitude", "longitude", "altitude", "camera-make", "camera-model", "attachment", "application-data"].forEach(function(meta){
+                        var metaInData = "data-evernote-attributes-" + meta;
+                        if (elem.hasAttribute(metaInData)) {
+                            var el = enExportDoc.createElement(meta);
+                            el.textContent = elem.getAttribute(metaInData);
+                            resourceAttributes.appendChild(el);
+                            elem.removeAttribute(metaInData);
+                        }
+                    }, this);
+                    // ----
+                    resourceElem.appendChild(resourceAttributes);
+                    noteElem.appendChild(resourceElem);
+
+                    // media
                     var mediaElem = enNoteDoc.createElement("en-media");
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
@@ -1021,26 +1074,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     }
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
-
-                    var resourceElem = enExportDoc.createElement("resource");
-                    // ---- data
-                    var el = enExportDoc.createElement("data");
-                    el.setAttribute("encoding", "base64");
-                    el.textContent = data_b64;
-                    resourceElem.appendChild(el);
-                    // ---- mime
-                    var el = enExportDoc.createElement("mime");
-                    el.textContent = mime;
-                    resourceElem.appendChild(el);
-                    // ---- resource-attributes
-                    var resourceAttributes = enExportDoc.createElement("resource-attributes");
-                    // ------ file-name
-                    var el = enExportDoc.createElement("file-name");
-                    el.textContent = file.leafName;
-                    resourceAttributes.appendChild(el);
-                    // ------
-                    resourceElem.appendChild(resourceAttributes);
-                    noteElem.appendChild(resourceElem);
                     continue;
                 case "INPUT":
                     // en-todo
