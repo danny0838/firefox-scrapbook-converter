@@ -954,13 +954,38 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         continue;
                     }
                     // en-media
-                    var file = getFileFromUrl(elem.getAttribute("src"));
-                    if (!file) break;
-                    var mime = sbConvCommon.getFileMime(file) || "image/jpeg";
-                    var data = readBinary(file);
-                    var data_b64 = window.btoa(data);
-                    var data_hash = hex_md5(data);
-
+                    var src = elem.getAttribute("src");
+                    if (src.indexOf("data:") === 0) {  // data URI
+                        var filename = "";
+                        src.match(/^data:([^;]*)(?:;charset=([^;,]*))?(;base64)?,([\s\S]*)$/i);
+                        var mime = RegExp.$1 || "text/plain", charset = RegExp.$2, base64 = RegExp.$3, data = RegExp.$4;
+                        if (base64) {
+                            var data_b64 = data;
+                            var data_bin = window.atob(data_b64);
+                            var data_hash = hex_md5(data_bin);
+                        }
+                        else if (charset) {
+                            var data_bin = sbConvCommon.convertToUnicode(decodeURIComponent(data), charset || "US-ASCII");
+                            var data_b64 = window.btoa(data_bin);
+                            var data_hash = hex_md5(data_bin);
+                        }
+                        // not supported yet
+                        else {
+                            break;
+                        }
+                    }
+                    else if (src.indexOf("://") === -1) {  // normal file
+                        var resFile = getFileFromUrl(src);
+                        if (!resFile) break;
+                        var filename = resFile.leafName;
+                        var mime = sbConvCommon.getFileMime(resFile);
+                        var data_bin = readBinary(resFile);
+                        var data_b64 = window.btoa(data_bin);
+                        var data_hash = hex_md5(data_bin);
+                    }
+                    else {  // bad scheme
+                        break;
+                    }
                     // -- resource
                     var resourceElem = enExportDoc.createElement("resource");
                     // ---- data
@@ -969,8 +994,8 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     el.textContent = data_b64;
                     resourceElem.appendChild(el);
                     // ---- overwrite values
-                    if (!elem.hasAttribute("data-evernote-mime")) elem.setAttribute("data-evernote-mime", mime);
-                    if (!elem.hasAttribute("data-evernote-attributes-file-name")) elem.setAttribute("data-evernote-attributes-file-name", file.leafName);
+                    if (!elem.hasAttribute("data-evernote-mime") && mime) elem.setAttribute("data-evernote-mime", mime);
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) elem.setAttribute("data-evernote-attributes-file-name", filename);
                     // ---- resource childs
                     ["mime", "width", "height"].forEach(function(meta){
                         var metaInData = "data-evernote-" + meta;
@@ -995,8 +1020,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     // ----
                     resourceElem.appendChild(resourceAttributes);
                     noteElem.appendChild(resourceElem);
-
-                    // media
+                    // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
@@ -1014,15 +1038,37 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     if (!elem.hasAttribute("href")) break;
                     // en-media
                     var href = elem.getAttribute("href");
-                    var urlObj = sbConvCommon.convertURLToObject(href);
-                    if (!(urlObj.scheme === "")) break;
-                    var file = getFileFromUrl(href);
-                    if (!file) break;
-                    var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                    var data = readBinary(file);
-                    var data_b64 = window.btoa(data);
-                    var data_hash = hex_md5(data);
-
+                    if (href.indexOf("data:") === 0) {  // data URI
+                        var filename = "";
+                        href.match(/^data:([^;]*)(?:;charset=([^;,]*))?(;base64)?,([\s\S]*)$/i);
+                        var mime = RegExp.$1 || "text/plain", charset = RegExp.$2, base64 = RegExp.$3, data = RegExp.$4;
+                        if (base64) {
+                            var data_b64 = data;
+                            var data_bin = window.atob(data_b64);
+                            var data_hash = hex_md5(data_bin);
+                        }
+                        else if (charset) {
+                            var data_bin = sbConvCommon.convertToUnicode(decodeURIComponent(data), charset || "US-ASCII");
+                            var data_b64 = window.btoa(data_bin);
+                            var data_hash = hex_md5(data_bin);
+                        }
+                        // not supported yet
+                        else {
+                            break;
+                        }
+                    }
+                    else if (href.indexOf("://") === -1) {  // normal file
+                        var resFile = getFileFromUrl(href);
+                        if (!resFile) break;
+                        var filename = resFile.leafName;
+                        var mime = sbConvCommon.getFileMime(resFile);
+                        var data_bin = readBinary(resFile);
+                        var data_b64 = window.btoa(data_bin);
+                        var data_hash = hex_md5(data_bin);
+                    }
+                    else {  // bad scheme
+                        break;
+                    }
                     // -- resource
                     var resourceElem = enExportDoc.createElement("resource");
                     // ---- data
@@ -1031,8 +1077,8 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     el.textContent = data_b64;
                     resourceElem.appendChild(el);
                     // ---- overwrite values
-                    if (!elem.hasAttribute("data-evernote-mime")) elem.setAttribute("data-evernote-mime", mime);
-                    if (!elem.hasAttribute("data-evernote-attributes-file-name")) elem.setAttribute("data-evernote-attributes-file-name", file.leafName);
+                    if (!elem.hasAttribute("data-evernote-mime") && mime) elem.setAttribute("data-evernote-mime", mime);
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) elem.setAttribute("data-evernote-attributes-file-name", filename);
                     if (!elem.hasAttribute("data-evernote-attributes-attachment")) elem.setAttribute("data-evernote-attributes-attachment", "true");
                     // ---- resource childs
                     ["mime", "width", "height"].forEach(function(meta){
@@ -1058,8 +1104,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     // ----
                     resourceElem.appendChild(resourceAttributes);
                     noteElem.appendChild(resourceElem);
-
-                    // media
+                    // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
