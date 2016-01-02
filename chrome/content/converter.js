@@ -790,12 +790,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         while (dirs.hasMoreElements()) {
             var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
             if ( !(dir.exists() && dir.isDirectory()) ) continue;
-            var indexFile = dir.clone();
-            indexFile.append("index.html");
-            if ( !(indexFile.exists() && indexFile.isFile()) ) continue;
             var indexData = dir.clone();
             indexData.append("index.dat");
             if ( !(indexData.exists() && indexData.isFile()) ) continue;
+            var indexFile = dir.clone();
+            indexFile.append("index.html");
             parseScrapBook(dir, indexFile, indexData, enExportDoc);
             // next dir (async)
             setTimeout(dirsNext, 0);
@@ -987,6 +986,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     }
 
     function parseScrapBookContent(indexFile, item, enNoteDoc, enNoteElem, enExportDoc, noteElem) {
+        if ( !(indexFile.exists() && indexFile.isFile()) ) return;
         var html = sbConvCommon.readFile(indexFile);
         var charset = item.chars || "UTF-8";
         html = sbConvCommon.convertToUnicode(html, charset);
