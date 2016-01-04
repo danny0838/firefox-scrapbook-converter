@@ -1004,6 +1004,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                 case "HEAD":
                     continue;
                 case "BODY":
+                    var attrs = elem.attributes;
+                    for (var k=attrs.length-1; k>=0; k--) {
+                        var attr = attrs[k];
+                        if (!isEvernoteAllowed("en-note", attr.name)) elem.removeAttribute(attr.name);
+                    }
                     continue;
                 case "IMG":
                     if (!elem.hasAttribute("src")) break;
