@@ -68,12 +68,6 @@ var evernoteAllowedElements = {
     "var": { "style": 1, "title": 1, "lang": 1, "xml:lang": 1, "dir": 1 }
 };
 
-function isEvernoteAllowed(nodeName, attrName) {
-    nodeName = nodeName.toLowerCase();
-    if (typeof(attrName) === "undefined") return typeof(evernoteAllowedElements[nodeName]) !== "undefined";
-    return typeof(evernoteAllowedElements[nodeName][attrName]) !== "undefined";
-}
-
 function init() {
     var args = window.arguments;
     if (!args) {
@@ -1202,13 +1196,16 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     if (!(elem.getAttribute("data-sb-obj") === "linemarker" && elem.getAttribute("style") === "background-color: rgb(255, 250, 165);")) break;
                     elem.setAttribute("style", "background-color:rgb(255, 250, 165);-evernote-highlight:true;");
                     break;
+                default:
+                    // validate node name
+                    if (!isEvernoteAllowed(elem.nodeName)) {
+                        elem.parentNode.removeChild(elem);
+                        continue;
+                    }
+                    break;
             }
 
-            // general process
-            if (!isEvernoteAllowed(elem.nodeName)) {
-                elem.parentNode.removeChild(elem);
-                continue;
-            }
+            // validate attributes
             var attrs = elem.attributes;
             for (var k=attrs.length-1; k>=0; k--) {
                 var attr = attrs[k];
@@ -1216,12 +1213,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             }
         }
         copyNodeFromHtmlToXml(body, enNoteElem);
-        
-        function listMakeRegExp(list) {
-            var join = list.join("|");
-            join = join.replace(/\*/g, ".*")
-            return new RegExp("^" + "(" + join + ")" + "$", "i");
-        }
 
         function getFileFromUrl(url) {
             var base = sbConvCommon.convertFilePathToURL(indexFile.parent.path);
@@ -1248,6 +1239,12 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             return y.toString() + m.toString() + d.toString() + "T" + h.toString() + i.toString() + s.toString() + "Z";
         }
         return false;
+    }
+
+    function isEvernoteAllowed(nodeName, attrName) {
+        nodeName = nodeName.toLowerCase();
+        if (typeof(attrName) === "undefined") return typeof(evernoteAllowedElements[nodeName]) !== "undefined";
+        return typeof(evernoteAllowedElements[nodeName][attrName]) !== "undefined";
     }
 
     function readBinary(aFile) {
