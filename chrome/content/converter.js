@@ -884,7 +884,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         // -- note-attributes
         var attributes = enExportDoc.createElement("note-attributes");
         var overwriteSourceUrl = false;
-        var overwriteSourceApplication = false;
         if (importAttrDoc) {
             var tags = importAttrDoc.documentElement.childNodes;
             for (var i=0, I=tags.length; i<I; ++i) {
@@ -892,9 +891,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                 switch (tag.nodeName) {
                     case "source-url":
                         overwriteSourceUrl = true;
-                        break;
-                    case "source-application":
-                        overwriteSourceApplication = true;
                         break;
                 }
                 var elem = enExportDoc.createElement(tag.nodeName);
@@ -906,12 +902,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (!overwriteSourceUrl && item.source) {
             var elem = enExportDoc.createElement("source-url");
             elem.textContent = item.source;
-            attributes.appendChild(elem);
-        }
-        // ---- source-application
-        if (!overwriteSourceApplication) {
-            var elem = enExportDoc.createElement("source-application");
-            elem.textContent = "ScrapBook";
             attributes.appendChild(elem);
         }
         // ----
