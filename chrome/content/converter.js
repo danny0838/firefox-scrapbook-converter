@@ -834,7 +834,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
 
         // -- title
         var elem = enExportDoc.createElement("title");
-        elem.textContent = item.title;
+        elem.textContent = item.title || "(empty)";
         noteElem.appendChild(elem);
 
         // -- content
