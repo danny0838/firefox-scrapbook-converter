@@ -811,6 +811,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     function parseScrapBook(dir, indexFile, indexData, enExportDoc) {
         print("converting ScrapBook data: '" + dir.path + "'");
         var item = sbConvCommon.parseIndexDat(indexData);
+        if (["folder", "separator"].indexOf(item.type) !== -1) {
+            print("skip item of type: '" + item.type + "'");
+            return;
+        }
+        
         if (!mergeOutput) {
             var enExportDoc = enExportDoc.cloneNode(true);
         }
