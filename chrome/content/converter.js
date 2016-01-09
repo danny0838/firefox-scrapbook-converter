@@ -1025,16 +1025,19 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                             break;
                         }
                     }
-                    else if (src.indexOf("://") === -1) {  // normal file
+                    else if (src.indexOf("://") === -1) {  // relative-linked file
                         var resFile = getFileFromUrl(src);
-                        if (!resFile) break;
+                        if ( !(resFile && resFile.exists() && resFile.isFile()) ) {
+                            elem.setAttribute("src", sbConvCommon.convertFilePathToURL(resFile.path));
+                            break;
+                        }
                         var filename = resFile.leafName;
                         var mime = sbConvCommon.getFileMime(resFile);
                         var data_bin = readBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
                     }
-                    else {  // bad scheme
+                    else {  // general URL
                         break;
                     }
                     // -- resource
@@ -1108,16 +1111,19 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                             break;
                         }
                     }
-                    else if (href.indexOf("://") === -1) {  // normal file
+                    else if (href.indexOf("://") === -1) {  // relative-linked file
                         var resFile = getFileFromUrl(href);
-                        if (!resFile) break;
+                        if ( !(resFile && resFile.exists() && resFile.isFile()) ) {
+                            elem.setAttribute("href", sbConvCommon.convertFilePathToURL(resFile.path));
+                            break;
+                        }
                         var filename = resFile.leafName;
                         var mime = sbConvCommon.getFileMime(resFile);
                         var data_bin = readBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
                     }
-                    else {  // bad scheme
+                    else {  // general URL
                         break;
                     }
                     // -- resource
@@ -1192,7 +1198,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var base = sbConvCommon.convertFilePathToURL(indexFile.parent.path);
             var url = sbConvCommon.resolveURL(base, url);
             var file = sbConvCommon.convertURLToFile(url);
-            if ( !(file && file.exists() && file.isFile()) ) return false;
             return file;
         }
 
