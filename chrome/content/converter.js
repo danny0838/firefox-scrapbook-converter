@@ -68,6 +68,8 @@ var evernoteAllowedElements = {
     "var": { "style": 1, "title": 1, "lang": 1, "xml:lang": 1, "dir": 1 }
 };
 
+var startTime;
+
 function init() {
     var args = window.arguments;
     if (!args) {
@@ -85,6 +87,7 @@ function print(txt) {
 }
 
 function convert(data) {
+    startTime = new Date();
     // check input
     try {
         var input = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
@@ -137,7 +140,7 @@ function convert(data) {
 
 function convert_finish() {
     print("");
-    print("done.");
+    print("done in " + ((new Date()) - startTime) + " milliseconds.");
     document.getElementById("sbconvConverterWindow").buttons = "accept";
 }
 
