@@ -987,9 +987,15 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (!body) return;
 
         // parse elements
+        var metaRefreshTarget = false;
         Array.prototype.slice.call(htmlDoc.getElementsByTagName("*")).forEach(function(elem){
             if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
             switch (elem.nodeName) {
+                case "META":
+                    if (metaRefreshTarget) break;  // only the first one should work
+                    if ( !(elem.hasAttribute("http-equiv") && elem.getAttribute("http-equiv").toLowerCase() === "refresh" && elem.getAttribute("content").match(/^(\d+;\s*url=)(.*)$/i)) ) break;
+                    metaRefreshTarget = getFileFromUrl(RegExp.$2);
+                    return;
                 case "IMG":
                     if (!elem.hasAttribute("src")) break;
                     // en-crypt
@@ -1192,6 +1198,50 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     break;
             }
         });
+        // if there is a meta-refresh, leave only the redirect target file
+        if (metaRefreshTarget) {
+            // clear already-added body and resources
+            Array.prototype.slice.call(body.attributes).forEach(function(attr){
+                body.removeAttribute(attr.name);
+            });
+            Array.prototype.slice.call(body.childNodes).forEach(function(elem){
+                elem.parentNode.removeChild(elem);
+            });
+            Array.prototype.slice.call(noteElem.getElementsByTagName("resource")).forEach(function(elem){
+                elem.parentNode.removeChild(elem);
+            });
+            if (metaRefreshTarget.exists() && metaRefreshTarget.isFile()) {
+                // data
+                var filename = metaRefreshTarget.leafName;
+                var mime = sbConvCommon.getFileMime(metaRefreshTarget);
+                var data_bin = readBinary(metaRefreshTarget);
+                var data_b64 = window.btoa(data_bin);
+                var data_hash = hex_md5(data_bin);
+                // -- resource
+                var resourceElem = enExportDoc.createElement("resource");
+                // ---- data
+                var el = enExportDoc.createElement("data");
+                el.setAttribute("encoding", "base64");
+                el.textContent = data_b64;
+                resourceElem.appendChild(el);
+                // ---- mime
+                var el = enExportDoc.createElement("mime");
+                el.textContent = mime;
+                resourceElem.appendChild(el);
+                // ---- resource-attributes
+                var resourceAttributes = enExportDoc.createElement("resource-attributes");
+                var el = enExportDoc.createElement("file-name");
+                el.textContent = filename;
+                resourceAttributes.appendChild(el);
+                resourceElem.appendChild(resourceAttributes);
+                noteElem.appendChild(resourceElem);
+                // -- en-media
+                var mediaElem = enNoteDoc.createElement("en-media");
+                mediaElem.setAttribute("hash", data_hash);
+                mediaElem.setAttribute("type", mime);
+                body.appendChild(mediaElem);
+            }
+        }
         copyNodeFromHtmlToXml(body, enNoteElem);
 
         function getFileFromUrl(url) {
