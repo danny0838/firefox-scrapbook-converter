@@ -984,21 +984,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (!body) return;
 
         // parse elements
-        var elems = htmlDoc.getElementsByTagName("*");
-        for (var i=elems.length-1; i>=0; i--) {
-            var elem = elems[i];
+        Array.prototype.slice.call(htmlDoc.getElementsByTagName("*")).forEach(function(elem){
+            if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
             switch (elem.nodeName) {
-                case "HTML":
-                    continue;
-                case "HEAD":
-                    continue;
-                case "BODY":
-                    var attrs = elem.attributes;
-                    for (var k=attrs.length-1; k>=0; k--) {
-                        var attr = attrs[k];
-                        if (!isEvernoteAllowed("en-note", attr.name)) elem.removeAttribute(attr.name);
-                    }
-                    continue;
                 case "IMG":
                     if (!elem.hasAttribute("src")) break;
                     // en-crypt
@@ -1011,7 +999,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         }, this);
                         elem.parentNode.insertBefore(cryptElem, elem);
                         elem.parentNode.removeChild(elem);
-                        continue;
+                        return;
                     }
                     // en-media
                     var src = elem.getAttribute("src");
@@ -1054,8 +1042,12 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     el.textContent = data_b64;
                     resourceElem.appendChild(el);
                     // ---- overwrite values
-                    if (!elem.hasAttribute("data-evernote-mime") && mime) elem.setAttribute("data-evernote-mime", mime);
-                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) elem.setAttribute("data-evernote-attributes-file-name", filename);
+                    if (!elem.hasAttribute("data-evernote-mime") && mime) {
+                        elem.setAttribute("data-evernote-mime", mime);
+                    }
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) {
+                        elem.setAttribute("data-evernote-attributes-file-name", filename);
+                    }
                     // ---- resource childs
                     ["mime", "width", "height"].forEach(function(meta){
                         var metaInData = "data-evernote-" + meta;
@@ -1082,18 +1074,14 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     noteElem.appendChild(resourceElem);
                     // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
+                    Array.prototype.slice.call(elem.attributes).forEach(function(attr){
+                        mediaElem.setAttribute(attr.name, attr.value);
+                    });
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
-                    var attrs = elem.attributes;
-                    for (var k=attrs.length-1; k>=0; k--) {
-                        var attr = attrs[k];
-                        if (isEvernoteAllowed(mediaElem.nodeName, attr.name)) {
-                            mediaElem.setAttribute(attr.name, attr.value);
-                        }
-                    }
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
-                    continue;
+                    return;
                 case "A":
                     if (!elem.hasAttribute("href")) break;
                     // en-media
@@ -1137,9 +1125,15 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     el.textContent = data_b64;
                     resourceElem.appendChild(el);
                     // ---- overwrite values
-                    if (!elem.hasAttribute("data-evernote-mime") && mime) elem.setAttribute("data-evernote-mime", mime);
-                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) elem.setAttribute("data-evernote-attributes-file-name", filename);
-                    if (!elem.hasAttribute("data-evernote-attributes-attachment")) elem.setAttribute("data-evernote-attributes-attachment", "true");
+                    if (!elem.hasAttribute("data-evernote-mime") && mime) {
+                        elem.setAttribute("data-evernote-mime", mime);
+                    }
+                    if (!elem.hasAttribute("data-evernote-attributes-file-name") && filename) {
+                        elem.setAttribute("data-evernote-attributes-file-name", filename);
+                    }
+                    if (!elem.hasAttribute("data-evernote-attributes-attachment")) {
+                        elem.setAttribute("data-evernote-attributes-attachment", "true");
+                    }
                     // ---- resource childs
                     ["mime", "width", "height"].forEach(function(meta){
                         var metaInData = "data-evernote-" + meta;
@@ -1166,18 +1160,14 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     noteElem.appendChild(resourceElem);
                     // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
+                    Array.prototype.slice.call(elem.attributes).forEach(function(attr){
+                        mediaElem.setAttribute(attr.name, attr.value);
+                    });
                     mediaElem.setAttribute("hash", data_hash);
                     mediaElem.setAttribute("type", mime);
-                    var attrs = elem.attributes;
-                    for (var k=attrs.length-1; k>=0; k--) {
-                        var attr = attrs[k];
-                        if (isEvernoteAllowed(mediaElem.nodeName, attr.name)) {
-                            mediaElem.setAttribute(attr.name, attr.value);
-                        }
-                    }
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
-                    continue;
+                    return;
                 case "INPUT":
                     // en-todo
                     if (!(elem.getAttribute("type") === "checkbox" && elem.getAttribute("data-sb-obj") === "todo")) break;
@@ -1185,28 +1175,14 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     if (elem.getAttribute("checked") === "checked") todoElem.setAttribute("checked", "true");
                     elem.parentNode.insertBefore(todoElem, elem);
                     elem.parentNode.removeChild(elem);
-                    continue;
+                    return;
                 case "SPAN":
                     // highlight
                     if (!(elem.getAttribute("data-sb-obj") === "linemarker" && elem.getAttribute("style") === "background-color: rgb(255, 250, 165);")) break;
                     elem.setAttribute("style", "background-color:rgb(255, 250, 165);-evernote-highlight:true;");
                     break;
-                default:
-                    // validate node name
-                    if (!isEvernoteAllowed(elem.nodeName)) {
-                        elem.parentNode.removeChild(elem);
-                        continue;
-                    }
-                    break;
             }
-
-            // validate attributes
-            var attrs = elem.attributes;
-            for (var k=attrs.length-1; k>=0; k--) {
-                var attr = attrs[k];
-                if (!isEvernoteAllowed(elem.nodeName, attr.name)) elem.removeAttribute(attr.name);
-            }
-        }
+        });
         copyNodeFromHtmlToXml(body, enNoteElem);
 
         function getFileFromUrl(url) {
@@ -1215,6 +1191,31 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var file = sbConvCommon.convertURLToFile(url);
             if ( !(file && file.exists() && file.isFile()) ) return false;
             return file;
+        }
+
+        // copy Evernote available attributes and childNodes from sourceNode to targetNode recursively
+        // no namespace, use lower case name
+        function copyNodeFromHtmlToXml(sourceNode, targetNode) {
+            // copy attributes
+            Array.prototype.slice.call(sourceNode.attributes).forEach(function(attr){
+                if (isEvernoteAllowed(targetNode.nodeName, attr.name)) {
+                    targetNode.setAttribute(attr.name, attr.value);
+                }
+            });
+            if (!sourceNode.hasChildNodes()) return;
+            Array.prototype.slice.call(sourceNode.childNodes).forEach(function(elem){
+                if (elem.nodeType === 1) {
+                    if (isEvernoteAllowed(elem.nodeName)) {
+                        var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
+                        targetNode.appendChild(newElem);
+                        copyNodeFromHtmlToXml(elem, newElem);
+                    }
+                }
+                else {
+                    var newElem = elem.cloneNode(true);
+                    targetNode.appendChild(newElem);
+                }
+            });
         }
     }
 
@@ -1255,30 +1256,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         }
         catch(ex) {
             return false;
-        }
-    }
-
-    // replicate the attributes and childNodes from sourceNode to targetNode
-    // no namespace, and use lower case name
-    function copyNodeFromHtmlToXml(sourceNode, targetNode) {
-        var attrs = sourceNode.attributes;
-        for (var i=0, I=attrs.length; i<I; i++) {
-            targetNode.setAttribute(attrs[i].name, attrs[i].value);
-        }
-        if (sourceNode.hasChildNodes()) {
-            var elems = sourceNode.childNodes;
-            for (var i=0, I=elems.length; i<I; i++) {
-                var elem = elems[i];
-                if (elem.nodeType === 1) {
-                    var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
-                    targetNode.appendChild(newElem);
-                    copyNodeFromHtmlToXml(elem, newElem);
-                }
-                else {
-                    var newElem = elem.cloneNode(true);
-                    targetNode.appendChild(newElem);
-                }
-            }
         }
     }
 }
