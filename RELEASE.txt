@@ -1,3 +1,10 @@
+ScrapBook X File Converter 1.1.0b1
+----------------
+
+- NEW: Support ScrapBook -> Evernote.
+- UPDATE: Separate different converters into individual dialog.
+
+
 ScrapBook X File Converter 1.0.14
 ----------------
 
