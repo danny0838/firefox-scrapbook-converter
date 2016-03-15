@@ -5,9 +5,10 @@
 <!ENTITY includeFileName "Add file name to item folder path">
 <!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
 
+<!ENTITY mergeOutput "Merge output into one file">
+
 <!ENTITY sb2enex.addTags "Add tag (separated with comma)">
 <!ENTITY sb2enex.folderAsTag "Write folder to tag">
 <!ENTITY sb2enex.importIndexHTML "Import the content of index.html">
 <!ENTITY sb2enex.importCommentMetadata "Import metadata from &lt;evernote&gt; in the comment">
 <!ENTITY sb2enex.importSourcePack "Import source data pack">
-<!ENTITY sb2enex.mergeOutput "Merge output into one file">

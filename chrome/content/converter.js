@@ -130,7 +130,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.sb2enex_mergeOutput);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.mergeOutput);
             break;
         default:
             print("ERROR: unknown method.");

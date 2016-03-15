@@ -25,6 +25,8 @@ function convert(method) {
     elem = document.getElementById("includeFileName"); if (elem) data["includeFileName"] = elem.checked;
     elem = document.getElementById("uniqueId"); if (elem) data["uniqueId"] = elem.checked;
 
+    elem = document.getElementById("mergeOutput"); if (elem) data["mergeOutput"] = elem.checked;
+
     elem = document.getElementById("sb2enex_addTags");
     if (elem && elem.checked) {
         if (elem) data["sb2enex_addTags"] = document.getElementById("sb2enex_addTagsValue").value;
@@ -33,7 +35,6 @@ function convert(method) {
     elem = document.getElementById("sb2enex_importIndexHTML"); if (elem) data["sb2enex_importIndexHTML"] = elem.checked;
     elem = document.getElementById("sb2enex_importCommentMetadata"); if (elem) data["sb2enex_importCommentMetadata"] = elem.checked;
     elem = document.getElementById("sb2enex_importSourcePack"); if (elem) data["sb2enex_importSourcePack"] = elem.checked;
-    elem = document.getElementById("sb2enex_mergeOutput"); if (elem) data["sb2enex_mergeOutput"] = elem.checked;
 
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }
