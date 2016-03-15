@@ -1287,11 +1287,8 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     }
 
     function parseScrapBookTime(time) {
-        if (time.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)) {
-            var date = new Date(
-                parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
-                parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
-            );
+        var date = sbConvCommon.timeStampToDate(time);
+        if (date) {
             var date = new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000);
             var y = date.getFullYear();
             var m = date.getMonth() + 1; if ( m < 10 ) m = "0" + m;
@@ -1389,7 +1386,7 @@ function convert_sb2maff(input, output, mergeOutput) {
         txtContent += "  <RDF:Description RDF:about=\"urn:root\">\n";
         txtContent += "    <MAF:originalurl RDF:resource=\"" + sbConvCommon.escapeHTML(item.source) + "\"/>\n";
         txtContent += "    <MAF:title RDF:resource=\"" + sbConvCommon.escapeHTML(item.title) + "\"/>\n";
-        txtContent += "    <MAF:archivetime RDF:resource=\"" + parseScrapBookTime(item.id) + "\"/>\n";
+        txtContent += "    <MAF:archivetime RDF:resource=\"" + sbConvCommon.timeStampToDate(item.id) + "\"/>\n";
         txtContent += "    <MAF:indexfilename RDF:resource=\"index.html\"/>\n";
         txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
         txtContent += "  </RDF:Description>\n";
@@ -1407,17 +1404,6 @@ function convert_sb2maff(input, output, mergeOutput) {
             zipAddDir(zw, dir);
             zipClose(zw);
         }
-    }
-
-    function parseScrapBookTime(time) {
-        if (time.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)) {
-            var date = new Date(
-                parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
-                parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
-            );
-            return date.toString();
-        }
-        return false;
     }
 }
 
