@@ -68,6 +68,10 @@ var evernoteAllowedElements = {
     "var": { "style": 1, "title": 1, "lang": 1, "xml:lang": 1, "dir": 1 }
 };
 
+// zip utils
+var nsIZipWriter = Components.interfaces.nsIZipWriter;
+var zipPr = {PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04, PR_CREATE_FILE: 0x08, PR_APPEND: 0x10, PR_TRUNCATE: 0x20, PR_SYNC: 0x40, PR_EXCL: 0x80}; //https://developer.mozilla.org/en-US/docs/PR_Open#Parameters
+
 var startTime;
 
 function init() {
@@ -798,16 +802,16 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             return;
         }
         // finished
+        dirsFinish();
+    }
+
+    function dirsFinish() {
         if (mergeOutput) {
             var destFile = output.clone();
             destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".enex");
             sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
             print("exporting file: '" + destFile.leafName + "'");
         }
-        dirsFinish();
-    }
-
-    function dirsFinish() {
         convert_finish();
     }
     
@@ -924,7 +928,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (importSourcePack) {
             var zipFile = output.clone();
             zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
-            makeZip(dir, zipFile);
+            var zw = zipOpen(zipFile);
+            zipAddDir(zw, dir);
+            zipClose(zw);
             if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
             var data = readBinary(zipFile);
             var data_b64 = window.btoa(data);
@@ -1467,29 +1473,34 @@ function extractZip(aZipFile, aDir) {
     }
 }
 
-function makeZip(aDir, aZipFile) {
-    var zw = Components.classes['@mozilla.org/zipwriter;1'].createInstance(Components.interfaces.nsIZipWriter);
-    var pr = {PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04, PR_CREATE_FILE: 0x08, PR_APPEND: 0x10, PR_TRUNCATE: 0x20, PR_SYNC: 0x40, PR_EXCL: 0x80}; //https://developer.mozilla.org/en-US/docs/PR_Open#Parameters
-    zw.open(aZipFile, pr.PR_RDWR | pr.PR_CREATE_FILE | pr.PR_TRUNCATE); //PR_TRUNCATE overwrites if file exists //PR_CREATE_FILE creates file if it dne //PR_RDWR opens for reading and writing
-    
+function zipOpen(zipFile) {
+    var zipWritter = Components.classes['@mozilla.org/zipwriter;1'].createInstance(nsIZipWriter);
+    zipWritter.open(zipFile, zipPr.PR_RDWR | zipPr.PR_CREATE_FILE | zipPr.PR_TRUNCATE);
+    return zipWritter;
+}
+
+function zipAddDir(zipWritter, dir) {
     //recursviely add all
-    var pathBase = aDir.parent.path;
-    var dirArr = [aDir]; //adds dirs to this as it finds it
+    var pathBase = dir.parent.path;
+    var dirArr = [dir];
     for (var i=0; i<dirArr.length; i++) {
-        // console.log('adding contents of dir['+i+']: ' + dirArr[i].leafName + ' PATH: ' + dirArr[i].path);
         var dirEntries = dirArr[i].directoryEntries;
         while (dirEntries.hasMoreElements()) {
-            var entry = dirEntries.getNext().QueryInterface(Components.interfaces.nsIFile); //entry is instance of nsiFile so here https://developer.mozilla.org/en-US/docs/XPCOM_Interface_Reference/nsIFile
+            var entry = dirEntries.getNext().QueryInterface(Components.interfaces.nsIFile);
             if (entry.isDirectory()) {
                dirArr.push(entry);
             }
-            var relPath = entry.path.replace(pathBase, ''); //need relative because we need to use this for telling addEntryFile where in the zip it should create it, and because zip is a copy of the directory
-            // console.log('+' + relPath); //makes it relative to directory the parent dir (dir[0]) so it can succesfully populate files with same names but different folders in this parent dir, needed because recursviely going through all dirs
-            var saveInZipAs = relPath.substr(1); //need to get ride of the first '\' forward slash at start otherwise it puts every file added in a folder of its own.
-            saveInZipAs = saveInZipAs.replace(/\\/g,'/'); //remember MUST use forward slash (/)
-            // console.log('--' + saveInZipAs);
-            zw.addEntryFile(saveInZipAs, Components.interfaces.nsIZipWriter.COMPRESSION_NONE, entry, false);
+            var relPath = entry.path.replace(pathBase, '');
+            var saveInZipAs = relPath.substr(1);
+            saveInZipAs = saveInZipAs.replace(/\\/g,'/');
+            // only compress known text-based files
+            // @TODO: better algorithm, maybe MIME-based or other detection techniques?
+            var compressionLevel = /\.(html?|xht(ml)?|xml|rdf|txt|css|js|json)$/i.test(entry.leafName) ? nsIZipWriter.COMPRESSION_BEST : nsIZipWriter.COMPRESSION_NONE;
+            zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
         }
     }
-    zw.close();
+}
+
+function zipClose(zipWritter) {
+    zipWritter.close();
 }
