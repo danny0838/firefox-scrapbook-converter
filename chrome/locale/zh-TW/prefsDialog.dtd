@@ -3,3 +3,4 @@
 <!ENTITY action.maf2sb "將 .maff 轉為 ScrapBook 資料格式">
 <!ENTITY action.html2sb "將網頁及檔案轉為 ScrapBook 資料格式">
 <!ENTITY action.sb2enex "將 ScrapBook 資料轉為 .enex">
+<!ENTITY action.sb2maff "將 ScrapBook 資料轉為 .maff">

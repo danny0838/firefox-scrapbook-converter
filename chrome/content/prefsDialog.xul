@@ -16,6 +16,7 @@
         <button label="&action.maf2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_maf2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.html2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_html2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2enex;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2enex.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2maff;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
     </prefpane>
 
 </prefwindow>

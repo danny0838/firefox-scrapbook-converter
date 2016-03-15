@@ -136,6 +136,9 @@ function convert(data) {
         case "sb2enex":
             convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.mergeOutput);
             break;
+        case "sb2maff":
+            convert_sb2maff(input, output, data.mergeOutput);
+            break;
         default:
             print("ERROR: unknown method.");
             break;
@@ -1321,6 +1324,100 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         catch(ex) {
             return false;
         }
+    }
+}
+
+function convert_sb2maff(input, output, mergeOutput) {
+    print("convert method: ScrapBook format --> .maff");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("");
+
+    if (mergeOutput) {
+        var destFile = output.clone();
+        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".maff");
+        var zipWritter = zipOpen(destFile);
+        print("generating file: '" + destFile.leafName + "' ...");
+    }
+
+    var dirs = input.directoryEntries;
+    dirsNext();
+
+    function dirsNext() {
+        while (dirs.hasMoreElements()) {
+            var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if ( !(dir.exists() && dir.isDirectory()) ) continue;
+            var indexData = dir.clone();
+            indexData.append("index.dat");
+            if ( !(indexData.exists() && indexData.isFile()) ) continue;
+            var indexFile = dir.clone();
+            indexFile.append("index.html");
+            parseScrapBook(dir, indexFile, indexData);
+            // next dir (async)
+            setTimeout(dirsNext, 0);
+            return;
+        }
+        // finished
+        dirsFinish();
+    }
+
+    function dirsFinish() {
+        if (mergeOutput) {
+            print("exported file: '" + destFile.leafName + "'");
+            zipClose(zipWritter);
+        }
+        convert_finish();
+    }
+    
+    function parseScrapBook(dir, indexFile, indexData) {
+        print("converting ScrapBook data: '" + dir.path + "'");
+
+        // load item data
+        var item = sbConvCommon.parseIndexDat(indexData);
+        if (["folder", "separator"].indexOf(item.type) !== -1) {
+            print("skip item of type: '" + item.type + "'");
+            return;
+        }
+
+        // generate index.rdf
+        var txtContent = "";
+        txtContent += "<?xml version=\"1.0\"?>\n";
+        txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
+        txtContent += "         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n";
+        txtContent += "         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n";
+        txtContent += "  <RDF:Description RDF:about=\"urn:root\">\n";
+        txtContent += "    <MAF:originalurl RDF:resource=\"" + sbConvCommon.escapeHTML(item.source) + "\"/>\n";
+        txtContent += "    <MAF:title RDF:resource=\"" + sbConvCommon.escapeHTML(item.title) + "\"/>\n";
+        txtContent += "    <MAF:archivetime RDF:resource=\"" + parseScrapBookTime(item.id) + "\"/>\n";
+        txtContent += "    <MAF:indexfilename RDF:resource=\"index.html\"/>\n";
+        txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
+        txtContent += "  </RDF:Description>\n";
+        txtContent += "</RDF:RDF>\n";
+        var rdfFile = dir.clone(); rdfFile.append("index.rdf")
+        sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
+
+        if (mergeOutput) {
+            zipAddDir(zipWritter, dir);
+        } else {
+            var destFile = output.clone();
+            destFile.append(dir.leafName + ".maff");
+            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            var zw = zipOpen(destFile);
+            zipAddDir(zw, dir);
+            zipClose(zw);
+        }
+    }
+
+    function parseScrapBookTime(time) {
+        if (time.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/)) {
+            var date = new Date(
+                parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
+                parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
+            );
+            return date.toString();
+        }
+        return false;
     }
 }
 
