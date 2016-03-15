@@ -137,7 +137,7 @@ function convert(data) {
             convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.mergeOutput);
+            convert_sb2maff(input, output, data.sb2maff_folderNameStyle, data.mergeOutput);
             break;
         default:
             print("ERROR: unknown method.");
@@ -1324,7 +1324,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     }
 }
 
-function convert_sb2maff(input, output, mergeOutput) {
+function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
     print("convert method: ScrapBook format --> .maff");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
@@ -1394,14 +1394,27 @@ function convert_sb2maff(input, output, mergeOutput) {
         var rdfFile = dir.clone(); rdfFile.append("index.rdf")
         sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
 
+        switch (folderNameStyle) {
+            case "scrapbook_id":
+                var overriteName = getUniqueId(item.id);
+                break;
+            case "maff":
+                var overriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + 
+                "_" + Math.floor(Math.random() * 1000);
+                break;
+            case "folder":
+            default:
+                var overriteName;
+        }
+
         if (mergeOutput) {
-            zipAddDir(zipWritter, dir);
+            zipAddDir(zipWritter, dir, overriteName);
         } else {
             var destFile = output.clone();
             destFile.append(dir.leafName + ".maff");
             print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
             var zw = zipOpen(destFile);
-            zipAddDir(zw, dir);
+            zipAddDir(zw, dir, overriteName);
             zipClose(zw);
         }
     }
@@ -1562,9 +1575,10 @@ function zipOpen(zipFile) {
     return zipWritter;
 }
 
-function zipAddDir(zipWritter, dir) {
+function zipAddDir(zipWritter, dir, setDirName) {
     //recursviely add all
-    var pathBase = dir.parent.path;
+    var pathBasePattern = dir.path;
+    var pathBaseReplace = setDirName || dir.leafName;
     var dirArr = [dir];
     for (var i=0; i<dirArr.length; i++) {
         var dirEntries = dirArr[i].directoryEntries;
@@ -1573,9 +1587,9 @@ function zipAddDir(zipWritter, dir) {
             if (entry.isDirectory()) {
                dirArr.push(entry);
             }
-            var relPath = entry.path.replace(pathBase, '');
-            var saveInZipAs = relPath.substr(1);
+            var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
             saveInZipAs = saveInZipAs.replace(/\\/g,'/');
+// console.log(entry.path, pathBasePattern, pathBaseReplace, saveInZipAs);
             // only compress known text-based files
             // @TODO: better algorithm, maybe MIME-based or other detection techniques?
             var compressionLevel = /\.(html?|xht(ml)?|xml|rdf|txt|css|js|json)$/i.test(entry.leafName) ? nsIZipWriter.COMPRESSION_BEST : nsIZipWriter.COMPRESSION_NONE;

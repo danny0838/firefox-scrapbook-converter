@@ -30,5 +30,15 @@
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
         <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
     </hbox>
+    <hbox align="center">
+        <label value="&sb2maff.folderNameStyle;:" />
+        <menulist id="sb2maff_folderNameStyle" value="scrapbook_id" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+            <menupopup>
+                <menuitem value="scrapbook_id" label="&sb2maff.folderNameStyle.scrapBookId;" />
+                <menuitem value="maff" label="&sb2maff.folderNameStyle.maff;" />
+                <menuitem value="folder" label="&sb2maff.folderNameStyle.folderName;" />
+            </menupopup>
+        </menulist>
+    </hbox>
     <checkbox id="mergeOutput" label="&mergeOutput;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>

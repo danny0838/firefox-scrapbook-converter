@@ -12,3 +12,8 @@
 <!ENTITY sb2enex.importIndexHTML "匯入 index.html 內容">
 <!ENTITY sb2enex.importCommentMetadata "匯入評註中的 &lt;evernote&gt; 元資料">
 <!ENTITY sb2enex.importSourcePack "匯入原始資料包">
+
+<!ENTITY sb2maff.folderNameStyle "頂層資料夾名稱樣式">
+<!ENTITY sb2maff.folderNameStyle.scrapBookId "ScrapBook ID">
+<!ENTITY sb2maff.folderNameStyle.maff "MAFF 預設">
+<!ENTITY sb2maff.folderNameStyle.folderName "資料夾名稱">
