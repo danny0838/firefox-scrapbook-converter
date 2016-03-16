@@ -1549,12 +1549,12 @@ function getUniqueDir(dir, name) {
     return destDir;
 }
 
-// generate index.rdf for the specified dir
-// if there were no one, return the generated rdf file object
-// so that we can remove it later
+// generate index.rdf for the specified dir and return its object for later cleanup
 function generateMaffRdf(dir, item) {
     var rdfFile = dir.clone(); rdfFile.append("index.rdf");
-    var hadRdf = rdfFile.exists();
+    if (rdfFile.exists()) {
+        throw "File '" + rdfFile.path + "' already exists.";
+    }
     var txtContent = "";
     txtContent += "<?xml version=\"1.0\"?>\n";
     txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
@@ -1569,7 +1569,7 @@ function generateMaffRdf(dir, item) {
     txtContent += "  </RDF:Description>\n";
     txtContent += "</RDF:RDF>\n";
     sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
-    return !hadRdf ? rdfFile : null;
+    return rdfFile;
 }
 
 /* borrowed from Firefox addon UnZIP */
