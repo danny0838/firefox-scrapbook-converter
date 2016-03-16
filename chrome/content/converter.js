@@ -134,7 +134,7 @@ function convert(data) {
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack, data.mergeOutput);
+            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack && data.sb2enex_importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
             convert_sb2maff(input, output, data.sb2maff_folderNameStyle, data.mergeOutput);
@@ -765,7 +765,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     }
 }
 
-function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePack, mergeOutput) {
+function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePackFormat, mergeOutput) {
     print("convert method: ScrapBook format --> .enex");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
@@ -773,7 +773,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     print("import index.html: " + (importIndexHTML ? "yes" : "no"));
     print("write folder to tag: " + (folderAsTag ? "yes" : "no"));
     print("import metadata from comment: " + (importCommentMetadata ? "yes" : "no"));
-    print("import source data pack: " + (importSourcePack ? "yes" : "no"));
+    print("import source data pack: " + (importSourcePackFormat || "no"));
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
@@ -928,12 +928,26 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         }
 
         // import source pack
-        if (importSourcePack) {
-            var zipFile = output.clone();
-            zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
-            var zw = zipOpen(zipFile);
-            zipAddDir(zw, dir);
-            zipClose(zw);
+        if (importSourcePackFormat) {
+            switch (importSourcePackFormat) {
+                case "zip":
+                    var zipFile = output.clone();
+                    zipFile.append(sbConvCommon.getTimeStamp() + ".zip");
+                    var zw = zipOpen(zipFile);
+                    zipAddDir(zw, dir);
+                    zipClose(zw);
+                    break;
+                case "maff":
+                    // generate index.rdf
+                    generateMaffRdf(dir, item);
+                    var zipFile = output.clone();
+                    zipFile.append(sbConvCommon.getTimeStamp() + ".maff");
+                    var zw = zipOpen(zipFile);
+                    zipAddDir(zw, dir);
+                    zipClose(zw);
+                    break;
+            }
+
             if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
             var data = readBinary(zipFile);
             var data_b64 = window.btoa(data);
@@ -955,7 +969,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var resourceAttributes = enExportDoc.createElement("resource-attributes");
             // ---- file-name
             var elem = enExportDoc.createElement("file-name");
-            elem.textContent = dir.leafName + ".zip";
+            elem.textContent = zipFile.leafName;
             resourceAttributes.appendChild(elem);
             // ---- attachment
             var elem = enExportDoc.createElement("attachment");
@@ -1378,22 +1392,9 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
         }
 
         // generate index.rdf
-        var txtContent = "";
-        txtContent += "<?xml version=\"1.0\"?>\n";
-        txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
-        txtContent += "         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n";
-        txtContent += "         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n";
-        txtContent += "  <RDF:Description RDF:about=\"urn:root\">\n";
-        txtContent += "    <MAF:originalurl RDF:resource=\"" + sbConvCommon.escapeHTML(item.source) + "\"/>\n";
-        txtContent += "    <MAF:title RDF:resource=\"" + sbConvCommon.escapeHTML(item.title) + "\"/>\n";
-        txtContent += "    <MAF:archivetime RDF:resource=\"" + sbConvCommon.timeStampToDate(item.id) + "\"/>\n";
-        txtContent += "    <MAF:indexfilename RDF:resource=\"index.html\"/>\n";
-        txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
-        txtContent += "  </RDF:Description>\n";
-        txtContent += "</RDF:RDF>\n";
-        var rdfFile = dir.clone(); rdfFile.append("index.rdf")
-        sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
+		generateMaffRdf(dir, item);
 
+		// determine top level folder name
         switch (folderNameStyle) {
             case "scrapbook_id":
                 var overriteName = getUniqueId(item.id);
@@ -1407,6 +1408,7 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
                 var overriteName;
         }
 
+		// add zip file or entry
         if (mergeOutput) {
             zipAddDir(zipWritter, dir, overriteName);
         } else {
@@ -1532,6 +1534,25 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
+}
+
+// generate index.rdf in the specified dir
+function generateMaffRdf(dir, item) {
+    var txtContent = "";
+    txtContent += "<?xml version=\"1.0\"?>\n";
+    txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
+    txtContent += "         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n";
+    txtContent += "         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n";
+    txtContent += "  <RDF:Description RDF:about=\"urn:root\">\n";
+    txtContent += "    <MAF:originalurl RDF:resource=\"" + sbConvCommon.escapeHTML(item.source) + "\"/>\n";
+    txtContent += "    <MAF:title RDF:resource=\"" + sbConvCommon.escapeHTML(item.title) + "\"/>\n";
+    txtContent += "    <MAF:archivetime RDF:resource=\"" + sbConvCommon.timeStampToDate(item.id) + "\"/>\n";
+    txtContent += "    <MAF:indexfilename RDF:resource=\"index.html\"/>\n";
+    txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
+    txtContent += "  </RDF:Description>\n";
+    txtContent += "</RDF:RDF>\n";
+    var rdfFile = dir.clone(); rdfFile.append("index.rdf")
+    sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
 }
 
 /* borrowed from Firefox addon UnZIP */
