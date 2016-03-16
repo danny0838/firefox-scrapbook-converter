@@ -73,21 +73,17 @@ var nsIZipWriter = Components.interfaces.nsIZipWriter;
 var zipPr = {PR_RDONLY: 0x01, PR_WRONLY: 0x02, PR_RDWR: 0x04, PR_CREATE_FILE: 0x08, PR_APPEND: 0x10, PR_TRUNCATE: 0x20, PR_SYNC: 0x40, PR_EXCL: 0x80}; //https://developer.mozilla.org/en-US/docs/PR_Open#Parameters
 
 var startTime;
+var warnCount = 0;
+var errorCount = 0;
 
 function init() {
     var args = window.arguments;
     if (!args) {
-        print("ERROR: no arguments.");
+        error("no arguments.");
         return;
     }
     var data = window.arguments[0];
     convert(data);
-}
-
-function print(txt) {
-    var field = document.getElementById("sbconvConverterStatus");
-    field.value += txt + "\n";
-    field.selectionStart = field.selectionEnd = field.value.length;
 }
 
 function convert(data) {
@@ -99,11 +95,11 @@ function convert(data) {
         if (!input.exists()) throw "not exist";
     }
     catch(ex) {
-        print("ERROR: input directory '" + input.path + "' does not exist.");
+        error("input directory '" + input.path + "' does not exist.");
         return;
     }
     if (!input.isDirectory()) {
-        print("ERROR: input directory '" + input.path + "' is not a directory.");
+        error("input directory '" + input.path + "' is not a directory.");
         return;
     }
 
@@ -114,11 +110,11 @@ function convert(data) {
         if (!output.exists()) throw "not exist";
     }
     catch(ex) {
-        print("ERROR: output directory '" + output.path + "' does not exist.");
+        error("output directory '" + output.path + "' does not exist.");
         return;
     }
     if (!output.isDirectory()) {
-        print("ERROR: output directory '" + output.path + "' is not a directory.");
+        error("output directory '" + output.path + "' is not a directory.");
         return;
     }
 
@@ -140,14 +136,15 @@ function convert(data) {
             convert_sb2maff(input, output, data.sb2maff_folderNameStyle, data.mergeOutput);
             break;
         default:
-            print("ERROR: unknown method.");
+            error("unknown method.");
             break;
     }
 }
 
 function convert_finish() {
     print("");
-    print("done in " + ((new Date()) - startTime) + " milliseconds.");
+    print("done in " + ((new Date()) - startTime) + " milliseconds." +
+        " (" + errorCount + " errors, " + warnCount + " warnings)");
     document.getElementById("sbconvConverterWindow").buttons = "accept";
 }
 
@@ -191,7 +188,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             notesNext();
         }
         else {
-            print("skip invalid enex: '" + file.path + "'");
+            error("skip invalid enex: '" + file.path + "'");
             notesFinish();
         }
 
@@ -443,7 +440,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                 }
 
                 if (html === false) {
-                    print("ERROR: cannot read en-note data and export the original html instead");
+                    warn("cannot read en-note data and export the original html instead");
                     html = data;
                 }
 
@@ -534,7 +531,7 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId)
             extractZip(file, tmpDir);
         } catch(ex) {
             // not zip or corrupted zip
-            print("skip invalid maff: '" + file.path + "'");
+            warn("skip invalid maff: '" + file.path + "'");
             pagesFinish();
             return;
         }
@@ -569,7 +566,7 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId)
             // create item
             var indexLeafName = ds.getMafProperty(res.indexFileName) || "index.html";
             if (indexLeafName !== "index.html") {
-                print("ERROR: maff page with index file other than index.html is not supported");
+                error("maff page with index file other than index.html is not supported");
                 return;
             }
             var item = sbConvCommon.newItem();
@@ -802,7 +799,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                 indexFile.append("index.html");
                 parseScrapBook(dir, indexFile, indexData, enExportDoc);
             } catch (ex) {
-                print("ERROR: " + ex);
+                error(ex);
             }
             // next dir (async)
             setTimeout(dirsNext, 0);
@@ -1373,7 +1370,7 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
                 indexFile.append("index.html");
                 parseScrapBook(dir, indexFile, indexData);
             } catch (ex) {
-                print("ERROR: " + ex);
+                error(ex);
             }
             // next dir (async)
             setTimeout(dirsNext, 0);
@@ -1433,6 +1430,22 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
         // clear the generated index.rdf
         if (rdfFile) { rdfFile.remove(false); }
     }
+}
+
+function print(txt) {
+    var field = document.getElementById("sbconvConverterStatus");
+    field.value += txt + "\n";
+    field.selectionStart = field.selectionEnd = field.value.length;
+}
+
+function warn(txt) {
+    warnCount++;
+    print("WARN: " + txt);
+}
+
+function error(txt) {
+    errorCount++;
+    print("ERROR: " + txt);
 }
 
 function loadXMLFile(file, callback, that) {
