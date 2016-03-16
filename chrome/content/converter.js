@@ -792,14 +792,18 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
 
     function dirsNext() {
         while (dirs.hasMoreElements()) {
-            var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if ( !(dir.exists() && dir.isDirectory()) ) continue;
-            var indexData = dir.clone();
-            indexData.append("index.dat");
-            if ( !(indexData.exists() && indexData.isFile()) ) continue;
-            var indexFile = dir.clone();
-            indexFile.append("index.html");
-            parseScrapBook(dir, indexFile, indexData, enExportDoc);
+            try {
+                var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+                if ( !(dir.exists() && dir.isDirectory()) ) continue;
+                var indexData = dir.clone();
+                indexData.append("index.dat");
+                if ( !(indexData.exists() && indexData.isFile()) ) continue;
+                var indexFile = dir.clone();
+                indexFile.append("index.html");
+                parseScrapBook(dir, indexFile, indexData, enExportDoc);
+            } catch (ex) {
+                print("ERROR: " + ex);
+            }
             // next dir (async)
             setTimeout(dirsNext, 0);
             return;
@@ -929,6 +933,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
 
         // import source pack
         if (importSourcePackFormat) {
+            var rdfFile = null;
             switch (importSourcePackFormat) {
                 case "zip":
                     var zipFile = output.clone();
@@ -939,7 +944,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     break;
                 case "maff":
                     // generate index.rdf
-                    generateMaffRdf(dir, item);
+                    rdfFile = generateMaffRdf(dir, item);
                     var zipFile = output.clone();
                     zipFile.append(sbConvCommon.getTimeStamp() + ".maff");
                     var zw = zipOpen(zipFile);
@@ -953,6 +958,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var data_b64 = window.btoa(data);
             var data_hash = hex_md5(data);
             zipFile.remove(true);
+            if (rdfFile) { rdfFile.remove(false); }
 
             // resource
             var resource = enExportDoc.createElement("resource");
@@ -1357,14 +1363,18 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
 
     function dirsNext() {
         while (dirs.hasMoreElements()) {
-            var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if ( !(dir.exists() && dir.isDirectory()) ) continue;
-            var indexData = dir.clone();
-            indexData.append("index.dat");
-            if ( !(indexData.exists() && indexData.isFile()) ) continue;
-            var indexFile = dir.clone();
-            indexFile.append("index.html");
-            parseScrapBook(dir, indexFile, indexData);
+            try {
+                var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+                if ( !(dir.exists() && dir.isDirectory()) ) continue;
+                var indexData = dir.clone();
+                indexData.append("index.dat");
+                if ( !(indexData.exists() && indexData.isFile()) ) continue;
+                var indexFile = dir.clone();
+                indexFile.append("index.html");
+                parseScrapBook(dir, indexFile, indexData);
+            } catch (ex) {
+                print("ERROR: " + ex);
+            }
             // next dir (async)
             setTimeout(dirsNext, 0);
             return;
@@ -1392,7 +1402,7 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
         }
 
         // generate index.rdf
-		generateMaffRdf(dir, item);
+		var rdfFile = generateMaffRdf(dir, item);
 
 		// determine top level folder name
         switch (folderNameStyle) {
@@ -1419,6 +1429,9 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
             zipAddDir(zw, dir, overriteName);
             zipClose(zw);
         }
+
+        // clear the generated index.rdf
+        if (rdfFile) { rdfFile.remove(false); }
     }
 }
 
@@ -1536,8 +1549,12 @@ function getUniqueDir(dir, name) {
     return destDir;
 }
 
-// generate index.rdf in the specified dir
+// generate index.rdf for the specified dir
+// if there were no one, return the generated rdf file object
+// so that we can remove it later
 function generateMaffRdf(dir, item) {
+    var rdfFile = dir.clone(); rdfFile.append("index.rdf");
+    var hadRdf = rdfFile.exists();
     var txtContent = "";
     txtContent += "<?xml version=\"1.0\"?>\n";
     txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
@@ -1551,8 +1568,8 @@ function generateMaffRdf(dir, item) {
     txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
     txtContent += "  </RDF:Description>\n";
     txtContent += "</RDF:RDF>\n";
-    var rdfFile = dir.clone(); rdfFile.append("index.rdf")
     sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
+    return !hadRdf ? rdfFile : null;
 }
 
 /* borrowed from Firefox addon UnZIP */
