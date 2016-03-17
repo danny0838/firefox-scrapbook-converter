@@ -4,5 +4,6 @@
 <!ENTITY action.html2sb "將網頁及檔案轉為 ScrapBook 資料">
 <!ENTITY action.sb2enex "將 ScrapBook 資料轉為 .enex">
 <!ENTITY action.sb2maff "將 ScrapBook 資料轉為 .maff">
+<!ENTITY action.sb2zip "將 ScrapBook 資料轉為 .zip">
 <!ENTITY action.sb2epub "將目前的 ScrapBook 轉為 .epub">
 <!ENTITY action.sb2maff2 "將目前的 ScrapBook 轉為 .maff">

@@ -135,6 +135,9 @@ function convert(data) {
         case "sb2maff":
             convert_sb2maff(input, output, data.sb2maff_folderNameStyle, data.mergeOutput);
             break;
+        case "sb2zip":
+            convert_sb2zip(input, output, data.mergeOutput);
+            break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
             convert_sb2epub(input, output, data.sb2epub_includeAllFiles);
@@ -1481,6 +1484,83 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
             zipAddDir(zw, dir, overriteName);
         } else {
             zipAddDir(zw, dir, overriteName);
+            zipClose(zw);
+        }
+    }
+}
+
+function convert_sb2zip(input, output, mergeOutput) {
+    print("convert method: ScrapBook data --> .zip");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("");
+
+    if (mergeOutput) {
+        var destFile = output.clone();
+        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".zip");
+        var zipWritter = zipOpen(destFile);
+        print("generating file: '" + destFile.leafName + "' ...");
+    }
+
+    var dirs = input.directoryEntries;
+    dirsNext();
+
+    function dirsNext() {
+        while (dirs.hasMoreElements()) {
+            try {
+                var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+                if ( !(dir.exists() && dir.isDirectory()) ) continue;
+                var indexData = dir.clone();
+                indexData.append("index.dat");
+                if ( !(indexData.exists() && indexData.isFile()) ) continue;
+                var indexFile = dir.clone();
+                indexFile.append("index.html");
+                parseScrapBook(dir, indexFile, indexData);
+            } catch (ex) {
+                error(ex);
+            }
+            // next dir (async)
+            setTimeout(dirsNext, 0);
+            return;
+        }
+        // finished
+        dirsFinish();
+    }
+
+    function dirsFinish() {
+        if (mergeOutput) {
+            print("exported file: '" + destFile.leafName + "'");
+            zipClose(zipWritter);
+        }
+        convert_finish();
+    }
+    
+    function parseScrapBook(dir, indexFile, indexData) {
+        print("compressing ScrapBook data: '" + dir.path + "'");
+
+        // load item data
+        var item = sbConvCommon.parseIndexDat(indexData);
+        if (["folder", "separator"].indexOf(item.type) !== -1) {
+            print("skip item of type: '" + item.type + "'");
+            return;
+        }
+
+        // open the zip file if not merged output
+        if (mergeOutput) {
+            var zw = zipWritter;
+        } else {
+            var destFile = output.clone();
+            destFile.append(dir.leafName + ".zip");
+            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            var zw = zipOpen(destFile);
+        }
+
+		// add zip file or entry
+        if (mergeOutput) {
+            zipAddDir(zw, dir);
+        } else {
+            zipAddDir(zw, dir);
             zipClose(zw);
         }
     }
