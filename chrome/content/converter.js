@@ -933,8 +933,19 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         }
 
         // import source pack
-        if (importSourcePackFormat) {
-            var rdfFile = null;
+        var specialCheck = true;
+
+        // special handle for maff format:
+        // if index.rdf already exists, warn out
+        if (importSourcePackFormat === "maff") {
+            var rdfFile = dir.clone(); rdfFile.append("index.rdf");
+            if (rdfFile.exists()) {
+                warn("skip importing maff since '" + rdfFile.path + "' already exists.");
+                specialCheck = false;
+            }
+        }
+
+        if (importSourcePackFormat && specialCheck) {
             switch (importSourcePackFormat) {
                 case "zip":
                     var zipFile = output.clone();
@@ -944,12 +955,26 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     zipClose(zw);
                     break;
                 case "maff":
-                    // generate index.rdf
-                    rdfFile = generateMaffRdf(dir, item);
+                    // generate index.rdf content
+                    var rdfContent = '<?xml version="1.0"?>\n' +
+                        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
+                        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
+                        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
+                        '  <RDF:Description RDF:about="urn:root">\n' +
+                        '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
+                        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
+                        '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
+                        '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
+                        '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
+                        '  </RDF:Description>\n' +
+                        '</RDF:RDF>\n';
+                    var overwriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + "_" + Math.floor(Math.random() * 1000);
+
                     var zipFile = output.clone();
                     zipFile.append(sbConvCommon.getTimeStamp() + ".maff");
                     var zw = zipOpen(zipFile);
-                    zipAddDir(zw, dir);
+                    zipAddFile(zw, overwriteName + "/index.rdf", rdfContent);
+                    zipAddDir(zw, dir, overwriteName);
                     zipClose(zw);
                     break;
             }
@@ -959,7 +984,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var data_b64 = window.btoa(data);
             var data_hash = hex_md5(data);
             zipFile.remove(true);
-            if (rdfFile) { rdfFile.remove(false); }
 
             // resource
             var resource = enExportDoc.createElement("resource");
@@ -1402,8 +1426,22 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
             return;
         }
 
-        // generate index.rdf
-		var rdfFile = generateMaffRdf(dir, item);
+        // open the zip file if not merged output
+        if (mergeOutput) {
+            var zw = zipWritter;
+        } else {
+            var destFile = output.clone();
+            destFile.append(dir.leafName + ".maff");
+            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            var zw = zipOpen(destFile);
+        }
+
+        // check index.rdf
+        // if already exists, throw an error
+        var rdfFile = dir.clone(); rdfFile.append("index.rdf");
+        if (rdfFile.exists()) {
+            throw "File '" + rdfFile.path + "' already exists.";
+        }
 
 		// determine top level folder name
         switch (folderNameStyle) {
@@ -1416,23 +1454,31 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
                 break;
             case "folder":
             default:
-                var overriteName;
+                var overriteName = dir.leafName;
         }
 
+        // generate index.rdf content
+        var rdfContent = '<?xml version="1.0"?>\n' +
+            '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
+            '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
+            '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
+            '  <RDF:Description RDF:about="urn:root">\n' +
+            '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
+            '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
+            '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
+            '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
+            '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
+            '  </RDF:Description>\n' +
+            '</RDF:RDF>\n';
+
 		// add zip file or entry
+        zipAddFile(zw, overriteName + "/index.rdf", rdfContent);
         if (mergeOutput) {
-            zipAddDir(zipWritter, dir, overriteName);
+            zipAddDir(zw, dir, overriteName);
         } else {
-            var destFile = output.clone();
-            destFile.append(dir.leafName + ".maff");
-            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
-            var zw = zipOpen(destFile);
             zipAddDir(zw, dir, overriteName);
             zipClose(zw);
         }
-
-        // clear the generated index.rdf
-        if (rdfFile) { rdfFile.remove(false); }
     }
 }
 
@@ -1833,29 +1879,6 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
-}
-
-// generate index.rdf for the specified dir and return its object for later cleanup
-function generateMaffRdf(dir, item) {
-    var rdfFile = dir.clone(); rdfFile.append("index.rdf");
-    if (rdfFile.exists()) {
-        throw "File '" + rdfFile.path + "' already exists.";
-    }
-    var txtContent = "";
-    txtContent += "<?xml version=\"1.0\"?>\n";
-    txtContent += "<RDF:RDF xmlns:MAF=\"http://maf.mozdev.org/metadata/rdf#\"\n";
-    txtContent += "         xmlns:NC=\"http://home.netscape.com/NC-rdf#\"\n";
-    txtContent += "         xmlns:RDF=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n";
-    txtContent += "  <RDF:Description RDF:about=\"urn:root\">\n";
-    txtContent += "    <MAF:originalurl RDF:resource=\"" + sbConvCommon.escapeHTML(item.source) + "\"/>\n";
-    txtContent += "    <MAF:title RDF:resource=\"" + sbConvCommon.escapeHTML(item.title) + "\"/>\n";
-    txtContent += "    <MAF:archivetime RDF:resource=\"" + sbConvCommon.timeStampToDate(item.id) + "\"/>\n";
-    txtContent += "    <MAF:indexfilename RDF:resource=\"index.html\"/>\n";
-    txtContent += "    <MAF:charset RDF:resource=\"" + sbConvCommon.escapeHTML(item.chars) + "\"/>\n";
-    txtContent += "  </RDF:Description>\n";
-    txtContent += "</RDF:RDF>\n";
-    sbConvCommon.writeFile(rdfFile, txtContent, "UTF-8");
-    return rdfFile;
 }
 
 function zipDetermineCompresssionLevel(filename) {
