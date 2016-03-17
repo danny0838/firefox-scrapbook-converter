@@ -20,6 +20,7 @@
         <button label="&action.sb2zip;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2zip.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2epub;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2epub.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2maff2;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff2.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2zip2;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2zip2.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
     </prefpane>
 
 </prefwindow>

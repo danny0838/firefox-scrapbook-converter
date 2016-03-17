@@ -22,3 +22,7 @@
 
 <!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">
 
+<!ENTITY sb2zip2.topDirName "Top Directory Name">
+<!ENTITY sb2zip2.topDirName.none "No top directory">
+<!ENTITY sb2zip2.topDirName.dir "Use ScrapBook directory name">
+<!ENTITY sb2zip2.topDirName.title "Use ScrapBook name">

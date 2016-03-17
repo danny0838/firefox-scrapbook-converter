@@ -146,6 +146,10 @@ function convert(data) {
             output.initWithPath(data.outputFile);
             convert_sb2maff2(input, output);
             break;
+        case "sb2zip2":
+            output.initWithPath(data.outputFile);
+            convert_sb2zip2(input, output, data.sb2zip2_topDirName);
+            break;
         default:
             error("unknown method.");
             break;
@@ -1880,6 +1884,37 @@ function convert_sb2maff2(input, output) {
     zipAddFile(zw, id + "/index.rdf", rdfContent);
     zipAddFile(zw, id + "/index.html", indexContent);
     zipAddDir(zw, input, id + "/ScrapBook");
+    zipClose(zw);
+
+    // finished
+    convert_finish();
+}
+
+function convert_sb2zip2(input, output, topDirName) {
+    print("convert method: whole ScrapBook --> .zip");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("top directory name: " + topDirName);
+    print("");
+
+    print("generating file: '" + output.leafName + "' ...");
+
+    // determine top level folder name
+    switch (topDirName) {
+        case "dir":
+            var overwriteName = input.leafName;
+            break;
+        case "title":
+            var overwriteName = sbConvCommon.validateFileName(sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook");
+            break;
+        case "none":
+        default:
+            var overwriteName = "";
+            break;
+    }
+
+    var zw = zipOpen(output);
+    zipAddDir(zw, input, overwriteName);
     zipClose(zw);
 
     // finished

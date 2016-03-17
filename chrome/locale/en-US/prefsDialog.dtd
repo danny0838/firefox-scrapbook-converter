@@ -7,3 +7,4 @@
 <!ENTITY action.sb2zip "Convert ScrapBook data to .zip">
 <!ENTITY action.sb2epub "Convert current ScrapBook to .epub">
 <!ENTITY action.sb2maff2 "Convert current ScrapBook to .maff">
+<!ENTITY action.sb2zip2 "Convert current ScrapBook to .zip">

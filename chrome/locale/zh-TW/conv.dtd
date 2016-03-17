@@ -21,3 +21,8 @@
 <!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">
 
 <!ENTITY sb2maff2.note "請先輸出 HTML 資料列表（包含頁框）並更新全文搜尋快取後再執行本操作">
+
+<!ENTITY sb2zip2.topDirName "頂層目錄名稱">
+<!ENTITY sb2zip2.topDirName.none "不產生頂層目錄">
+<!ENTITY sb2zip2.topDirName.dir "使用 ScrapBook 目錄名稱">
+<!ENTITY sb2zip2.topDirName.title "使用 ScrapBook 名稱">

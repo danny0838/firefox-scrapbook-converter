@@ -7,3 +7,4 @@
 <!ENTITY action.sb2zip "將 ScrapBook 資料轉為 .zip">
 <!ENTITY action.sb2epub "將目前的 ScrapBook 轉為 .epub">
 <!ENTITY action.sb2maff2 "將目前的 ScrapBook 轉為 .maff">
+<!ENTITY action.sb2zip2 "將目前的 ScrapBook 轉為 .zip">
