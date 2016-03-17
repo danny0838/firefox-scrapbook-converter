@@ -5,6 +5,7 @@ function onLoad() {
 function onOutputBrowse() {
     var FP = Components.classes['@mozilla.org/filepicker;1'].createInstance(Components.interfaces.nsIFilePicker);
     FP.init(window, null, FP.modeSave);
+    FP.defaultString = sbConvCommon.validateFileName(sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook");
     FP.defaultExtension = "maff";
     FP.appendFilter("MAFF", "*.maff");
     if ( [FP.returnOK, FP.returnReplace].indexOf(FP.show()) === -1 ) return false;
