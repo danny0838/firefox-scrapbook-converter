@@ -19,3 +19,6 @@
 <!ENTITY sb2maff.folderNameStyle.folderName "Folder name">
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
+
+<!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">
+

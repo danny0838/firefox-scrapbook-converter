@@ -18,6 +18,7 @@
         <button label="&action.sb2enex;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2enex.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2maff;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2epub;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2epub.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2maff2;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff2.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
     </prefpane>
 
 </prefwindow>

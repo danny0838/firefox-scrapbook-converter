@@ -139,6 +139,10 @@ function convert(data) {
             output.initWithPath(data.outputFile);
             convert_sb2epub(input, output, data.sb2epub_includeAllFiles);
             break;
+        case "sb2maff2":
+            output.initWithPath(data.outputFile);
+            convert_sb2maff2(input, output);
+            break;
         default:
             error("unknown method.");
             break;
@@ -1749,6 +1753,51 @@ function convert_sb2epub(input, output, includeAllFiles) {
             }
         }
     }
+}
+
+function convert_sb2maff2(input, output) {
+    print("convert method: whole ScrapBook --> .maff");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("");
+
+    print("generating file: '" + output.leafName + "' ...");
+
+    var date = (new Date());
+    var id = date.valueOf() + "_" + Math.floor(Math.random() * 1000);
+    var title = sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook";
+
+    var rdfContent = '<?xml version="1.0"?>\n' +
+        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
+        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
+        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
+        '  <RDF:Description RDF:about="urn:root">\n' +
+        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(title) + '"/>\n' +
+        '    <MAF:archivetime RDF:resource="' + date + '"/>\n' +
+        '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
+        '    <MAF:charset RDF:resource="UTF-8"/>\n' +
+        '  </RDF:Description>\n' +
+        '</RDF:RDF>\n';
+
+    var indexContent = "<!DOCTYPE html>\n" +
+            '<html>\n' +
+            '  <head>\n' +
+            '    <meta charset="UTF-8">\n' +
+            '    <meta http-equiv="refresh" content="0;URL=./ScrapBook/tree/frame.html">\n' +
+            '  </head>\n' +
+            '  <body>\n' +
+            '    <a href="ScrapBook/tree/frame.html">ScrapBook</a>\n' +
+            '  </body>\n' +
+            '</html>\n';
+
+    var zw = zipOpen(output);
+    zipAddFile(zw, id + "/index.rdf", rdfContent);
+    zipAddFile(zw, id + "/index.html", indexContent);
+    zipAddDir(zw, input, id + "/ScrapBook");
+    zipClose(zw);
+
+    // finished
+    convert_finish();
 }
 
 function print(txt) {
