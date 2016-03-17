@@ -1766,6 +1766,12 @@ function convert_sb2maff2(input, output) {
     var date = (new Date());
     var id = date.valueOf() + "_" + Math.floor(Math.random() * 1000);
     var title = sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook";
+    var frameFile = input.clone(); frameFile.append("tree"); frameFile.append("frame.html");
+
+    if (!frameFile.exists()) {
+        error("tree/frame.html not generated. Please output HTML with frames first.");
+        throw "frame.html not exist";
+    }
 
     var rdfContent = '<?xml version="1.0"?>\n' +
         '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
