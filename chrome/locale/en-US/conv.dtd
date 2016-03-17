@@ -17,3 +17,5 @@
 <!ENTITY sb2maff.folderNameStyle.scrapBookId "ScrapBook ID">
 <!ENTITY sb2maff.folderNameStyle.maff "MAFF default">
 <!ENTITY sb2maff.folderNameStyle.folderName "Folder name">
+
+<!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">

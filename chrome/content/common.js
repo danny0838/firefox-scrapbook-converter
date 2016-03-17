@@ -1,5 +1,6 @@
 (function(){
     var PREF = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("extensions.scrapbook.addon.converter.");
+    var PREF_GLOBAL = Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefService).getBranch("");
 
     // API support for different ScrapBook versions
     if (typeof(sbCommonUtils) == "object") {
@@ -26,6 +27,10 @@
             return oSBCommon.BUNDLE;
         },
 
+        get RDF() {
+            return oSBCommon.RDF;
+        },
+
         get RDFC() {
             return oSBCommon.RDFC;
         },
@@ -40,6 +45,14 @@
 
         readFile : function(aFile) {
             return oSBCommon.readFile(aFile);
+        },
+
+        getScrapBookDir : function() {
+            return oSBCommon.getScrapBookDir();
+        },
+
+        getContentDir : function(aID, aSuppressCreate) {
+            return oSBCommon.getContentDir(aID, aSuppressCreate);
         },
 
         getTimeStamp : function(aDate) {
@@ -155,6 +168,39 @@
             return aStr;
         },
 
+        unescapeHTML : function(aStr) {
+            var list = { "&amp;": "&", "&lt;": "<", "&gt;" : ">", "&quot;" : '"', "&nbsp;" : " " };
+            return aStr.replace(/&amp;|&lt;|&gt;|&quot;|&nbsp;|&#(\d+);|&#x([0-9A-Fa-f]+);/g, function(entity, dec, hex) {
+                if (dec) return String.fromCharCode(parseInt(dec, 10));
+                if (hex) return String.fromCharCode(parseInt(hex, 16));
+                return list[entity];
+            });
+        },
+
+        /**
+         * We cannot and don't have to handle all possible cases.
+         * Here's a heuristic that handles most possible cases of a standard HTML page
+         */
+        getMetaRefreshUrl : function(sourceHtml) {
+          var regex = /<\!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<style>[\s\S]*?<\/style>|<script>[\s\S]*?<\/script>|<xmp>[\s\S]*?<\/xmp>|<meta\s+([^>]*)>/ig;
+          while (regex.exec(sourceHtml) && RegExp.$1) {
+            var attrs = RegExp.$1;
+            if (!/\s*http-equiv\s*=\s*("[^"]+"|'[^']*'|\S+)/i.test(attrs)) continue;
+            var value = this.unescapeHTML(/^(["'])?(.*)\1$/.exec(RegExp.$1)[2]);
+            if (value.toLowerCase() !== "refresh") continue;
+            if (!/\s*content\s*=\s*("[^"]+"|'[^']*'|\S+)/i.test(attrs)) continue;
+            var value = this.unescapeHTML(/^(["']?)(.*)\1$/.exec(RegExp.$1)[2]);
+            if (!/;\s*url\s*=\s*("[^"]+"|'[^']+'|\S+)\s*$/i.test(value)) continue;
+            var value = /^(["']?)(.*)\1$/.exec(RegExp.$1)[2];
+            return value;
+          }
+          return false;
+        },
+
+        escapeRegExp : function(aString) {
+            return aString.replace(/([\*\+\?\.\^\/\$\\\|\[\]\{\}\(\)])/g, "\\$1");
+        },
+
         getBoolPref : function(aName, aDefaultValue) {
             try {
                 return PREF.getBoolPref(aName);
@@ -179,6 +225,49 @@
                 PREF.setComplexValue(aName, Components.interfaces.nsISupportsString, str);
             }
             catch (ex) {}
+        },
+
+        getSbUnicharPref : function(aName, aDefaultValue) {
+            var result = false;
+            try {
+                result = PREF_GLOBAL.getComplexValue("extensions.scrapbook." + aName, Components.interfaces.nsISupportsString).data;
+            } catch(ex) {}
+            if (result !== false) return result;
+            try {
+                result = PREF_GLOBAL.getComplexValue("scrapbook." + aName, Components.interfaces.nsISupportsString).data;
+            } catch(ex) {}
+            if (result !== false) return result;
+            return aDefaultValue;
+        },
+
+        getGlobalUnicharPref : function(aName, aDefaultValue) {
+            try {
+                return PREF_GLOBAL.getComplexValue(aName, Components.interfaces.nsISupportsString).data;
+            } catch(ex) {
+                return aDefaultValue;
+            }
+        }
+    };
+
+    window.sbConvData = {
+        get data() {
+            return ("dataSource" in oSBData) ? oSBData.dataSource : oSBData.data;
+        },
+
+        flattenResources: function(aContRes, aRule, aRecursive) {
+            return oSBData.flattenResources(aContRes, aRule, aRecursive);
+        },
+
+        findParentResource: function(aRes) {
+            return oSBData.findParentResource(aRes);
+        },
+
+        getProperty: function(aRes, aProp) {
+            return oSBData.getProperty(aRes, aProp);
+        },
+        
+        isContainer: function(aRes) {
+            return oSBData.isContainer(aRes);
         },
     };
 })();

@@ -1,6 +1,7 @@
 <!ENTITY window.title "ScrapBook 轉檔工具">
-<!ENTITY action.enex2sb "將 .enex 轉為 ScrapBook 資料格式">
-<!ENTITY action.maf2sb "將 .maff 轉為 ScrapBook 資料格式">
-<!ENTITY action.html2sb "將網頁及檔案轉為 ScrapBook 資料格式">
+<!ENTITY action.enex2sb "將 .enex 轉為 ScrapBook 資料">
+<!ENTITY action.maf2sb "將 .maff 轉為 ScrapBook 資料">
+<!ENTITY action.html2sb "將網頁及檔案轉為 ScrapBook 資料">
 <!ENTITY action.sb2enex "將 ScrapBook 資料轉為 .enex">
 <!ENTITY action.sb2maff "將 ScrapBook 資料轉為 .maff">
+<!ENTITY action.sb2epub "將目前的 ScrapBook 轉為 .epub">

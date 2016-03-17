@@ -17,3 +17,5 @@
 <!ENTITY sb2maff.folderNameStyle.scrapBookId "ScrapBook ID">
 <!ENTITY sb2maff.folderNameStyle.maff "MAFF 預設">
 <!ENTITY sb2maff.folderNameStyle.folderName "資料夾名稱">
+
+<!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">

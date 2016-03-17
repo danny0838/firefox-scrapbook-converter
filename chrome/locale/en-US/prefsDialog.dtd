@@ -4,3 +4,4 @@
 <!ENTITY action.html2sb "Convert HTML and files to ScrapBook data">
 <!ENTITY action.sb2enex "Convert ScrapBook data to .enex">
 <!ENTITY action.sb2maff "Convert ScrapBook data to .maff">
+<!ENTITY action.sb2epub "Convert current ScrapBook to .epub">
