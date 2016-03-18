@@ -1610,6 +1610,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
     print("generating file: '" + output.leafName + "' ...");
 
+    // create zip
+    var zipWritter = zipOpen(output);
+
     // book data
     // @TODO: use pref setting or appropriate content
     var bookData = {
@@ -1619,64 +1622,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         modified: getModifiedDateStamp()
     };
 
-    // generate XML
-    var [manifest, spine, toc] = getOpfManifestAndSpine();
-
-    // META-INF/container.xml
-    var containerTxt = '<?xml version="1.0"?>\n' +
-        '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
-        '  <rootfiles>\n' +
-        '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
-        '  </rootfiles>\n' +
-        '</container>\n';
-
-    // OEBPS/content.opf
-    var opfTxt = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-        '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
-        '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
-        '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookData.id) + '</dc:identifier>\n' +
-        '    <dc:title>' + sbConvCommon.escapeHTML(bookData.title) + '</dc:title>\n' +
-        '    <dc:language>' + sbConvCommon.escapeHTML(bookData.language) + '</dc:language>\n' +
-        '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
-        '  </metadata>\n' +
-        '  <manifest>\n' +
-        '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
-        '    <item id="blank" href="blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
-        '  </manifest>\n' +
-        '  <spine toc="ncx">\n' + spine +
-        '  </spine>\n' +
-        '</package>\n';
-
-    // OEBPS/toc.ncx
-    var tocTxt = '<?xml version="1.0" encoding="UTF-8"?>\n' +
-        '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n' +
-        ' "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n' +
-        '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
-        '<head>\n' +
-        '   <meta name="dtb:uid" content="amb.vis.ne.jp" />\n' +
-        '</head>\n' +
-        '<docTitle>\n' +
-        '   <text>' + bookData.title + '</text>\n' +
-        '</docTitle>\n' +
-        '<docAuthor>\n' +
-        '   <text>' + bookData.author + '</text>\n' +
-        '</docAuthor>\n' +
-        '<navMap>\n' + toc +
-        '</navMap>\n' +
-        '</ncx>\n';
-
-    // OEBPS/blank.xhtml
-    // The epub reader may strip folder entries without path, so we make a blank page for them.
-    var blankTxt = '<?xml version="1.0" encoding="utf-8"?>\n' +
-        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
-        '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-        '  <head>\n' +
-        '    <title></title>\n' +
-        '  </head>\n' +
-        '  <body></body>\n' +
-        '</html>\n';
-
-    // make zip
+    // determine files not to include
     var excludeEntries = [
         "backup",
         "tree",
@@ -1694,47 +1640,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
         "search.html"
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
     var excludeRegex = new RegExp("^OEBPS\\/Content\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
-    var zw = zipOpen(output);
-    zipAddFile(zw, "mimetype", "application/epub+zip");
-    zipAddFile(zw, "META-INF/container.xml", containerTxt);
-    zipAddFile(zw, "OEBPS/content.opf", opfTxt);
-    zipAddFile(zw, "OEBPS/toc.ncx", tocTxt);
-    zipAddFile(zw, "OEBPS/blank.xhtml", blankTxt);
 
-    if (includeAllFiles) {
-        zipAddDirEx(zw, input, "OEBPS/Content");
-    } else {
-        zipAddDirEx(zw, input, "OEBPS/Content", excludeRegex);
-    }
-
-    zipClose(zw);
-
-    // finish
-    convert_finish();
-
-    function getModifiedDateStamp() {
-        var date = new Date();
-        var y = date.getUTCFullYear();
-        var m = date.getUTCMonth() + 1; if ( m < 10 ) m = "0" + m;
-        var d = date.getUTCDate();      if ( d < 10 ) d = "0" + d;
-        var h = date.getUTCHours();     if ( h < 10 ) h = "0" + h;
-        var i = date.getUTCMinutes();   if ( i < 10 ) i = "0" + i;
-        var s = date.getUTCSeconds();   if ( s < 10 ) s = "0" + s;
-        return y.toString() + "-" + m.toString() + "-" + d.toString() + "T" + h.toString() + ":" + i.toString() + ":" + s.toString() + "Z";
-    }
-
-    function getUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-            return v.toString(16);
-        });
-    }
-
-    function getLocale() {
-        return sbConvCommon.getGlobalUnicharPref("general.useragent.locale", "") || "en";
-    }
-
-    function getOpfManifestAndSpine() {
+    // recurse into files and ScrapBook tree and generate related information
+    var [manifest, spine, toc] = (function () {
         // index, playOrder, depth are 1-based
         var result = { manifest: "", spine: "", toc: "" }, index = 1, playOrder = 1;
         
@@ -1815,6 +1723,95 @@ function convert_sb2epub(input, output, includeAllFiles) {
         function indent(count) {
             return (new Array(count+1)).join(" ");
         }
+    })();
+
+    zipAddFile(zipWritter, "mimetype", "application/epub+zip");
+
+    zipAddFile(zipWritter, "META-INF/container.xml", 
+        '<?xml version="1.0"?>\n' +
+        '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
+        '  <rootfiles>\n' +
+        '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
+        '  </rootfiles>\n' +
+        '</container>\n');
+
+    zipAddFile(zipWritter, "OEBPS/content.opf",
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+        '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
+        '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
+        '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookData.id) + '</dc:identifier>\n' +
+        '    <dc:title>' + sbConvCommon.escapeHTML(bookData.title) + '</dc:title>\n' +
+        '    <dc:language>' + sbConvCommon.escapeHTML(bookData.language) + '</dc:language>\n' +
+        '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
+        '  </metadata>\n' +
+        '  <manifest>\n' +
+        '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
+        '    <item id="blank" href="blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
+        '  </manifest>\n' +
+        '  <spine toc="ncx">\n' + spine +
+        '  </spine>\n' +
+        '</package>\n');
+
+    zipAddFile(zipWritter, "OEBPS/toc.ncx",
+        '<?xml version="1.0" encoding="UTF-8"?>\n' +
+        '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n' +
+        ' "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n' +
+        '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
+        '<head>\n' +
+        '   <meta name="dtb:uid" content="amb.vis.ne.jp" />\n' +
+        '</head>\n' +
+        '<docTitle>\n' +
+        '   <text>' + bookData.title + '</text>\n' +
+        '</docTitle>\n' +
+        '<docAuthor>\n' +
+        '   <text>' + bookData.author + '</text>\n' +
+        '</docAuthor>\n' +
+        '<navMap>\n' + toc +
+        '</navMap>\n' +
+        '</ncx>\n');
+
+    // The epub reader may strip folder entries without path, so we make a blank page for them.
+    zipAddFile(zipWritter, "OEBPS/blank.xhtml",
+        '<?xml version="1.0" encoding="utf-8"?>\n' +
+        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+        '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+        '  <head>\n' +
+        '    <title></title>\n' +
+        '  </head>\n' +
+        '  <body></body>\n' +
+        '</html>\n');
+
+    if (includeAllFiles) {
+        zipAddDirEx(zipWritter, input, "OEBPS/Content");
+    } else {
+        zipAddDirEx(zipWritter, input, "OEBPS/Content", excludeRegex);
+    }
+
+    zipClose(zipWritter);
+
+    // finish
+    convert_finish();
+
+    function getModifiedDateStamp() {
+        var date = new Date();
+        var y = date.getUTCFullYear();
+        var m = date.getUTCMonth() + 1; if ( m < 10 ) m = "0" + m;
+        var d = date.getUTCDate();      if ( d < 10 ) d = "0" + d;
+        var h = date.getUTCHours();     if ( h < 10 ) h = "0" + h;
+        var i = date.getUTCMinutes();   if ( i < 10 ) i = "0" + i;
+        var s = date.getUTCSeconds();   if ( s < 10 ) s = "0" + s;
+        return y.toString() + "-" + m.toString() + "-" + d.toString() + "T" + h.toString() + ":" + i.toString() + ":" + s.toString() + "Z";
+    }
+
+    function getUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    }
+
+    function getLocale() {
+        return sbConvCommon.getGlobalUnicharPref("general.useragent.locale", "") || "en";
     }
 
     // extended version of zipAddDir for better intervention
