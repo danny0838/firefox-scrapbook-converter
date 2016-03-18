@@ -1864,9 +1864,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '<html xmlns="http://www.w3.org/1999/xhtml"></html>\n');
 
     if (includeAllFiles) {
-        zipAddDirEx(zipWritter, input, "OEBPS/scrapbook");
+        zipAddDir(zipWritter, input, "OEBPS/scrapbook");
     } else {
-        zipAddDirEx(zipWritter, input, "OEBPS/scrapbook", excludeRegex);
+        zipAddDir(zipWritter, input, "OEBPS/scrapbook", null, excludeRegex);
     }
 
     zipClose(zipWritter);
@@ -1894,34 +1894,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
     function getLocale() {
         return sbConvCommon.getGlobalUnicharPref("general.useragent.locale", "") || "en";
-    }
-
-    // extended version of zipAddDir for better intervention
-    function zipAddDirEx(zipWritter, dir, subPath, excludeRegex) {
-        //recursviely add all
-        var pathBasePattern = dir.path;
-        var pathBaseReplace = (typeof subPath !== "undefined") ? subPath : dir.leafName;
-        var dirArr = [dir];
-        for (var i=0; i<dirArr.length; i++) {
-            var dirEntries = dirArr[i].directoryEntries;
-            while (dirEntries.hasMoreElements()) {
-                var entry = dirEntries.getNext().QueryInterface(Components.interfaces.nsIFile);
-                var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
-                saveInZipAs = saveInZipAs.replace(/\\/g,'/');
-                saveInZipAs = saveInZipAs.replace(/^\//, "");
-
-                if (excludeRegex && excludeRegex.test(saveInZipAs)) {
-                    continue;
-                }
-
-                if (entry.isDirectory()) {
-                   dirArr.push(entry);
-                }
-
-                var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
-                zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
-            }
-        }
     }
 }
 
@@ -2195,10 +2167,12 @@ function zipWriteFile(zipWritter, saveInZipAs, content) {
     zipWritter.addEntryChannel(saveInZipAs, Date.now() * 1000, nsIZipWriter.COMPRESSION_BEST, channel, false);
 }
 
-// recursively add dir to the zip, with optionally determinable dirSubPath
-// subPath can be "", which means file/directory under dir will be placed at top level
-// subPath can be a subfolder, such as "subfolder/here"
-function zipAddDir(zipWritter, dir, subPath) {
+/**
+ * recursively add dir to the zip, with optionally determinable dirSubPath
+ * subPath can be "", which means file/directory under dir will be placed at top level
+ * subPath can be a subfolder, such as "subfolder/here"
+ */
+function zipAddDir(zipWritter, dir, subPath, includeRegex, excludeRegex) {
     //recursviely add all
     var pathBasePattern = dir.path;
     var pathBaseReplace = (typeof subPath !== "undefined") ? subPath : dir.leafName;
@@ -2207,13 +2181,22 @@ function zipAddDir(zipWritter, dir, subPath) {
         var dirEntries = dirArr[i].directoryEntries;
         while (dirEntries.hasMoreElements()) {
             var entry = dirEntries.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if (entry.isDirectory()) {
-               dirArr.push(entry);
-            }
             var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
             saveInZipAs = saveInZipAs.replace(/\\/g,'/');
             saveInZipAs = saveInZipAs.replace(/^\//, "");
-// console.log(entry.path, saveInZipAs, pathBasePattern, pathBaseReplace);
+
+            if (includeRegex && !includeRegex.test(saveInZipAs)) {
+                continue;
+            }
+
+            if (excludeRegex && excludeRegex.test(saveInZipAs)) {
+                continue;
+            }
+
+            if (entry.isDirectory()) {
+               dirArr.push(entry);
+            }
+
             var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
             zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
         }
