@@ -1648,7 +1648,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         "scrapbook.rdf",
         "cache.rdf",
         "sitemap.xsl",
-        "multiple.txt",
+        "multibook.txt",
         "folders.txt",
         "collection.html",
         "combine.html",
