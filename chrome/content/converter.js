@@ -1774,12 +1774,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     zipWriteFile(zipWritter, "OEBPS/blank.xhtml",
         '<?xml version="1.0" encoding="utf-8"?>\n' +
         '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
-        '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-        '  <head>\n' +
-        '    <title></title>\n' +
-        '  </head>\n' +
-        '  <body></body>\n' +
-        '</html>\n');
+        '<html xmlns="http://www.w3.org/1999/xhtml"></html>\n');
 
     if (includeAllFiles) {
         zipAddDirEx(zipWritter, input, "OEBPS/Content");
