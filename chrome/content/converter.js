@@ -1658,7 +1658,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
         "notex_template.html",
         "search.html"
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
-    var excludeRegex = new RegExp("^OEBPS\\/scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
 
     // recurse into files and ScrapBook tree and generate related information
     var [manifest, spine, toc] = (function () {
@@ -1668,10 +1667,14 @@ function convert_sb2epub(input, output, includeAllFiles) {
         // include general files
         // do not include data/<id>/*.* now
         var files = getDescFiles(input, true), file;
+        var excludeRegex = new RegExp("^scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
             var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+            if (!includeAllFiles && excludeRegex.test(subPath)) {
+                continue;
+            }
             if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
                 var opf_id = 'file' + index;
                 var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
@@ -1886,6 +1889,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     if (includeAllFiles) {
         zipAddDir(zipWritter, input, "OEBPS/scrapbook");
     } else {
+        var excludeRegex = new RegExp("^OEBPS\\/scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
         zipAddDir(zipWritter, input, "OEBPS/scrapbook", null, excludeRegex);
     }
 
