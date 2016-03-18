@@ -136,7 +136,7 @@ function convert(data) {
             convert_sb2maff(input, output, data.sb2maff_topDirName, data.mergeOutput);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.mergeOutput);
+            convert_sb2zip(input, output, data.sb2zip_topDirName, data.mergeOutput);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
@@ -1494,14 +1494,20 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
     }
 }
 
-function convert_sb2zip(input, output, mergeOutput) {
+function convert_sb2zip(input, output, topDirName, mergeOutput) {
     print("convert method: ScrapBook data --> .zip");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("top directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
     if (mergeOutput) {
+        if (topDirName === "none") {
+            error("mergeOutput cannot be used with no top directory name");
+            throw "mergeOutput cannot be used with no top directory name";
+        }
+        
         var destFile = output.clone();
         destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".zip");
         var zipWritter = zipOpen(destFile);
@@ -1551,6 +1557,20 @@ function convert_sb2zip(input, output, mergeOutput) {
             return;
         }
 
+        // determine top level folder name
+        switch (topDirName) {
+            case "dir":
+                var overwriteName = dir.leafName;
+                break;
+            case "id":
+                var overwriteName = item.id;
+                break;
+            case "none":
+            default:
+                var overwriteName = "";
+                break;
+        }
+
         // open the zip file if not merged output
         if (mergeOutput) {
             var zw = zipWritter;
@@ -1563,9 +1583,13 @@ function convert_sb2zip(input, output, mergeOutput) {
 
 		// add zip file or entry
         if (mergeOutput) {
-            zipAddDir(zw, dir);
+            if (topDirName === "id" && overwriteName !== getUniqueId(overwriteName)) {
+                warn("skip due to duplicate path: " + overwriteName);
+                return;
+            }
+            zipAddDir(zw, dir, overwriteName);
         } else {
-            zipAddDir(zw, dir);
+            zipAddDir(zw, dir, overwriteName);
             zipClose(zw);
         }
     }
@@ -2097,6 +2121,10 @@ function zipOpen(zipFile) {
     var zipWritter = Components.classes['@mozilla.org/zipwriter;1'].createInstance(nsIZipWriter);
     zipWritter.open(zipFile, zipPr.PR_RDWR | zipPr.PR_CREATE_FILE | zipPr.PR_TRUNCATE);
     return zipWritter;
+}
+
+function zipHasEntry(zipWritter, entry) {
+    return zipWritter.hasEntry(entry);
 }
 
 // add the text from content to the zip with path saveInZipAs

@@ -39,5 +39,7 @@ function convert(method) {
 
     elem = document.getElementById("sb2maff_topDirName"); if (elem) data["sb2maff_topDirName"] = elem.value;
 
+    elem = document.getElementById("sb2zip_topDirName"); if (elem) data["sb2zip_topDirName"] = elem.value;
+
     window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
 }

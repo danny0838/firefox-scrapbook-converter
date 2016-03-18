@@ -18,6 +18,11 @@
 <!ENTITY sb2maff.topDirName.maff "MAFF default">
 <!ENTITY sb2maff.topDirName.dir "Directory name">
 
+<!ENTITY sb2zip.topDirName "Top directory name">
+<!ENTITY sb2zip.topDirName.none "No top directory">
+<!ENTITY sb2zip.topDirName.id "ScrapBook ID">
+<!ENTITY sb2zip.topDirName.dir "目錄名稱">
+
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
 
 <!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">

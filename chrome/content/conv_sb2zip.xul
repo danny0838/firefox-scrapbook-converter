@@ -31,5 +31,15 @@
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
         <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
     </hbox>
+    <hbox align="center">
+        <label value="&sb2zip.topDirName;:" />
+        <menulist id="sb2zip_topDirName" value="dir" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+            <menupopup>
+                <menuitem value="none" label="&sb2zip.topDirName.none;" />
+                <menuitem value="id" label="&sb2zip.topDirName.id;" />
+                <menuitem value="dir" label="&sb2zip.topDirName.dir;" />
+            </menupopup>
+        </menulist>
+    </hbox>
     <checkbox id="mergeOutput" label="&mergeOutput;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>
