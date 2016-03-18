@@ -1639,12 +1639,12 @@ function convert_sb2epub(input, output, includeAllFiles) {
         "notex_template.html",
         "search.html"
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
-    var excludeRegex = new RegExp("^OEBPS\\/Content\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
+    var excludeRegex = new RegExp("^OEBPS\\/scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
 
     // recurse into files and ScrapBook tree and generate related information
     var [manifest, spine, toc] = (function () {
         // index, playOrder, depth are 1-based
-        var result = { manifest: "", spine: "", toc: "" }, index = 1, playOrder = 1;
+        var result = { manifest: "", spine: "", toc: "" }, index = 1, playOrder = 1, bookmarks = 1, refreshes = 1;
         
         // include general files
         // do not include data/<id>/*.* now
@@ -1652,11 +1652,11 @@ function convert_sb2epub(input, output, includeAllFiles) {
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
-            var subPath = "Content/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
-            if (!/^Content\/data\/\d{14}\//.test(subPath)) {
-                var id = 'file' + index;
+            var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+            if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
+                var opf_id = 'file' + index;
                 var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                result.manifest += indent(4) + '<item id="' + id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
+                result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
                 index++;
             }
         }
@@ -1672,29 +1672,126 @@ function convert_sb2epub(input, output, includeAllFiles) {
             var resEnum = sbConvCommon.RDFC.GetElements();
             while (resEnum.hasMoreElements()) {
                 var res = resEnum.getNext();
-                if (sbConvData.isContainer(res)) {
-                    result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
-                        indent(depth * 2) + '  <navLabel>\n' +
-                        indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(sbConvData.getProperty(res, "title")) + '</text>\n' +
-                        indent(depth * 2) + '  </navLabel>\n' +
-                        indent(depth * 2) + '  <content src="blank.xhtml" />\n';
-                    playOrder++;
-                    processResRecursively(res, depth + 1);
-                    result.toc += indent(depth * 2) + '</navPoint>\n';
-                } else {
-                    var id = sbConvData.getProperty(res, "id");
-                    var dir = sbConvCommon.getContentDir(id, true);
-                    if (dir) {
+                var id = sbConvData.getProperty(res, "id");
+                var type = sbConvData.getProperty(res, "type");
+                var title = sbConvData.getProperty(res, "title");
+                var source = sbConvData.getProperty(res, "source");
+
+                switch (type) {
+                    case "folder":
+                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                            indent(depth * 2) + '  <navLabel>\n' +
+                            indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
+                            indent(depth * 2) + '  </navLabel>\n' +
+                            indent(depth * 2) + '  <content src="sb2epub/blank.xhtml" />\n';
+                        playOrder++;
+                        processResRecursively(res, depth + 1);
+                        result.toc += indent(depth * 2) + '</navPoint>\n';
+                        break;
+
+                    case "separator":
+                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                            indent(depth * 2) + '  <navLabel>\n' +
+                            indent(depth * 2) + '    <text>---- ' + sbConvCommon.escapeHTML(title) + ' ----</text>\n' +
+                            indent(depth * 2) + '  </navLabel>\n' +
+                            indent(depth * 2) + '  <content src="sb2epub/blank.xhtml" />\n' +
+                            indent(depth * 2) + '</navPoint>\n';
+                        playOrder++;
+                        break;
+
+                    case "bookmark":
+                        var opf_id = "bookmark" + bookmarks;
+                        bookmarks++;
+                        var subPath = "sb2epub/" + opf_id + ".xhtml";
+
+                        zipWriteFile(zipWritter, "OEBPS/" + subPath, 
+                            '<?xml version="1.0" encoding="utf-8"?>\n' +
+                            '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+                            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                            '  <head>\n' +
+                            '    <meta charset="UTF-8" />\n' +
+                            '  </head>\n' +
+                            '  <body>\n' +
+                            '    <a href="' + sbConvCommon.escapeHTML(source) + '" target="_blank">#BOOKMARK</a>\n' +
+                            '  </body>\n' +
+                            '</html>\n');
+
+                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                            indent(depth * 2) + '  <navLabel>\n' +
+                            indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
+                            indent(depth * 2) + '  </navLabel>\n' +
+                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
+                            indent(depth * 2) + '</navPoint>\n';
+                        playOrder++;
+                        break;
+
+                    default:
+                        var dir = sbConvCommon.getContentDir(id, true);
+                        if (!dir) break;
                         var files = getDescFiles(dir, true), file;
                         while (files.length) {
                             file = files.shift();
                             if ( !(file.exists() && file.isFile()) ) continue;
-                            var subPath = "Content/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
-                            var id = 'file' + index;
+
+                            var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+                            var opf_id = 'file' + index;
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                            result.manifest += indent(4) + '<item id="' + id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
-                            if (/^Content\/data\/\d{14}\/index\.html$/.test(subPath)) {
-                                result.spine += indent(4) + '<itemref idref="' + id + '" />\n';
+
+                            result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
+
+                            // epub doesn't support meta refresh, generate entry files for them
+                            if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
+                                // if the file is rather small, reguard them as a total redirect,
+                                // and check for a possible meta refresh to the real html file
+                                if (file.fileSize <= 512) {
+                                    // @TODO: improve the accuracy for meta refresh detection
+                                    var metaRefreshUrl = sbConvCommon.getMetaRefreshUrl(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
+                                    if (metaRefreshUrl) {
+                                        var opf_id = "refresh" + refreshes;
+                                        refreshes++;
+                                        var subPath = "sb2epub/" + opf_id + ".xhtml";
+
+                                        if (/^[a-z][a-z0-9+.-]*:/.test(metaRefreshUrl)) {
+                                            // absolute link
+                                            var metaRefreshRef = metaRefreshUrl;
+                                        } else if (/^\/\//.test(metaRefreshUrl)) {
+                                            // protocol relative link:
+                                            // meaningless for file: protocol in ScrapBook and shouldn't happen
+                                            // treat them as absolute link, althoug this would get an almost random target
+                                            var metaRefreshRef = metaRefreshUrl;
+                                        } else {
+                                            // relative link: rewrite the path
+                                            var metaRefreshRef = "../scrapbook/data/" + id + "/" + metaRefreshUrl;
+                                        }
+
+                                        zipWriteFile(zipWritter, "OEBPS/" + subPath,
+                                            '<?xml version="1.0" encoding="utf-8"?>\n' +
+                                            '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+                                            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                                            '  <head>\n' +
+                                            '    <meta charset="UTF-8" />\n' +
+                                            '  </head>\n' +
+                                            '  <body>\n' +
+                                            '    <a href="' + metaRefreshRef + '" target="_blank">#META REFRESH</a>\n' +
+                                            '  </body>\n' +
+                                            '</html>\n');
+
+                                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                                            indent(depth * 2) + '  <navLabel>\n' +
+                                            indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
+                                            indent(depth * 2) + '  </navLabel>\n' +
+                                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
+                                            indent(depth * 2) + '</navPoint>\n';
+                                        playOrder++;
+                                        continue;
+                                    }
+                                }
+
+                                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
                                 result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
                                     indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(sbConvData.getProperty(res, "title")) + '</text>\n' +
@@ -1705,17 +1802,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             }
                             index++;
                         }
-                    } else {
-                        var text = sbConvCommon.escapeHTML(sbConvData.getProperty(res, "title"));
-                        if (sbConvData.getProperty(res, "type") === "separator") { text = "---- " + text + " ----"; }
-                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
-                            indent(depth * 2) + '  <navLabel>\n' +
-                            indent(depth * 2) + '    <text>' + text + '</text>\n' +
-                            indent(depth * 2) + '  </navLabel>\n' +
-                            indent(depth * 2) + '  <content src="blank.xhtml" />\n' +
-                            indent(depth * 2) + '</navPoint>\n';
-                        playOrder++;
-                    }
+                        break;
                 }
             }
         }
@@ -1746,7 +1833,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '  </metadata>\n' +
         '  <manifest>\n' +
         '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
-        '    <item id="blank" href="blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
+        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
         '  </manifest>\n' +
         '  <spine toc="ncx">\n' + spine +
         '  </spine>\n' +
@@ -1771,15 +1858,15 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '</ncx>\n');
 
     // The epub reader may strip folder entries without path, so we make a blank page for them.
-    zipWriteFile(zipWritter, "OEBPS/blank.xhtml",
+    zipWriteFile(zipWritter, "OEBPS/sb2epub/blank.xhtml",
         '<?xml version="1.0" encoding="utf-8"?>\n' +
         '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
         '<html xmlns="http://www.w3.org/1999/xhtml"></html>\n');
 
     if (includeAllFiles) {
-        zipAddDirEx(zipWritter, input, "OEBPS/Content");
+        zipAddDirEx(zipWritter, input, "OEBPS/scrapbook");
     } else {
-        zipAddDirEx(zipWritter, input, "OEBPS/Content", excludeRegex);
+        zipAddDirEx(zipWritter, input, "OEBPS/scrapbook", excludeRegex);
     }
 
     zipClose(zipWritter);
@@ -1832,30 +1919,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
                 }
 
                 var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
-
-                // epub doesn't support meta refresh, rewrite them to links
-                if (/^OEBPS\/Content\/data\/\d{14}\/index\.html$/.test(saveInZipAs)) {
-                    // if the file is rather small, reguard them as a total redirect,
-                    // and check for a possible meta refresh to the real html file
-                    if (entry.fileSize <= 512) {
-                        // @TODO: improve the accuracy for meta refresh detection
-                        var metaRefreshUrl = sbConvCommon.getMetaRefreshUrl(sbConvCommon.convertToUnicode(sbConvCommon.readFile(entry), "UTF-8"));
-                        if (metaRefreshUrl) {
-                            var content = "<!DOCTYPE html>\n" +
-                                '<html>\n' +
-                                '  <head>\n' +
-                                '    <meta charset="UTF-8" />\n' +
-                                '  </head>\n' +
-                                '  <body>\n' +
-                                '    <a href="' + metaRefreshUrl + '">#META REDIRECT</a>\n' +
-                                '  </body>\n' +
-                                '</html>\n';
-                            zipWriteFile(zipWritter, saveInZipAs, content);
-                            continue;
-                        }
-                    }
-                }
-
                 zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
             }
         }
