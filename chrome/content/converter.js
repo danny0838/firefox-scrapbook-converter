@@ -2134,8 +2134,7 @@ function zipHasEntry(zipWritter, entry) {
 function zipWriteFile(zipWritter, saveInZipAs, content) {
     var channel = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService)
                  .newChannel("data:," + encodeURIComponent(content), null, null);
-    var compressionLevel = zipDetermineCompresssionLevel(saveInZipAs.replace(/^.*\//, ""));
-    zipWritter.addEntryChannel(saveInZipAs, Date.now() * 1000, compressionLevel, channel, false);
+    zipWritter.addEntryChannel(saveInZipAs, Date.now() * 1000, nsIZipWriter.COMPRESSION_BEST, channel, false);
 }
 
 // recursively add dir to the zip, with optionally determinable dirSubPath
