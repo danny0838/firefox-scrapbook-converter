@@ -1611,7 +1611,26 @@ function convert_sb2epub(input, output, includeAllFiles) {
     print("generating file: '" + output.leafName + "' ...");
 
     // create zip
-    var zipWritter = zipOpen(output);
+    // nsIZipWriter will add additional digits and corrupt the mimetype from spec
+    // we copy a pre-compressed zip file containing the mimetype file instead
+    var zipWritter = (function (zipFile) {
+        var istream = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService)
+                        .newChannel("chrome://sbconv/content/mimetype.zip", null, null).open();
+        var bistream = Components.classes["@mozilla.org/binaryinputstream;1"].createInstance(Components.interfaces.nsIBinaryInputStream);
+        bistream.setInputStream(istream);
+        var ostream = Components.classes['@mozilla.org/network/file-output-stream;1'].createInstance(Components.interfaces.nsIFileOutputStream);
+        ostream.init(zipFile, -1, -1, 0);
+        var bostream = Components.classes["@mozilla.org/binaryoutputstream;1"].createInstance(Components.interfaces.nsIBinaryOutputStream);
+        bostream.setOutputStream(ostream);
+        var size = 0;
+        while (size = bistream.available()) {
+            bostream.writeBytes(bistream.readBytes(size), size);
+        }
+        bostream.close();
+        var zipWritter = Components.classes['@mozilla.org/zipwriter;1'].createInstance(nsIZipWriter);
+        zipWritter.open(zipFile, zipPr.PR_RDWR | zipPr.PR_CREATE_FILE);
+        return zipWritter;
+    })(output);
 
     // book data
     // @TODO: use pref setting or appropriate content
@@ -1811,8 +1830,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
             return (new Array(count+1)).join(" ");
         }
     })();
-
-    zipWriteFile(zipWritter, "mimetype", "application/epub+zip");
 
     zipWriteFile(zipWritter, "META-INF/container.xml", 
         '<?xml version="1.0"?>\n' +
