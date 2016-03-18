@@ -203,7 +203,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             notesNext();
         }
         else {
-            error("skip invalid enex: '" + file.path + "'");
+            warn("skip invalid enex: '" + file.path + "'");
             notesFinish();
         }
 
@@ -581,7 +581,7 @@ function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId)
             // create item
             var indexLeafName = ds.getMafProperty(res.indexFileName) || "index.html";
             if (indexLeafName !== "index.html") {
-                error("maff page with index file other than index.html is not supported");
+                warn("maff page with index file other than index.html is not supported");
                 return;
             }
             var item = sbConvCommon.newItem();
@@ -1452,7 +1452,8 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         // if already exists, throw an error
         var rdfFile = dir.clone(); rdfFile.append("index.rdf");
         if (rdfFile.exists()) {
-            throw "File '" + rdfFile.path + "' already exists.";
+            warn("skip since file '" + rdfFile.path + "' already exists.");
+            return;
         }
 
 		// determine top level folder name
@@ -1510,7 +1511,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     if (mergeOutput) {
         if (topDirName === "none") {
             error("mergeOutput cannot be used with no top directory name");
-            throw "mergeOutput cannot be used with no top directory name";
+            return;
         }
         
         var destFile = output.clone();
@@ -1884,7 +1885,7 @@ function convert_sb2maff2(input, output) {
 
     if (!frameFile.exists()) {
         error("tree/frame.html not generated. Please output HTML with frames first.");
-        throw "frame.html not exist";
+        return;
     }
 
     var rdfContent = '<?xml version="1.0"?>\n' +
