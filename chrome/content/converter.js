@@ -984,7 +984,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     var zipFile = output.clone();
                     zipFile.append(sbConvCommon.getTimeStamp() + ".maff");
                     var zw = zipOpen(zipFile);
-                    zipAddFile(zw, overwriteName + "/index.rdf", rdfContent);
+                    zipWriteFile(zw, overwriteName + "/index.rdf", rdfContent);
                     zipAddDir(zw, dir, overwriteName);
                     zipClose(zw);
                     break;
@@ -1490,10 +1490,10 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
                 warn("skip due to duplicate path: " + overwriteName);
                 return;
             }
-            zipAddFile(zw, overwriteName + "/index.rdf", rdfContent);
+            zipWriteFile(zw, overwriteName + "/index.rdf", rdfContent);
             zipAddDir(zw, dir, overwriteName);
         } else {
-            zipAddFile(zw, overwriteName + "/index.rdf", rdfContent);
+            zipWriteFile(zw, overwriteName + "/index.rdf", rdfContent);
             zipAddDir(zw, dir, overwriteName);
             zipClose(zw);
         }
@@ -1725,9 +1725,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
         }
     })();
 
-    zipAddFile(zipWritter, "mimetype", "application/epub+zip");
+    zipWriteFile(zipWritter, "mimetype", "application/epub+zip");
 
-    zipAddFile(zipWritter, "META-INF/container.xml", 
+    zipWriteFile(zipWritter, "META-INF/container.xml", 
         '<?xml version="1.0"?>\n' +
         '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
         '  <rootfiles>\n' +
@@ -1735,7 +1735,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '  </rootfiles>\n' +
         '</container>\n');
 
-    zipAddFile(zipWritter, "OEBPS/content.opf",
+    zipWriteFile(zipWritter, "OEBPS/content.opf",
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
         '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
         '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
@@ -1752,7 +1752,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '  </spine>\n' +
         '</package>\n');
 
-    zipAddFile(zipWritter, "OEBPS/toc.ncx",
+    zipWriteFile(zipWritter, "OEBPS/toc.ncx",
         '<?xml version="1.0" encoding="UTF-8"?>\n' +
         '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n' +
         ' "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n' +
@@ -1771,7 +1771,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '</ncx>\n');
 
     // The epub reader may strip folder entries without path, so we make a blank page for them.
-    zipAddFile(zipWritter, "OEBPS/blank.xhtml",
+    zipWriteFile(zipWritter, "OEBPS/blank.xhtml",
         '<?xml version="1.0" encoding="utf-8"?>\n' +
         '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
         '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
@@ -1855,7 +1855,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                 '    <a href="' + metaRefreshUrl + '">#META REDIRECT</a>\n' +
                                 '  </body>\n' +
                                 '</html>\n';
-                            zipAddFile(zipWritter, saveInZipAs, content);
+                            zipWriteFile(zipWritter, saveInZipAs, content);
                             continue;
                         }
                     }
@@ -1909,8 +1909,8 @@ function convert_sb2maff2(input, output) {
             '</html>\n';
 
     var zw = zipOpen(output);
-    zipAddFile(zw, id + "/index.rdf", rdfContent);
-    zipAddFile(zw, id + "/index.html", indexContent);
+    zipWriteFile(zw, id + "/index.rdf", rdfContent);
+    zipWriteFile(zw, id + "/index.html", indexContent);
     zipAddDir(zw, input, id + "/ScrapBook");
     zipClose(zw);
 
@@ -2130,8 +2130,8 @@ function zipHasEntry(zipWritter, entry) {
     return zipWritter.hasEntry(entry);
 }
 
-// add the text from content to the zip with path saveInZipAs
-function zipAddFile(zipWritter, saveInZipAs, content) {
+// write the specific content into the zip with entry saveInZipAs directly
+function zipWriteFile(zipWritter, saveInZipAs, content) {
     var channel = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService)
                  .newChannel("data:," + encodeURIComponent(content), null, null);
     var compressionLevel = zipDetermineCompresssionLevel(saveInZipAs.replace(/^.*\//, ""));
