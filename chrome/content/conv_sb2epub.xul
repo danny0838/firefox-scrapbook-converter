@@ -9,14 +9,12 @@
     %prefDTD;
 ]>
 
-<dialog id="sbconvConverterWindow"
+<dialog id="sbconvConverterOptionWindow"
+        title="&action.sb2epub;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="scrapbook"
-        title="&action.sb2epub;"
         width="500"
-        height="400"
-        onload="onLoad();"
-        ondialogaccept="convert('sb2epub');">
+        height="400">
 
     <!--JavaScript-->
     <script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
@@ -32,7 +30,7 @@
     <hbox>
         <label>&output;</label>
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
-        <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();" />
+        <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
-    <checkbox id="sb2epub_includeAllFiles" label="&sb2epub.includeAllFiles;" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="includeAllFiles" label="&sb2epub.includeAllFiles;" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>

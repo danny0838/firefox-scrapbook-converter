@@ -9,38 +9,37 @@
     %prefDTD;
 ]>
 
-<dialog id="sbconvConverterWindow"
+<dialog id="sbconvConverterOptionWindow"
+        title="&action.sb2enex;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="scrapbook"
-        title="&action.sb2enex;"
         width="500"
-        height="400"
-        ondialogaccept="convert('sb2enex');">
+        height="400">
 
     <!--JavaScript-->
-    <script type="application/x-javascript" src="chrome://sbconv/content/conv.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/conv_sb2enex.js" />
 
     <!-- Options -->
     <hbox>
         <label>&input;</label>
         <textbox id="inputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);"/>
-        <button id="inputPick" class="dialog" label="&pick;" oncommand="return onInputBrowse();"/>
+        <button id="inputPick" class="dialog" label="&pick;" />
     </hbox>
     <hbox>
         <label>&output;</label>
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
-        <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
+        <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <hbox>
-        <checkbox id="sb2enex_addTags" label="&sb2enex.addTags;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-        <textbox id="sb2enex_addTagsValue" flex="1" value="ScrapBook" persist="value" onchange="this.setAttribute('value', this.value);" />
+        <checkbox id="addTags" label="&sb2enex.addTags;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+        <textbox id="addTagsValue" flex="1" value="ScrapBook" persist="value" onchange="this.setAttribute('value', this.value);" />
     </hbox>
-    <checkbox id="sb2enex_folderAsTag" label="&sb2enex.folderAsTag;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-    <checkbox id="sb2enex_importIndexHTML" label="&sb2enex.importIndexHTML;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-    <checkbox id="sb2enex_importCommentMetadata" label="&sb2enex.importCommentMetadata;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="folderAsTag" label="&sb2enex.folderAsTag;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="importIndexHTML" label="&sb2enex.importIndexHTML;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="importCommentMetadata" label="&sb2enex.importCommentMetadata;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
     <hbox>
-        <checkbox id="sb2enex_importSourcePack" label="&sb2enex.importSourcePack;:" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-        <menulist id="sb2enex_importSourcePackFormat" value="zip" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+        <checkbox id="importSourcePack" label="&sb2enex.importSourcePack;:" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+        <menulist id="importSourcePackFormat" value="zip" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
             <menupopup>
                 <menuitem value="zip" label="zip" />
                 <menuitem value="maff" label="maff" />

@@ -123,24 +123,24 @@ function convert(data) {
         case "enex2sb":
             convert_enex2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
-        case "maf2sb":
-            convert_maf2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
+        case "maff2sb":
+            convert_maff2sb(input, output, data.includeSubdir, data.includeFileName, data.uniqueId);
             break;
         case "html2sb":
             convert_html2sb(input, output, data.includeSubdir, data.uniqueId);
             break;
         case "sb2enex":
-            convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack && data.sb2enex_importSourcePackFormat, data.mergeOutput);
+            convert_sb2enex(input, output, data.addTags, data.folderAsTag, data.importIndexHTML, data.importCommentMetadata, data.importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.sb2maff_topDirName, data.mergeOutput);
+            convert_sb2maff(input, output, data.topDirName, data.mergeOutput);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.sb2zip_topDirName, data.mergeOutput);
+            convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
-            convert_sb2epub(input, output, data.sb2epub_includeAllFiles);
+            convert_sb2epub(input, output, data.includeAllFiles);
             break;
         case "sb2maff2":
             output.initWithPath(data.outputFile);
@@ -148,7 +148,7 @@ function convert(data) {
             break;
         case "sb2zip2":
             output.initWithPath(data.outputFile);
-            convert_sb2zip2(input, output, data.sb2zip2_topDirName);
+            convert_sb2zip2(input, output, data.topDirName);
             break;
         default:
             error("unknown method.");
@@ -508,7 +508,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     }
 }
 
-function convert_maf2sb(input, output, includeSubdir, includeFileName, uniqueId) {
+function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId) {
     print("convert method: .maff --> ScrapBook data");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
@@ -785,7 +785,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     print("import index.html: " + (importIndexHTML ? "yes" : "no"));
     print("write folder to tag: " + (folderAsTag ? "yes" : "no"));
     print("import metadata from comment: " + (importCommentMetadata ? "yes" : "no"));
-    print("import source data pack: " + (importSourcePackFormat || "no"));
+    print("import source data pack as: " + (importSourcePackFormat || "none"));
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 

@@ -9,14 +9,12 @@
     %prefDTD;
 ]>
 
-<dialog id="sbconvConverterWindow"
+<dialog id="sbconvConverterOptionWindow"
+        title="&action.sb2maff2;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="scrapbook"
-        title="&action.sb2maff2;"
         width="500"
-        height="400"
-        onload="onLoad();"
-        ondialogaccept="convert('sb2maff2');">
+        height="400">
 
     <!--JavaScript-->
     <script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
@@ -32,7 +30,7 @@
     <hbox>
         <label>&output;</label>
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
-        <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();" />
+        <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <label style="color: red;">&sb2maff2.note;</label>
 </dialog>

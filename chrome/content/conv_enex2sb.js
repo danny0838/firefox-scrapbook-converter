@@ -1,10 +1,7 @@
-function pickFileSave(targetId, defaultName) {
+function pickFolder(targetId) {
     var FP = Components.classes['@mozilla.org/filepicker;1'].createInstance(Components.interfaces.nsIFilePicker);
-    FP.init(window, null, FP.modeSave);
-    FP.defaultString = defaultName;
-    FP.defaultExtension = "maff";
-    FP.appendFilter("MAFF", "*.maff");
-    if ( [FP.returnOK, FP.returnReplace].indexOf(FP.show()) === -1 ) return false;
+    FP.init(window, null, FP.modeGetFolder);
+    if ( FP.show() != FP.returnOK ) return false;
     var targetElem = document.getElementById(targetId);
     targetElem.value = FP.file.path;
     targetElem.setAttribute("value", targetElem.value);
@@ -12,19 +9,23 @@ function pickFileSave(targetId, defaultName) {
 }
 
 window.addEventListener("load", function () {
-    document.getElementById("inputPath").value = sbConvCommon.getScrapBookDir().path;
-
     document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
         var data = {
-            method: "sb2maff2",
+            method: "enex2sb",
             input: document.getElementById("inputPath").value,
-            output: document.getElementById("inputPath").value, // dummy value to prevent check fail
-            outputFile: document.getElementById("outputPath").value,
+            output: document.getElementById("outputPath").value,
+            includeSubdir: document.getElementById("includeSubdir").checked,
+            includeFileName: document.getElementById("includeFileName").checked,
+            uniqueId: document.getElementById("uniqueId").checked,
         };
         window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
     });
 
+    document.getElementById("inputPick").addEventListener("command", function () {
+        return pickFolder("inputPath");
+    });
+
     document.getElementById("outputPick").addEventListener("command", function () {
-        return pickFileSave("outputPath", sbConvCommon.validateFileName(sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook"));
+        return pickFolder("outputPath");
     });
 });

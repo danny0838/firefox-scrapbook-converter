@@ -9,33 +9,32 @@
     %prefDTD;
 ]>
 
-<dialog id="sbconvConverterWindow"
+<dialog id="sbconvConverterOptionWindow"
+        title="&action.sb2zip;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="scrapbook"
-        title="&action.sb2zip;"
         width="500"
-        height="400"
-        ondialogaccept="convert('sb2zip');">
+        height="400">
 
     <!--JavaScript-->
-    <script type="application/x-javascript" src="chrome://sbconv/content/conv.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/conv_sb2zip.js" />
 
     <!-- Options -->
     <hbox>
         <label>&input;</label>
         <textbox id="inputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);"/>
-        <button id="inputPick" class="dialog" label="&pick;" oncommand="return onInputBrowse();"/>
+        <button id="inputPick" class="dialog" label="&pick;" />
     </hbox>
     <hbox>
         <label>&output;</label>
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
-        <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
+        <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <hbox align="center">
         <label value="&sb2zip.topDirName;:" />
-        <menulist id="sb2zip_topDirName" value="dir" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+        <menulist id="topDirName" value="dir" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
             <menupopup>
-                <menuitem value="none" label="&sb2zip.topDirName.none;" />
+                <menuitem id="topDirName_none" value="none" label="&sb2zip.topDirName.none;" />
                 <menuitem value="id" label="&sb2zip.topDirName.id;" />
                 <menuitem value="dir" label="&sb2zip.topDirName.dir;" />
             </menupopup>

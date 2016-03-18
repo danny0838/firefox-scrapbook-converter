@@ -5,9 +5,9 @@
 <!DOCTYPE prefwindow SYSTEM "chrome://sbconv/locale/converter.dtd">
 
 <dialog id="sbconvConverterWindow"
+        title="&window.title;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         windowtype="scrapbook"
-        title="&window.title;"
         buttons="cancel"
         onload="init();"
         width="600"

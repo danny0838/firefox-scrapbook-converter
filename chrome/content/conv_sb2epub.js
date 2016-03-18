@@ -1,26 +1,31 @@
-function onLoad() {
-    document.getElementById("inputPath").value = sbConvCommon.getScrapBookDir().path;
-}
-
-function onOutputBrowse() {
+function pickFileSave(targetId, defaultName) {
     var FP = Components.classes['@mozilla.org/filepicker;1'].createInstance(Components.interfaces.nsIFilePicker);
     FP.init(window, null, FP.modeSave);
-    FP.defaultString = sbConvCommon.validateFileName(sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook");
+    FP.defaultString = defaultName;
     FP.defaultExtension = "epub";
     FP.appendFilter("EPUB", "*.epub");
     if ( [FP.returnOK, FP.returnReplace].indexOf(FP.show()) === -1 ) return false;
-    var targetElem = document.getElementById("outputPath");
+    var targetElem = document.getElementById(targetId);
     targetElem.value = FP.file.path;
     targetElem.setAttribute("value", targetElem.value);
     return true;
 }
 
-function convert(method) {
-    var data = { method: method }, elem;
-    data["input"] = document.getElementById("inputPath").value;
-    data["output"] = data["input"]; // dummy value to prevent check fail
-    data["outputFile"] = document.getElementById("outputPath").value;
-    data["sb2epub_includeAllFiles"] = document.getElementById("sb2epub_includeAllFiles").checked;
+window.addEventListener("load", function () {
+    document.getElementById("inputPath").value = sbConvCommon.getScrapBookDir().path;
 
-    window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
-}
+    document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
+        var data = {
+            method: "sb2epub",
+            input: document.getElementById("inputPath").value,
+            output: document.getElementById("inputPath").value, // dummy value to prevent check fail
+            outputFile: document.getElementById("outputPath").value,
+            includeAllFiles: document.getElementById("includeAllFiles").checked,
+        };
+        window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
+    });
+
+    document.getElementById("outputPick").addEventListener("command", function () {
+        return pickFileSave("outputPath", sbConvCommon.validateFileName(sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook"));
+    });
+});

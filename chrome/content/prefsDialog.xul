@@ -7,14 +7,14 @@
 <!DOCTYPE main SYSTEM "chrome://sbconv/locale/prefsDialog.dtd">
 
 <prefwindow id="sbconvPrefWindow"
+            title="&window.title;"
             xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
             windowtype="scrapbook"
-            title="&window.title;"
             buttons="cancel">
 
     <prefpane id="pane1" label="">
         <button label="&action.enex2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_enex2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
-        <button label="&action.maf2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_maf2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.maff2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_maff2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.html2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_html2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2enex;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2enex.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
         <button label="&action.sb2maff;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
