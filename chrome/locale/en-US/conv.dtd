@@ -13,10 +13,10 @@
 <!ENTITY sb2enex.importCommentMetadata "Import metadata from &lt;evernote&gt; in the comment">
 <!ENTITY sb2enex.importSourcePack "Import source data pack">
 
-<!ENTITY sb2maff.folderNameStyle "Top folder name style">
-<!ENTITY sb2maff.folderNameStyle.scrapBookId "ScrapBook ID">
-<!ENTITY sb2maff.folderNameStyle.maff "MAFF default">
-<!ENTITY sb2maff.folderNameStyle.folderName "Folder name">
+<!ENTITY sb2maff.topDirName "Top directory name">
+<!ENTITY sb2maff.topDirName.id "ScrapBook ID">
+<!ENTITY sb2maff.topDirName.maff "MAFF default">
+<!ENTITY sb2maff.topDirName.dir "Directory name">
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
 

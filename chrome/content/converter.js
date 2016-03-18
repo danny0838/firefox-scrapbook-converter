@@ -133,7 +133,7 @@ function convert(data) {
             convert_sb2enex(input, output, data.sb2enex_addTags, data.sb2enex_folderAsTag, data.sb2enex_importIndexHTML, data.sb2enex_importCommentMetadata, data.sb2enex_importSourcePack && data.sb2enex_importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.sb2maff_folderNameStyle, data.mergeOutput);
+            convert_sb2maff(input, output, data.sb2maff_topDirName, data.mergeOutput);
             break;
         case "sb2zip":
             convert_sb2zip(input, output, data.mergeOutput);
@@ -1380,10 +1380,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     }
 }
 
-function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
+function convert_sb2maff(input, output, topDirName, mergeOutput) {
     print("convert method: ScrapBook data --> .maff");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("entry directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
@@ -1455,17 +1456,17 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
         }
 
 		// determine top level folder name
-        switch (folderNameStyle) {
-            case "scrapbook_id":
-                var overriteName = getUniqueId(item.id);
+        switch (topDirName) {
+            case "id":
+                var overwriteName = getUniqueId(item.id);
                 break;
             case "maff":
-                var overriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + 
+                var overwriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + 
                 "_" + Math.floor(Math.random() * 1000);
                 break;
-            case "folder":
+            case "dir":
             default:
-                var overriteName = dir.leafName;
+                var overwriteName = dir.leafName;
         }
 
         // generate index.rdf content
@@ -1483,11 +1484,11 @@ function convert_sb2maff(input, output, folderNameStyle, mergeOutput) {
             '</RDF:RDF>\n';
 
 		// add zip file or entry
-        zipAddFile(zw, overriteName + "/index.rdf", rdfContent);
+        zipAddFile(zw, overwriteName + "/index.rdf", rdfContent);
         if (mergeOutput) {
-            zipAddDir(zw, dir, overriteName);
+            zipAddDir(zw, dir, overwriteName);
         } else {
-            zipAddDir(zw, dir, overriteName);
+            zipAddDir(zw, dir, overwriteName);
             zipClose(zw);
         }
     }

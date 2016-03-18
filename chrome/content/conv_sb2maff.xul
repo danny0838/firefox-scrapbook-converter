@@ -31,12 +31,12 @@
         <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
     </hbox>
     <hbox align="center">
-        <label value="&sb2maff.folderNameStyle;:" />
-        <menulist id="sb2maff_folderNameStyle" value="scrapbook_id" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+        <label value="&sb2maff.topDirName;:" />
+        <menulist id="sb2maff_topDirName" value="scrapbook_id" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
             <menupopup>
-                <menuitem value="scrapbook_id" label="&sb2maff.folderNameStyle.scrapBookId;" />
-                <menuitem value="maff" label="&sb2maff.folderNameStyle.maff;" />
-                <menuitem value="folder" label="&sb2maff.folderNameStyle.folderName;" />
+                <menuitem value="id" label="&sb2maff.topDirName.id;" />
+                <menuitem value="maff" label="&sb2maff.topDirName.maff;" />
+                <menuitem value="dir" label="&sb2maff.topDirName.dir;" />
             </menupopup>
         </menulist>
     </hbox>
