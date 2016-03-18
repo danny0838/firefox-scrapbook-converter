@@ -11,6 +11,7 @@
 
 <dialog id="sbconvConverterWindow"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        windowtype="scrapbook"
         title="&action.html2sb;"
         width="500"
         height="400"
