@@ -1806,12 +1806,15 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                             var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
                             var opf_id = 'file' + index;
+                            index++;
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
 
                             result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
 
-                            // epub doesn't support meta refresh, generate entry files for them
+                            // handle main pages (index.html)
                             if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
+                                // epub doesn't support meta refresh, generate entry files for them
+
                                 // if the file is rather small, reguard them as a total redirect,
                                 // and check for a possible meta refresh to the real html file
                                 if (file.fileSize <= 512) {
@@ -1863,9 +1866,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                     }
                                 }
 
-                                // add main entry to the spine
+                                // add main entry to the spine and toc
                                 result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-
                                 result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
                                 result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
@@ -1878,7 +1880,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                 // add non-main entries to spine tails
                                 spine_tails.push(opf_id);
                             }
-                            index++;
                         }
                         break;
                 }
