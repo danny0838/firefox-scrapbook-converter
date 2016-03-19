@@ -28,14 +28,14 @@ function getUUID() {
 
 function getBookMeta() {
     return {
-        id: document.getElementById("epub_id").value || document.getElementById("epub_id").placeholder,
-        title: document.getElementById("epub_title").value || document.getElementById("epub_title").placeholder,
-        language: document.getElementById("epub_language").value || document.getElementById("epub_language").placeholder,
+        id: document.getElementById("epub_id").value,
+        title: document.getElementById("epub_title").value,
+        language: document.getElementById("epub_language").value,
         author: document.getElementById("epub_author").value,
         contributor: document.getElementById("epub_contributor").value,
         publisher: document.getElementById("epub_publisher").value,
         description: document.getElementById("epub_description").value,
-        date: document.getElementById("epub_date").value || document.getElementById("epub_date").placeholder,
+        date: document.getElementById("epub_date").value,
         source: document.getElementById("epub_source").value,
         cover: document.getElementById("epub_coverCheck").checked && document.getElementById("epub_cover").value,
     };
@@ -50,6 +50,30 @@ window.addEventListener("load", function () {
     updateCoverImage(document.getElementById("epub_cover").value);
 
     document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
+        var elem = document.getElementById("epub_id");
+        if (!elem.value) {
+            elem.value = elem.placeholder;
+            elem.setAttribute("value", elem.value);
+        }
+
+        var elem = document.getElementById("epub_title");
+        if (!elem.value) {
+            elem.value = elem.placeholder;
+            elem.setAttribute("value", elem.value);
+        }
+
+        var elem = document.getElementById("epub_language");
+        if (!elem.value) {
+            elem.value = elem.placeholder;
+            elem.setAttribute("value", elem.value);
+        }
+
+        var elem = document.getElementById("epub_date");
+        if (!elem.value) {
+            elem.value = elem.placeholder;
+            elem.setAttribute("value", elem.value);
+        }
+
         var data = {
             method: "sb2epub",
             input: document.getElementById("inputPath").value,
