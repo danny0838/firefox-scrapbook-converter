@@ -1780,7 +1780,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             '    <meta charset="UTF-8" />\n' +
                             '  </head>\n' +
                             '  <body>\n' +
-                            '    <a href="' + sbConvCommon.escapeHTML(source) + '" target="_blank">#BOOKMARK</a>\n' +
+                            '    #BOOKMARK <a href="' + sbConvCommon.escapeHTML(source) + '" target="_blank">' + sbConvCommon.escapeHTML(source) + '</a>\n' +
                             '  </body>\n' +
                             '</html>\n');
 
@@ -1851,7 +1851,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                             '    <meta charset="UTF-8" />\n' +
                                             '  </head>\n' +
                                             '  <body>\n' +
-                                            '    <a href="' + metaRefreshRef + '" target="_blank">#META REFRESH</a>\n' +
+                                            '    #META REFRESH <a href="' + metaRefreshRef + '" target="_blank">' + metaRefreshUrl + '</a>\n' +
                                             '  </body>\n' +
                                             '</html>\n');
 
