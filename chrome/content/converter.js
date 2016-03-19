@@ -1663,6 +1663,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     var [manifest, spine, toc, ncx] = (function () {
         // index, playOrder, depth are 1-based
         var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, bookmarks = 1, refreshes = 1;
+        var spine_tails = [];
         
         // include general files
         // do not include data/<id>/*.* now
@@ -1679,14 +1680,19 @@ function convert_sb2epub(input, output, includeAllFiles) {
                 var opf_id = 'file' + index;
                 var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
                 result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
-                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
                 index++;
+                spine_tails.push(opf_id);
             }
         }
 
         // include each data entry by order
         var res = sbConvCommon.RDF.GetResource("urn:scrapbook:root");
         processResRecursively(res, 1);
+
+        // add trailing spines
+        spine_tails.forEach(function (spine_id) {
+            result.spine += indent(4) + '<itemref idref="' + spine_id + '" linear="no" />\n';
+        });
 
         return [result.manifest, result.spine, result.toc, result.ncx];
 
@@ -1769,7 +1775,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
 
                             result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
-                            result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
 
                             // epub doesn't support meta refresh, generate entry files for them
                             if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
@@ -1779,6 +1784,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                     // @TODO: improve the accuracy for meta refresh detection
                                     var metaRefreshUrl = sbConvCommon.getMetaRefreshUrl(sbConvCommon.convertToUnicode(sbConvCommon.readFile(file), "UTF-8"));
                                     if (metaRefreshUrl) {
+                                        spine_tails.push(opf_id);
+
                                         var opf_id = "refresh" + refreshes;
                                         refreshes++;
                                         var subPath = "sb2epub/" + opf_id + ".xhtml";
@@ -1822,6 +1829,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                     }
                                 }
 
+                                // add main entry to the spine
+                                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+
                                 result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
                                 result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
@@ -1830,6 +1840,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                     indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
                                     indent(depth * 2) + '</navPoint>\n';
                                 playOrder++;
+                            } else {
+                                // add non-main entries to spine tails
+                                spine_tails.push(opf_id);
                             }
                             index++;
                         }
