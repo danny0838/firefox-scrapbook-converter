@@ -33,16 +33,53 @@
         <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <checkbox id="includeAllFiles" label="&sb2epub.includeAllFiles;" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-    <groupbox>
+    <groupbox style="margin-top: 10px;">
         <caption label="&sb2epub.meta;" />
+        <description style="margin: 5px;">&sb2epub.help;</description>
+        <hbox>
+            <label>&sb2epub.id;</label>
+            <textbox id="epub_id" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.title;</label>
+            <textbox id="epub_title" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.language;</label>
+            <textbox id="epub_language" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.author;</label>
+            <textbox id="epub_author" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.contributor;</label>
+            <textbox id="epub_contributor" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.publisher;</label>
+            <textbox id="epub_publisher" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.description;</label>
+            <textbox id="epub_description" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.date;</label>
+            <textbox id="epub_date" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
+        <hbox>
+            <label>&sb2epub.source;</label>
+            <textbox id="epub_source" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        </hbox>
         <hbox>
             <label>&sb2epub.cover;</label>
-            <textbox id="coverPath" flex="1" disabled="true" />
-            <button id="coverPick" class="dialog" label="&pick;" />
+            <textbox id="epub_cover" flex="1" disabled="true" />
+            <button id="epub_coverPick" class="dialog" label="&pick;" />
         </hbox>
         <hbox style="margin: 20px; width: 300px; height: 300px;">
             <spacer flex="1"/>
-            <image id="cover" style="max-width: 250px; max-height: 250px;" />
+            <image id="epub_coverImage" style="max-width: 250px; max-height: 250px;" />
             <spacer flex="1"/>
         </hbox>
     </groupbox>

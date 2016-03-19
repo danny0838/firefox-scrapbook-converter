@@ -25,6 +25,16 @@
 
 <!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">
 <!ENTITY sb2epub.meta "電子書後設資料">
+<!ENTITY sb2epub.help "留空則帶入預設值">
+<!ENTITY sb2epub.id "識別碼:">
+<!ENTITY sb2epub.title "標題:">
+<!ENTITY sb2epub.language "語文:">
+<!ENTITY sb2epub.author "作者:">
+<!ENTITY sb2epub.contributor "協力作者:">
+<!ENTITY sb2epub.publisher "出版者:">
+<!ENTITY sb2epub.description "描述:">
+<!ENTITY sb2epub.date "電子書出版時間:">
+<!ENTITY sb2epub.source "原始出版品:">
 <!ENTITY sb2epub.cover "封面圖片:">
 
 <!ENTITY sb2maff2.note "請先輸出 HTML 資料列表（包含頁框）並更新全文搜尋快取後再執行本操作">

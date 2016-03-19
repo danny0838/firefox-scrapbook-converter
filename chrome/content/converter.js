@@ -1606,10 +1606,21 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
     print("input directory: " + input.path);
     print("output file: " + output.path);
     print("include all files: " + (includeAllFiles ? "yes" : "no"));
+    print("book id: " + bookMeta.id);
+    print("book title: " + bookMeta.title);
+    print("book language: " + bookMeta.language);
+    print("book author: " + bookMeta.author);
+    print("book contributor: " + bookMeta.contributor);
+    print("book description: " + bookMeta.description);
+    print("book E-publication date: " + bookMeta.date);
+    print("book source: " + bookMeta.source);
     print("book cover: " + (bookMeta.cover || "no"));
     print("");
 
     print("generating file: '" + output.leafName + "' ...");
+
+    // record the internal modified time
+    bookMeta.internalModified = sbConvCommon.getW3CTimeStamp();
 
     // create zip
     // nsIZipWriter will add additional digits and corrupt the mimetype from spec
@@ -1632,15 +1643,6 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         zipWritter.open(zipFile, zipPr.PR_RDWR | zipPr.PR_CREATE_FILE);
         return zipWritter;
     })(output);
-
-    // book data
-    // @TODO: use pref setting or appropriate content
-    var bookData = {
-        id: "urn:uuid:" + getUUID(),
-        title: sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook",
-        language: getLocale(),
-        modified: getModifiedDateStamp()
-    };
 
     // determine files not to include
     var excludeEntries = [
@@ -1958,10 +1960,16 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
         '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
         '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
-        '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookData.id) + '</dc:identifier>\n' +
-        '    <dc:title>' + sbConvCommon.escapeHTML(bookData.title) + '</dc:title>\n' +
-        '    <dc:language>' + sbConvCommon.escapeHTML(bookData.language) + '</dc:language>\n' +
-        '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
+        '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookMeta.id) + '</dc:identifier>\n' +
+        '    <dc:title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</dc:title>\n' +
+        '    <dc:language>' + sbConvCommon.escapeHTML(bookMeta.language) + '</dc:language>\n' +
+        '    <dc:creator opf:role="aut">' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
+        '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' +
+        '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' +
+        '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' +
+        '    <dc:date>' + sbConvCommon.escapeHTML(bookMeta.date) + '</dc:date>\n' +
+        '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' +
+        '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookMeta.internalModified) + '</meta>\n' +
         (infoTree.hasCover ? '<meta name="cover" content="cover" />\n' : "") +
         '  </metadata>\n' +
         '  <manifest>\n' +
@@ -1979,7 +1987,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">\n' +
         '<head>\n' +
         '   <meta charset="UTF-8" />\n' +
-        '   <title>' + sbConvCommon.escapeHTML(bookData.title) + '</title>\n' +
+        '   <title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</title>\n' +
         '</head>\n' +
         '<body>\n' +
         '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + infoTree.toc +
@@ -1994,8 +2002,11 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         '   <meta name="dtb:uid" content="amb.vis.ne.jp" />\n' +
         '</head>\n' +
         '<docTitle>\n' +
-        '   <text>' + sbConvCommon.escapeHTML(bookData.title) + '</text>\n' +
+        '   <text>' + sbConvCommon.escapeHTML(bookMeta.title) + '</text>\n' +
         '</docTitle>\n' +
+        '<docAuthor>\n' +
+        '   <text>' + sbConvCommon.escapeHTML(bookMeta.author) + '</text>\n' +
+        '</docAuthor>\n' +
         '<navMap>\n' + infoTree.ncx +
         '</navMap>\n' +
         '</ncx>\n');
@@ -2023,28 +2034,6 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
 
     function indent(count) {
         return (new Array(count+1)).join(" ");
-    }
-
-    function getModifiedDateStamp() {
-        var date = new Date();
-        var y = date.getUTCFullYear();
-        var m = date.getUTCMonth() + 1; if ( m < 10 ) m = "0" + m;
-        var d = date.getUTCDate();      if ( d < 10 ) d = "0" + d;
-        var h = date.getUTCHours();     if ( h < 10 ) h = "0" + h;
-        var i = date.getUTCMinutes();   if ( i < 10 ) i = "0" + i;
-        var s = date.getUTCSeconds();   if ( s < 10 ) s = "0" + s;
-        return y.toString() + "-" + m.toString() + "-" + d.toString() + "T" + h.toString() + ":" + i.toString() + ":" + s.toString() + "Z";
-    }
-
-    function getUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-            return v.toString(16);
-        });
-    }
-
-    function getLocale() {
-        return sbConvCommon.getGlobalUnicharPref("general.useragent.locale", "") || "en";
     }
 }
 

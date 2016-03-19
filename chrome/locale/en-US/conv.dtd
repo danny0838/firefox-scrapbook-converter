@@ -25,6 +25,16 @@
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
 <!ENTITY sb2epub.meta "E-Book Metadata">
+<!ENTITY sb2epub.help "Leave blank to use default values.">
+<!ENTITY sb2epub.id "ID:">
+<!ENTITY sb2epub.title "Title:">
+<!ENTITY sb2epub.language "Language:">
+<!ENTITY sb2epub.author "Author:">
+<!ENTITY sb2epub.contributor "Contributor:">
+<!ENTITY sb2epub.description "Description:">
+<!ENTITY sb2epub.publisher "Publisher:">
+<!ENTITY sb2epub.date "E-Book publication date:">
+<!ENTITY sb2epub.source "Source publication:">
 <!ENTITY sb2epub.cover "Cover image:">
 
 <!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">

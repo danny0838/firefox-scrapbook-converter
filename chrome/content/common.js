@@ -85,6 +85,17 @@
             }
             return false;
         },
+
+        getW3CTimeStamp : function(date) {
+            var date = date || new Date();
+            var y = date.getUTCFullYear();
+            var m = date.getUTCMonth() + 1; if ( m < 10 ) m = "0" + m;
+            var d = date.getUTCDate();      if ( d < 10 ) d = "0" + d;
+            var h = date.getUTCHours();     if ( h < 10 ) h = "0" + h;
+            var i = date.getUTCMinutes();   if ( i < 10 ) i = "0" + i;
+            var s = date.getUTCSeconds();   if ( s < 10 ) s = "0" + s;
+            return y.toString() + "-" + m.toString() + "-" + d.toString() + "T" + h.toString() + ":" + i.toString() + ":" + s.toString() + "Z";
+        },
         
         convertFilePathToURL : function(aFilePath) {
             return oSBCommon.convertFilePathToURL(aFilePath);
