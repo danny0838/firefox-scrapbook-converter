@@ -1660,9 +1660,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
 
     // recurse into files and ScrapBook tree and generate related information
-    var [manifest, spine, toc] = (function () {
+    var [manifest, spine, toc, ncx] = (function () {
         // index, playOrder, depth are 1-based
-        var result = { manifest: "", spine: "", toc: "" }, index = 1, playOrder = 1, bookmarks = 1, refreshes = 1;
+        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, bookmarks = 1, refreshes = 1;
         
         // include general files
         // do not include data/<id>/*.* now
@@ -1678,7 +1678,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
             if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
                 var opf_id = 'file' + index;
                 var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
+                result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
                 index++;
             }
         }
@@ -1687,7 +1687,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         var res = sbConvCommon.RDF.GetResource("urn:scrapbook:root");
         processResRecursively(res, 1);
 
-        return [result.manifest, result.spine, result.toc];
+        return [result.manifest, result.spine, result.toc, result.ncx];
 
         function processResRecursively(containerRes, depth) {
             sbConvCommon.RDFC.Init(sbConvData.data, containerRes);
@@ -1701,18 +1701,23 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                 switch (type) {
                     case "folder":
-                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="sb2epub/blank.xhtml">' + sbConvCommon.escapeHTML(title) + '</a>\n' +
+                            indent(depth * 4 + 2) + '  <ol>\n';
+                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
                             indent(depth * 2) + '  <content src="sb2epub/blank.xhtml" />\n';
                         playOrder++;
                         processResRecursively(res, depth + 1);
-                        result.toc += indent(depth * 2) + '</navPoint>\n';
+                        result.toc += indent(depth * 4 + 2) + '  </ol>\n' +
+                            indent(depth * 4 + 2) + '</li>\n';
+                        result.ncx += indent(depth * 2) + '</navPoint>\n';
                         break;
 
                     case "separator":
-                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="sb2epub/blank.xhtml">---- ' + sbConvCommon.escapeHTML(title) + ' ----</a></li>\n';
+                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>---- ' + sbConvCommon.escapeHTML(title) + ' ----</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1728,7 +1733,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                         zipWriteFile(zipWritter, "OEBPS/" + subPath, 
                             '<?xml version="1.0" encoding="utf-8"?>\n' +
-                            '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+                            '<!DOCTYPE html>\n' +
                             '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
                             '  <head>\n' +
                             '    <meta charset="UTF-8" />\n' +
@@ -1740,7 +1745,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                         result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
                         result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1761,7 +1767,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             var opf_id = 'file' + index;
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
 
-                            result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" />\n';
+                            result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
 
                             // epub doesn't support meta refresh, generate entry files for them
                             if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
@@ -1790,7 +1796,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                                         zipWriteFile(zipWritter, "OEBPS/" + subPath,
                                             '<?xml version="1.0" encoding="utf-8"?>\n' +
-                                            '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+                                            '<!DOCTYPE html>\n' +
                                             '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
                                             '  <head>\n' +
                                             '    <meta charset="UTF-8" />\n' +
@@ -1802,7 +1808,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                                         result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
                                         result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                                        result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                             indent(depth * 2) + '  <navLabel>\n' +
                                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1814,9 +1821,10 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                 }
 
                                 result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                                result.toc += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '" playOrder="' + playOrder + '">\n' +
+                                result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                                result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
-                                    indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(sbConvData.getProperty(res, "title")) + '</text>\n' +
+                                    indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                     indent(depth * 2) + '  </navLabel>\n' +
                                     indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
                                     indent(depth * 2) + '</navPoint>\n';
@@ -1852,6 +1860,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
         '  </metadata>\n' +
         '  <manifest>\n' +
+        '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" />\n' +
         '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
         '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
         '  </manifest>\n' +
@@ -1859,28 +1868,39 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '  </spine>\n' +
         '</package>\n');
 
+    zipWriteFile(zipWritter, "OEBPS/toc.xhtml",
+        '<?xml version="1.0" encoding="utf-8"?>\n' +
+        '<!DOCTYPE html>\n' +
+        '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">\n' +
+        '<head>\n' +
+        '   <meta charset="UTF-8" />\n' +
+        '   <title>' + sbConvCommon.escapeHTML(bookData.title) + '</title>\n' +
+        '</head>\n' +
+        '<body>\n' +
+        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' +
+        '    <ol>\n' + toc +
+        '    </ol>\n' +
+        '  </nav>\n' +
+        '</body>\n' +
+        '</html>\n');
+
     zipWriteFile(zipWritter, "OEBPS/toc.ncx",
         '<?xml version="1.0" encoding="UTF-8"?>\n' +
-        '<!DOCTYPE ncx PUBLIC "-//NISO//DTD ncx 2005-1//EN"\n' +
-        ' "http://www.daisy.org/z3986/2005/ncx-2005-1.dtd">\n' +
         '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
         '<head>\n' +
         '   <meta name="dtb:uid" content="amb.vis.ne.jp" />\n' +
         '</head>\n' +
         '<docTitle>\n' +
-        '   <text>' + bookData.title + '</text>\n' +
+        '   <text>' + sbConvCommon.escapeHTML(bookData.title) + '</text>\n' +
         '</docTitle>\n' +
-        '<docAuthor>\n' +
-        '   <text>' + bookData.author + '</text>\n' +
-        '</docAuthor>\n' +
-        '<navMap>\n' + toc +
+        '<navMap>\n' + ncx +
         '</navMap>\n' +
         '</ncx>\n');
 
     // The epub reader may strip folder entries without path, so we make a blank page for them.
     zipWriteFile(zipWritter, "OEBPS/sb2epub/blank.xhtml",
         '<?xml version="1.0" encoding="utf-8"?>\n' +
-        '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">\n' +
+        '<!DOCTYPE html>\n' +
         '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
         '  <head></head>\n' +
         '  <body></body>\n' +
