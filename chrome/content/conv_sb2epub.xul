@@ -74,7 +74,8 @@
         </hbox>
         <hbox>
             <label>&sb2epub.cover;</label>
-            <textbox id="epub_cover" flex="1" disabled="true" />
+            <checkbox id="epub_coverCheck" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+            <textbox id="epub_cover" flex="1" persist="value" disabled="true" onchange="this.setAttribute('value', this.value);" />
             <button id="epub_coverPick" class="dialog" label="&pick;" />
         </hbox>
         <hbox style="margin: 20px; width: 300px; height: 300px;">

@@ -11,6 +11,14 @@ function pickFileSave(targetId, defaultName) {
     return true;
 }
 
+function updateCoverImage(file) {
+    if (typeof file !== "string") file = file.path;
+    if (!file) return;
+    document.getElementById("epub_coverImage").src = sbConvCommon.convertFilePathToURL(file);
+    document.getElementById("epub_cover").label = document.getElementById("epub_cover").value = file;
+    document.getElementById("epub_cover").setAttribute('value', file);
+}
+
 function getUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
@@ -29,7 +37,7 @@ function getBookMeta() {
         description: document.getElementById("epub_description").value,
         date: document.getElementById("epub_date").value || document.getElementById("epub_date").placeholder,
         source: document.getElementById("epub_source").value,
-        cover: document.getElementById("epub_cover").value,
+        cover: document.getElementById("epub_coverCheck").checked && document.getElementById("epub_cover").value,
     };
 }
 
@@ -39,6 +47,7 @@ window.addEventListener("load", function () {
     document.getElementById("epub_title").placeholder = sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook";
     document.getElementById("epub_language").placeholder = sbConvCommon.getGlobalUnicharPref("general.useragent.locale", "") || "en";
     document.getElementById("epub_date").placeholder = sbConvCommon.getW3CTimeStamp("");
+    updateCoverImage(document.getElementById("epub_cover").value);
 
     document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
         var data = {
@@ -61,7 +70,7 @@ window.addEventListener("load", function () {
         FP.init(window, null, FP.modeOpen);
         FP.appendFilters(FP.filterImages);
         if ( FP.show() != FP.returnOK ) return;
-        document.getElementById("epub_coverImage").src = sbConvCommon.convertFilePathToURL(FP.file.path);
-        document.getElementById("epub_cover").label = document.getElementById("epub_cover").value = FP.file.path;
+        updateCoverImage(FP.file.path);
+        document.getElementById("epub_coverCheck").checked = true;
     });
 });
