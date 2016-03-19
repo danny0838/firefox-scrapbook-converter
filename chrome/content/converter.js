@@ -1679,6 +1679,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                 var opf_id = 'file' + index;
                 var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
                 result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
+                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
                 index++;
             }
         }
@@ -1768,6 +1769,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
 
                             result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
+                            result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
 
                             // epub doesn't support meta refresh, generate entry files for them
                             if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
@@ -1820,7 +1822,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                     }
                                 }
 
-                                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
                                 result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
                                 result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
