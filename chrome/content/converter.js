@@ -1662,7 +1662,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     // recurse into files and ScrapBook tree and generate related information
     var [manifest, spine, toc, ncx] = (function () {
         // index, playOrder, depth are 1-based
-        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, blanks = 1, bookmarks = 1, refreshes = 1;
+        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, folders = 1, separators = 1, bookmarks = 1, refreshes = 1;
         var spine_tails = [];
         
         // include general files
@@ -1708,8 +1708,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                 switch (type) {
                     case "folder":
-                        var opf_id = "blank" + blanks;
-                        blanks++;
+                        var opf_id = "folder" + folders;
+                        folders++;
                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                         // The epub reader may strip folder entries without path, so we make a blank page for them.
@@ -1717,7 +1717,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             '<?xml version="1.0" encoding="utf-8"?>\n' +
                             '<!DOCTYPE html>\n' +
                             '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-                            '  <head></head>\n' +
+                            '  <head>\n' + 
+                            '    <title>' + sbConvCommon.escapeHTML(title) + '</title>\n' +
+                            '  </head>\n' +
                             '  <body></body>\n' +
                             '</html>\n');
 
@@ -1738,8 +1740,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
                         break;
 
                     case "separator":
-                        var opf_id = "blank" + blanks;
-                        blanks++;
+                        var opf_id = "separator" + separators;
+                        separators++;
                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                         // The epub reader may strip folder entries without path, so we make a blank page for them.
@@ -1747,7 +1749,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
                             '<?xml version="1.0" encoding="utf-8"?>\n' +
                             '<!DOCTYPE html>\n' +
                             '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-                            '  <head></head>\n' +
+                            '  <head>\n' + 
+                            '    <title>' + sbConvCommon.escapeHTML(title) + '</title>\n' +
+                            '  </head>\n' +
                             '  <body></body>\n' +
                             '</html>\n');
 
