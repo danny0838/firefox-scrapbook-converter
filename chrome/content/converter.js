@@ -1697,9 +1697,16 @@ function convert_sb2epub(input, output, includeAllFiles) {
         return [result.manifest, result.spine, result.toc, result.ncx];
 
         function processResRecursively(containerRes, depth) {
+            var hasChild = false;
             sbConvCommon.RDFC.Init(sbConvData.data, containerRes);
             var resEnum = sbConvCommon.RDFC.GetElements();
+
             while (resEnum.hasMoreElements()) {
+                if (!hasChild) {
+                    hasChild = true;
+                    result.toc += indent(depth * 4) + '<ol>\n';
+                }
+
                 var res = resEnum.getNext();
                 var id = sbConvData.getProperty(res, "id");
                 var type = sbConvData.getProperty(res, "type");
@@ -1725,17 +1732,17 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                         result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
                         result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a>\n' +
-                            indent(depth * 4 + 2) + '  <ol>\n';
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a>\n';
                         result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
                             indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
+
                         processResRecursively(res, depth + 1);
-                        result.toc += indent(depth * 4 + 2) + '  </ol>\n' +
-                            indent(depth * 4 + 2) + '</li>\n';
+
+                        result.toc += indent(depth * 4 + 2) + '</li>\n';
                         result.ncx += indent(depth * 2) + '</navPoint>\n';
                         break;
 
@@ -1887,6 +1894,10 @@ function convert_sb2epub(input, output, includeAllFiles) {
                         break;
                 }
             }
+
+            if (hasChild) {
+                result.toc += indent(depth * 4) + '</ol>\n';
+            }
         }
 
         function indent(count) {
@@ -1929,9 +1940,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '   <title>' + sbConvCommon.escapeHTML(bookData.title) + '</title>\n' +
         '</head>\n' +
         '<body>\n' +
-        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' +
-        '    <ol>\n' + toc +
-        '    </ol>\n' +
+        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + toc +
         '  </nav>\n' +
         '</body>\n' +
         '</html>\n');
