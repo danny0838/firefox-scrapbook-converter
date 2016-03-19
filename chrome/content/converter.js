@@ -1660,7 +1660,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
 
     // recurse into files and ScrapBook tree and generate related information
-    var [manifest, spine, toc, ncx] = (function () {
+    var infoTree = (function () {
         // index, playOrder, depth are 1-based
         var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, folders = 1, separators = 1, bookmarks = 1, refreshes = 1;
         var spine_tails = [];
@@ -1694,7 +1694,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
             result.spine += indent(4) + '<itemref idref="' + spine_id + '" linear="no" />\n';
         });
 
-        return [result.manifest, result.spine, result.toc, result.ncx];
+        return result;
 
         function processResRecursively(containerRes, depth) {
             var hasChild = false;
@@ -1925,9 +1925,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '  <manifest>\n' +
         '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
         '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><!-- epub2 -->\n' +
-        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
+        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ infoTree.manifest +
         '  </manifest>\n' +
-        '  <spine toc="ncx">\n' + spine +
+        '  <spine toc="ncx">\n' + infoTree.spine +
         '  </spine>\n' +
         '</package>\n');
 
@@ -1940,7 +1940,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '   <title>' + sbConvCommon.escapeHTML(bookData.title) + '</title>\n' +
         '</head>\n' +
         '<body>\n' +
-        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + toc +
+        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + infoTree.toc +
         '  </nav>\n' +
         '</body>\n' +
         '</html>\n');
@@ -1954,7 +1954,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '<docTitle>\n' +
         '   <text>' + sbConvCommon.escapeHTML(bookData.title) + '</text>\n' +
         '</docTitle>\n' +
-        '<navMap>\n' + ncx +
+        '<navMap>\n' + infoTree.ncx +
         '</navMap>\n' +
         '</ncx>\n');
 
