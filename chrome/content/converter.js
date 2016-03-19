@@ -1827,6 +1827,9 @@ function convert_sb2epub(input, output, includeAllFiles) {
                                         refreshes++;
                                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
+                                        // prevent not-well-escaped chars
+                                        metaRefreshUrl = sbConvCommon.escapeHTML(sbConvCommon.unescapeHTML(metaRefreshUrl));
+
                                         if (/^[a-z][a-z0-9+.-]*:/.test(metaRefreshUrl)) {
                                             // absolute link
                                             var metaRefreshRef = metaRefreshUrl;
