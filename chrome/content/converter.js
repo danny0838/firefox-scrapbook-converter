@@ -1662,7 +1662,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
     // recurse into files and ScrapBook tree and generate related information
     var [manifest, spine, toc, ncx] = (function () {
         // index, playOrder, depth are 1-based
-        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, bookmarks = 1, refreshes = 1;
+        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, blanks = 1, bookmarks = 1, refreshes = 1;
         var spine_tails = [];
         
         // include general files
@@ -1708,13 +1708,28 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
                 switch (type) {
                     case "folder":
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="sb2epub/blank.xhtml">' + sbConvCommon.escapeHTML(title) + '</a>\n' +
+                        var opf_id = "blank" + blanks;
+                        blanks++;
+                        var subPath = "sb2epub/" + opf_id + ".xhtml";
+
+                        // The epub reader may strip folder entries without path, so we make a blank page for them.
+                        zipWriteFile(zipWritter, "OEBPS/" + subPath,
+                            '<?xml version="1.0" encoding="utf-8"?>\n' +
+                            '<!DOCTYPE html>\n' +
+                            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                            '  <head></head>\n' +
+                            '  <body></body>\n' +
+                            '</html>\n');
+
+                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a>\n' +
                             indent(depth * 4 + 2) + '  <ol>\n';
                         result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
-                            indent(depth * 2) + '  <content src="sb2epub/blank.xhtml" />\n';
+                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
                         processResRecursively(res, depth + 1);
                         result.toc += indent(depth * 4 + 2) + '  </ol>\n' +
@@ -1723,12 +1738,27 @@ function convert_sb2epub(input, output, includeAllFiles) {
                         break;
 
                     case "separator":
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="sb2epub/blank.xhtml">---- ' + sbConvCommon.escapeHTML(title) + ' ----</a></li>\n';
+                        var opf_id = "blank" + blanks;
+                        blanks++;
+                        var subPath = "sb2epub/" + opf_id + ".xhtml";
+
+                        // The epub reader may strip folder entries without path, so we make a blank page for them.
+                        zipWriteFile(zipWritter, "OEBPS/" + subPath,
+                            '<?xml version="1.0" encoding="utf-8"?>\n' +
+                            '<!DOCTYPE html>\n' +
+                            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                            '  <head></head>\n' +
+                            '  <body></body>\n' +
+                            '</html>\n');
+
+                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">---- ' + sbConvCommon.escapeHTML(title) + ' ----</a></li>\n';
                         result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>---- ' + sbConvCommon.escapeHTML(title) + ' ----</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
-                            indent(depth * 2) + '  <content src="sb2epub/blank.xhtml" />\n' +
+                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
                             indent(depth * 2) + '</navPoint>\n';
                         playOrder++;
                         break;
@@ -1912,7 +1942,7 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '</navMap>\n' +
         '</ncx>\n');
 
-    // The epub reader may strip folder entries without path, so we make a blank page for them.
+    // simple fallback for pages that cannot be rendered
     zipWriteFile(zipWritter, "OEBPS/sb2epub/blank.xhtml",
         '<?xml version="1.0" encoding="utf-8"?>\n' +
         '<!DOCTYPE html>\n' +
