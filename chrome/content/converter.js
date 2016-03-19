@@ -1864,7 +1864,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
         '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
         '  </manifest>\n' +
-        '  <spine toc="ncx">\n' + spine +
+        '  <spine toc="ncx">\n' +
+        '    <itemref idref="toc" />\n' + spine +
         '  </spine>\n' +
         '</package>\n');
 
