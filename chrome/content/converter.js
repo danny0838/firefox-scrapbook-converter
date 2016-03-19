@@ -1912,8 +1912,8 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
         '  </metadata>\n' +
         '  <manifest>\n' +
-        '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" />\n' +
-        '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" />\n' +
+        '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
+        '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><!-- epub2 -->\n' +
         '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ manifest +
         '  </manifest>\n' +
         '  <spine toc="ncx">\n' + spine +
