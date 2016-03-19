@@ -24,6 +24,8 @@
 <!ENTITY sb2zip.topDirName.dir "目錄名稱">
 
 <!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">
+<!ENTITY sb2epub.meta "電子書後設資料">
+<!ENTITY sb2epub.cover "封面圖片:">
 
 <!ENTITY sb2maff2.note "請先輸出 HTML 資料列表（包含頁框）並更新全文搜尋快取後再執行本操作">
 

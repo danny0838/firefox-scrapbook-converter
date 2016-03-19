@@ -140,7 +140,7 @@ function convert(data) {
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
-            convert_sb2epub(input, output, data.includeAllFiles);
+            convert_sb2epub(input, output, data.includeAllFiles, data.bookMeta);
             break;
         case "sb2maff2":
             output.initWithPath(data.outputFile);
@@ -1601,11 +1601,12 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     }
 }
 
-function convert_sb2epub(input, output, includeAllFiles) {
+function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
     print("convert method: whole ScrapBook --> .epub");
     print("input directory: " + input.path);
     print("output file: " + output.path);
     print("include all files: " + (includeAllFiles ? "yes" : "no"));
+    print("book cover: " + (bookMeta.cover || "no"));
     print("");
 
     print("generating file: '" + output.leafName + "' ...");
@@ -1662,8 +1663,52 @@ function convert_sb2epub(input, output, includeAllFiles) {
     // recurse into files and ScrapBook tree and generate related information
     var infoTree = (function () {
         // index, playOrder, depth are 1-based
-        var result = { manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, folders = 1, separators = 1, bookmarks = 1, refreshes = 1;
+        var result = { hasCover: false, manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, folders = 1, separators = 1, bookmarks = 1, refreshes = 1;
         var spine_tails = [];
+
+        // handle cover
+        (function (coverFilePath) {
+            if (!coverFilePath) return;
+
+            // convert path to file object
+            try {
+                var coverFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+                coverFile.initWithPath(coverFilePath);
+                if (!(coverFile.exists() && !coverFile.isDirectory())) {
+                    throw "not valid";
+                }
+            }
+            catch(ex) {
+                error("cover image '" + input.path + "' is not an available file.");
+                return;
+            }
+
+            // add cover file to the zip
+            var [filename, ext] = sbConvCommon.splitFileName(coverFile.leafName);
+            filename = "cover." + ext;
+            zipAddFile(zipWritter, "OEBPS/Images/" + filename, coverFile);
+
+            // generate the cover page
+            zipWriteFile(zipWritter, "OEBPS/sb2epub/cover.xhtml",
+                '<?xml version="1.0" encoding="utf-8"?>\n' +
+                '<!DOCTYPE html>\n' +
+                '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+                '  <head>\n' +
+                '    <meta charset="UTF-8" />\n' +
+                '    <title>Cover</title>\n' +
+                '    <style>.cover { text-align: center; }</style>\n' +
+                '  </head>\n' +
+                '  <body>\n' +
+                '    <div><img alt="" src="../Images/' + filename + '" /></div>\n' +
+                '  </body>\n' +
+                '</html>\n');
+
+            var mime = sbConvCommon.getFileMime(coverFile) || "application/octet-stream";
+            result.manifest += indent(4) + '<item id="' + filename + '" href="Images/' + filename + '" media-type="' + mime + '" />\n';
+            result.manifest += indent(4) + '<item id="cover" href="sb2epub/cover.xhtml" media-type="application/xhtml+xml" />\n';
+            result.spine += indent(4) + '<itemref idref="cover" />\n';
+            result.hasCover = true;
+        })(bookMeta.cover);
         
         // include general files
         // do not include data/<id>/*.* now
@@ -1899,10 +1944,6 @@ function convert_sb2epub(input, output, includeAllFiles) {
                 result.toc += indent(depth * 4) + '</ol>\n';
             }
         }
-
-        function indent(count) {
-            return (new Array(count+1)).join(" ");
-        }
     })();
 
     zipWriteFile(zipWritter, "META-INF/container.xml", 
@@ -1921,11 +1962,12 @@ function convert_sb2epub(input, output, includeAllFiles) {
         '    <dc:title>' + sbConvCommon.escapeHTML(bookData.title) + '</dc:title>\n' +
         '    <dc:language>' + sbConvCommon.escapeHTML(bookData.language) + '</dc:language>\n' +
         '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookData.modified) + '</meta>\n' +
+        (infoTree.hasCover ? '<meta name="cover" content="cover" />\n' : "") +
         '  </metadata>\n' +
         '  <manifest>\n' +
         '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
         '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><!-- epub2 -->\n' +
-        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n'+ infoTree.manifest +
+        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n' + infoTree.manifest +
         '  </manifest>\n' +
         '  <spine toc="ncx">\n' + infoTree.spine +
         '  </spine>\n' +
@@ -1978,6 +2020,10 @@ function convert_sb2epub(input, output, includeAllFiles) {
 
     // finish
     convert_finish();
+
+    function indent(count) {
+        return (new Array(count+1)).join(" ");
+    }
 
     function getModifiedDateStamp() {
         var date = new Date();
@@ -2270,6 +2316,11 @@ function zipWriteFile(zipWritter, saveInZipAs, content) {
     var channel = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService)
                  .newChannel("data:," + encodeURIComponent(content), null, null);
     zipWritter.addEntryChannel(saveInZipAs, Date.now() * 1000, nsIZipWriter.COMPRESSION_BEST, channel, false);
+}
+
+function zipAddFile(zipWritter, saveInZipAs, file) {
+    var compressionLevel = zipDetermineCompresssionLevel(file.leafName);
+    zipWritter.addEntryFile(saveInZipAs, compressionLevel, file, false);
 }
 
 /**

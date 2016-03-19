@@ -24,6 +24,8 @@
 <!ENTITY sb2zip.topDirName.dir "目錄名稱">
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
+<!ENTITY sb2epub.meta "E-Book Metadata">
+<!ENTITY sb2epub.cover "Cover image:">
 
 <!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">
 

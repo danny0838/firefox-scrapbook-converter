@@ -33,4 +33,17 @@
         <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <checkbox id="includeAllFiles" label="&sb2epub.includeAllFiles;" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <groupbox>
+        <caption label="&sb2epub.meta;" />
+        <hbox>
+            <label>&sb2epub.cover;</label>
+            <textbox id="coverPath" flex="1" disabled="true" />
+            <button id="coverPick" class="dialog" label="&pick;" />
+        </hbox>
+        <hbox style="margin: 20px; width: 300px; height: 300px;">
+            <spacer flex="1"/>
+            <image id="cover" style="max-width: 250px; max-height: 250px;" />
+            <spacer flex="1"/>
+        </hbox>
+    </groupbox>
 </dialog>
