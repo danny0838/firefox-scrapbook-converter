@@ -455,7 +455,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                 }
 
                 if (html === false) {
-                    warn("cannot read en-note data and export the original html instead");
+                    warn("cannot read en-note data from '" + item.title + "' and export the original xhtml as fallback.");
                     html = data;
                 }
 
@@ -580,10 +580,6 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
 
             // create item
             var indexLeafName = ds.getMafProperty(res.indexFileName) || "index.html";
-            if (indexLeafName !== "index.html") {
-                warn("maff page with index file other than index.html is not supported");
-                return;
-            }
             var item = sbConvCommon.newItem();
             item.title = ds.getMafProperty(res.title);
             item.source = ds.getMafProperty(res.originalUrl);
@@ -591,6 +587,11 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             item.id = item.create = item.modify = parseMafTime(ds.getMafProperty(res.archiveTime));
             if (uniqueId) item.id = getUniqueId(item.id);
             item.folder = subPath;
+
+            if (indexLeafName !== "index.html") {
+                warn("'" + item.title + "' (" + item.id + ") has index file other than index.html, and is not supported.");
+                return;
+            }
 
             var indexDat = pageDir.clone(); indexDat.append("index.dat");
             sbConvCommon.writeIndexDat(item, indexDat);
