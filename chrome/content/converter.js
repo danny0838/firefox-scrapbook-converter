@@ -566,7 +566,12 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
         }
 
         function pagesFinish() {
-            tmpDir.remove(true);
+            // @FIXME: Exception is frequently seen here if the page is skipped. Cause to be determined.
+            try {
+                tmpDir.remove(true);
+            } catch (ex) {
+                console.error(ex);
+            }
             // next file (async)
             setTimeout(filesNext, 0);
         }
