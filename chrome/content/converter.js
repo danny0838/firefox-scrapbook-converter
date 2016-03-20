@@ -1662,108 +1662,142 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         "search.html"
     ].map(function (pattern) { return sbConvCommon.escapeRegExp(pattern); });
 
-    // recurse into files and ScrapBook tree and generate related information
-    var infoTree = (function () {
-        // index, playOrder, depth are 1-based
-        var result = { hasCover: false, manifest: "", spine: "", toc: "", ncx: "" }, index = 1, playOrder = 1, folders = 1, separators = 1, bookmarks = 1, refreshes = 1;
-        var spine_tails = [];
+    // index, playOrder, depth are 1-based
+    var infoTree = { hasCover: false, manifest: "", spine: "", toc: "", ncx: "" },
+        fileIndex = 1, playOrder = 1, folderIndex = 1, separatorIndex = 1, bookmarkIndex = 1, refreshIndex = 1;
+    var spine_tails = [];
 
-        // handle cover
-        (function (coverFilePath) {
-            if (!coverFilePath) return;
+    var indent = function (count) {
+        return (new Array(count+1)).join(" ");
+    };
 
-            // convert path to file object
-            try {
-                var coverFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
-                coverFile.initWithPath(coverFilePath);
-                if (!(coverFile.exists() && !coverFile.isDirectory())) {
-                    throw "not valid";
-                }
-            }
-            catch(ex) {
-                error("cover image '" + input.path + "' is not an available file.");
-                return;
-            }
+    var handleCover = function (coverFilePath) {
+        if (!coverFilePath) return;
 
-            // add cover file to the zip
-            var [filename, ext] = sbConvCommon.splitFileName(coverFile.leafName);
-            filename = "cover." + ext;
-            zipAddFile(zipWritter, "OEBPS/Images/" + filename, coverFile);
-
-            // generate the cover page
-            zipWriteFile(zipWritter, "OEBPS/sb2epub/cover.xhtml",
-                '<?xml version="1.0" encoding="utf-8"?>\n' +
-                '<!DOCTYPE html>\n' +
-                '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-                '  <head>\n' +
-                '    <meta charset="UTF-8" />\n' +
-                '    <title>Cover</title>\n' +
-                '    <style>.cover { text-align: center; }</style>\n' +
-                '  </head>\n' +
-                '  <body>\n' +
-                '    <div><img alt="" src="../Images/' + filename + '" /></div>\n' +
-                '  </body>\n' +
-                '</html>\n');
-
-            var mime = sbConvCommon.getFileMime(coverFile) || "application/octet-stream";
-            result.manifest += indent(4) + '<item id="' + filename + '" href="Images/' + filename + '" media-type="' + mime + '" />\n';
-            result.manifest += indent(4) + '<item id="cover" href="sb2epub/cover.xhtml" media-type="application/xhtml+xml" />\n';
-            result.spine += indent(4) + '<itemref idref="cover" />\n';
-            result.hasCover = true;
-        })(bookMeta.cover);
-        
-        // include general files
-        // do not include data/<id>/*.* now
-        var files = getDescFiles(input, true), file;
-        var excludeRegex = new RegExp("^scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
-        while (files.length) {
-            file = files.shift();
-            if ( !(file.exists() && file.isFile()) ) continue;
-            var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
-            if (!includeAllFiles && excludeRegex.test(subPath)) {
-                continue;
-            }
-            if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
-                var opf_id = 'file' + index;
-                var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
-                index++;
-                spine_tails.push(opf_id);
+        // convert path to file object
+        try {
+            var coverFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+            coverFile.initWithPath(coverFilePath);
+            if (!(coverFile.exists() && !coverFile.isDirectory())) {
+                throw "not valid";
             }
         }
+        catch(ex) {
+            error("cover image '" + input.path + "' is not an available file.");
+            return;
+        }
 
-        // include each data entry by order
-        var res = sbConvCommon.RDF.GetResource("urn:scrapbook:root");
-        processResRecursively(res, 1);
+        // add cover file to the zip
+        var [filename, ext] = sbConvCommon.splitFileName(coverFile.leafName);
+        filename = "cover." + ext;
+        zipAddFile(zipWritter, "OEBPS/Images/" + filename, coverFile);
 
-        // add trailing spines
-        spine_tails.forEach(function (spine_id) {
-            result.spine += indent(4) + '<itemref idref="' + spine_id + '" linear="no" />\n';
-        });
+        // generate the cover page
+        zipWriteFile(zipWritter, "OEBPS/sb2epub/cover.xhtml",
+            '<?xml version="1.0" encoding="utf-8"?>\n' +
+            '<!DOCTYPE html>\n' +
+            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+            '  <head>\n' +
+            '    <meta charset="UTF-8" />\n' +
+            '    <title>Cover</title>\n' +
+            '    <style>.cover { text-align: center; }</style>\n' +
+            '  </head>\n' +
+            '  <body>\n' +
+            '    <div><img alt="" src="../Images/' + filename + '" /></div>\n' +
+            '  </body>\n' +
+            '</html>\n');
 
-        return result;
+        var mime = sbConvCommon.getFileMime(coverFile) || "application/octet-stream";
+        infoTree.manifest += indent(4) + '<item id="' + filename + '" href="Images/' + filename + '" media-type="' + mime + '" />\n';
+        infoTree.manifest += indent(4) + '<item id="cover" href="sb2epub/cover.xhtml" media-type="application/xhtml+xml" />\n';
+        infoTree.spine += indent(4) + '<itemref idref="cover" />\n';
+        infoTree.hasCover = true;
 
-        function processResRecursively(containerRes, depth) {
-            var hasChild = false;
-            sbConvCommon.RDFC.Init(sbConvData.data, containerRes);
-            var resEnum = sbConvCommon.RDFC.GetElements();
+        // next step
+        setTimeout(handleGeneralFiles, 0);
+    };
 
-            while (resEnum.hasMoreElements()) {
-                if (!hasChild) {
-                    hasChild = true;
-                    result.toc += indent(depth * 4) + '<ol>\n';
+    // Add files into the zip
+    // Do notadd files in the data directory to the itemlist currently
+    // (We'll handle them later by walking the resource tree)
+    var handleGeneralFiles = function () {
+        if (includeAllFiles) {
+            var excludeRegex = null;
+        } else {
+            var excludeRegex = new RegExp("^OEBPS\\/scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
+        }
+
+        zipAddDirAsync(zipWritter, input, "OEBPS/scrapbook", null, excludeRegex, {
+            onTask: function (file, subPath, depth) {
+                if (!file.exists()) {
+                    error("file '" + file.path + "' is not available.");
+                    return false;
+                } else if (file.isDirectory()) {
+                    return false;
                 }
 
-                var res = resEnum.getNext();
+                print("compressing file: '" + file.path + "' ...");
+
+                var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+                if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
+                    var opf_id = 'file' + fileIndex;
+                    var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
+                    var innerSubPath = subPath.replace(/^.*\//, "");
+                    infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(innerSubPath) + '" media-type="' + mime + '" fallback="blank" />\n';
+                    fileIndex++;
+                    spine_tails.push(opf_id);
+                }
+            },
+            onComplete: function () {
+                setTimeout(handleResTree, 0);
+            }
+        });
+    };
+
+    var handleResTree = function () {
+        var rootRes = sbConvCommon.RDF.GetResource("urn:scrapbook:root"), lastDepth = 0, openedFolderDepth = 0;
+
+        var closeOpenedFolders = function (depth) {
+            var changed;
+            do {
+                changed = false;
+                if (depth > lastDepth) {
+                    // if we go in to a deeper level, open an ol
+                    infoTree.toc += indent(depth * 4) + '<ol>\n';
+                    lastDepth++;
+                    changed = true;
+                }
+                if (depth < lastDepth) {
+                    // if we go out of a deeper level, close an ol
+                    infoTree.toc += indent(lastDepth * 4) + '</ol>\n';
+                    lastDepth--;
+                    changed = true;
+                }
+                // if the current depth is not a child of previously opened folder, close the folder tag
+                if (openedFolderDepth > 0 && depth <= openedFolderDepth) {
+                    infoTree.toc += indent(openedFolderDepth * 4 + 2) + '</li>\n';
+                    infoTree.ncx += indent(openedFolderDepth * 2) + '</navPoint>\n';
+                    openedFolderDepth--;
+                    changed = true;
+                }
+            } while (changed);
+        };
+        
+        forResTreeAsync(rootRes, {
+            onTask: function (res, depth) {
+                closeOpenedFolders(depth);
+
                 var id = sbConvData.getProperty(res, "id");
                 var type = sbConvData.getProperty(res, "type");
                 var title = sbConvData.getProperty(res, "title");
                 var source = sbConvData.getProperty(res, "source");
 
+                print("processing item " + id + " (" + title + ") ...");
+
                 switch (type) {
                     case "folder":
-                        var opf_id = "folder" + folders;
-                        folders++;
+                        var opf_id = "folder" + folderIndex;
+                        folderIndex++;
                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                         // The epub reader may strip folder entries without path, so we make a blank page for them.
@@ -1777,25 +1811,21 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             '  <body></body>\n' +
                             '</html>\n');
 
-                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
-                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a>\n';
-                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
+                        infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        infoTree.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        infoTree.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a>\n';
+                        infoTree.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
                             indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
-
-                        processResRecursively(res, depth + 1);
-
-                        result.toc += indent(depth * 4 + 2) + '</li>\n';
-                        result.ncx += indent(depth * 2) + '</navPoint>\n';
+                        openedFolderDepth++;
                         break;
 
                     case "separator":
-                        var opf_id = "separator" + separators;
-                        separators++;
+                        var opf_id = "separator" + separatorIndex;
+                        separatorIndex++;
                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                         // The epub reader may strip folder entries without path, so we make a blank page for them.
@@ -1809,10 +1839,10 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             '  <body></body>\n' +
                             '</html>\n');
 
-                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
-                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">---- ' + sbConvCommon.escapeHTML(title) + ' ----</a></li>\n';
-                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
+                        infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        infoTree.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        infoTree.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">---- ' + sbConvCommon.escapeHTML(title) + ' ----</a></li>\n';
+                        infoTree.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>---- ' + sbConvCommon.escapeHTML(title) + ' ----</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1822,8 +1852,8 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                         break;
 
                     case "bookmark":
-                        var opf_id = "bookmark" + bookmarks;
-                        bookmarks++;
+                        var opf_id = "bookmark" + bookmarkIndex;
+                        bookmarkIndex++;
                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                         zipWriteFile(zipWritter, "OEBPS/" + subPath, 
@@ -1838,10 +1868,10 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             '  </body>\n' +
                             '</html>\n');
 
-                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
-                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
-                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
+                        infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                        infoTree.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                        infoTree.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                        infoTree.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1859,12 +1889,11 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             if ( !(file.exists() && file.isFile()) ) continue;
 
                             var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
-                            var opf_id = 'file' + index;
-                            index++;
+                            var opf_id = 'file' + fileIndex;
+                            fileIndex++;
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
 
-                            result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
-
+                            infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
                             // handle main pages (index.html)
                             if (/^scrapbook\/data\/\d{14}\/index\.html$/.test(subPath)) {
                                 // epub doesn't support meta refresh, generate entry files for them
@@ -1877,8 +1906,8 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                                     if (metaRefreshUrl) {
                                         spine_tails.push(opf_id);
 
-                                        var opf_id = "refresh" + refreshes;
-                                        refreshes++;
+                                        var opf_id = "refresh" + refreshIndex;
+                                        refreshIndex++;
                                         var subPath = "sb2epub/" + opf_id + ".xhtml";
 
                                         // prevent not-well-escaped chars
@@ -1909,10 +1938,10 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                                             '  </body>\n' +
                                             '</html>\n');
 
-                                        result.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
-                                        result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                                        result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
-                                        result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
+                                        infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="application/xhtml+xml" />\n';
+                                        infoTree.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                                        infoTree.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                                        infoTree.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                             indent(depth * 2) + '  <navLabel>\n' +
                                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                             indent(depth * 2) + '  </navLabel>\n' +
@@ -1924,9 +1953,9 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                                 }
 
                                 // add main entry to the spine and toc
-                                result.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
-                                result.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
-                                result.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
+                                infoTree.spine += indent(4) + '<itemref idref="' + opf_id + '" />\n';
+                                infoTree.toc += indent(depth * 4 + 2) + '<li><a href="' + sbConvCommon.escapeHTML(subPath) + '">' + sbConvCommon.escapeHTML(title) + '</a></li>\n';
+                                infoTree.ncx += indent(depth * 2) + '<navPoint id="navPoint-' + playOrder + '">\n' +
                                     indent(depth * 2) + '  <navLabel>\n' +
                                     indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                     indent(depth * 2) + '  </navLabel>\n' +
@@ -1940,101 +1969,105 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                         }
                         break;
                 }
+                
+            },
+            onComplete: function () {
+                closeOpenedFolders(0);
+                setTimeout(handleSpineTails, 0);
             }
+        });
+    };
 
-            if (hasChild) {
-                result.toc += indent(depth * 4) + '</ol>\n';
-            }
-        }
-    })();
+    var handleSpineTails = function () {
+        spine_tails.forEach(function (spine_id) {
+            infoTree.spine += indent(4) + '<itemref idref="' + spine_id + '" linear="no" />\n';
+        });
+        setTimeout(handleEpubSpecs, 0);
+    };
+    
+    var handleEpubSpecs = function () {
+        zipWriteFile(zipWritter, "META-INF/container.xml", 
+            '<?xml version="1.0"?>\n' +
+            '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
+            '  <rootfiles>\n' +
+            '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
+            '  </rootfiles>\n' +
+            '</container>\n');
 
-    zipWriteFile(zipWritter, "META-INF/container.xml", 
-        '<?xml version="1.0"?>\n' +
-        '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">\n' +
-        '  <rootfiles>\n' +
-        '    <rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/>\n' +
-        '  </rootfiles>\n' +
-        '</container>\n');
+        zipWriteFile(zipWritter, "OEBPS/content.opf",
+            '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+            '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
+            '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
+            '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookMeta.id) + '</dc:identifier>\n' +
+            '    <dc:title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</dc:title>\n' +
+            '    <dc:language>' + sbConvCommon.escapeHTML(bookMeta.language) + '</dc:language>\n' +
+            '    <dc:creator opf:role="aut">' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
+            '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' +
+            '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' +
+            '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' +
+            '    <dc:date>' + sbConvCommon.escapeHTML(bookMeta.date) + '</dc:date>\n' +
+            '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' +
+            '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookMeta.internalModified) + '</meta>\n' +
+            (infoTree.hasCover ? '<meta name="cover" content="cover" />\n' : "") +
+            '  </metadata>\n' +
+            '  <manifest>\n' +
+            '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
+            '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><!-- epub2 -->\n' +
+            '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n' + infoTree.manifest +
+            '  </manifest>\n' +
+            '  <spine toc="ncx">\n' + infoTree.spine +
+            '  </spine>\n' +
+            '</package>\n');
 
-    zipWriteFile(zipWritter, "OEBPS/content.opf",
-        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
-        '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
-        '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
-        '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookMeta.id) + '</dc:identifier>\n' +
-        '    <dc:title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</dc:title>\n' +
-        '    <dc:language>' + sbConvCommon.escapeHTML(bookMeta.language) + '</dc:language>\n' +
-        '    <dc:creator opf:role="aut">' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
-        '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' +
-        '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' +
-        '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' +
-        '    <dc:date>' + sbConvCommon.escapeHTML(bookMeta.date) + '</dc:date>\n' +
-        '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' +
-        '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookMeta.internalModified) + '</meta>\n' +
-        (infoTree.hasCover ? '<meta name="cover" content="cover" />\n' : "") +
-        '  </metadata>\n' +
-        '  <manifest>\n' +
-        '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
-        '    <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml" /><!-- epub2 -->\n' +
-        '    <item id="blank" href="sb2epub/blank.xhtml" media-type="application/xhtml+xml" />\n' + infoTree.manifest +
-        '  </manifest>\n' +
-        '  <spine toc="ncx">\n' + infoTree.spine +
-        '  </spine>\n' +
-        '</package>\n');
+        zipWriteFile(zipWritter, "OEBPS/toc.xhtml",
+            '<?xml version="1.0" encoding="utf-8"?>\n' +
+            '<!DOCTYPE html>\n' +
+            '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">\n' +
+            '<head>\n' +
+            '   <meta charset="UTF-8" />\n' +
+            '   <title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</title>\n' +
+            '</head>\n' +
+            '<body>\n' +
+            '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + infoTree.toc +
+            '  </nav>\n' +
+            '</body>\n' +
+            '</html>\n');
 
-    zipWriteFile(zipWritter, "OEBPS/toc.xhtml",
-        '<?xml version="1.0" encoding="utf-8"?>\n' +
-        '<!DOCTYPE html>\n' +
-        '<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops">\n' +
-        '<head>\n' +
-        '   <meta charset="UTF-8" />\n' +
-        '   <title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</title>\n' +
-        '</head>\n' +
-        '<body>\n' +
-        '  <nav id="toc" role="doc-toc" epub:type="toc">\n' + infoTree.toc +
-        '  </nav>\n' +
-        '</body>\n' +
-        '</html>\n');
+        zipWriteFile(zipWritter, "OEBPS/toc.ncx",
+            '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
+            '<head>\n' +
+            '   <meta name="dtb:uid" content="' + sbConvCommon.escapeHTML(bookMeta.id) + '" />\n' +
+            '</head>\n' +
+            '<docTitle>\n' +
+            '   <text>' + sbConvCommon.escapeHTML(bookMeta.title) + '</text>\n' +
+            '</docTitle>\n' +
+            '<docAuthor>\n' +
+            '   <text>' + sbConvCommon.escapeHTML(bookMeta.author) + '</text>\n' +
+            '</docAuthor>\n' +
+            '<navMap>\n' + infoTree.ncx +
+            '</navMap>\n' +
+            '</ncx>\n');
 
-    zipWriteFile(zipWritter, "OEBPS/toc.ncx",
-        '<?xml version="1.0" encoding="UTF-8"?>\n' +
-        '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">\n' +
-        '<head>\n' +
-        '   <meta name="dtb:uid" content="amb.vis.ne.jp" />\n' +
-        '</head>\n' +
-        '<docTitle>\n' +
-        '   <text>' + sbConvCommon.escapeHTML(bookMeta.title) + '</text>\n' +
-        '</docTitle>\n' +
-        '<docAuthor>\n' +
-        '   <text>' + sbConvCommon.escapeHTML(bookMeta.author) + '</text>\n' +
-        '</docAuthor>\n' +
-        '<navMap>\n' + infoTree.ncx +
-        '</navMap>\n' +
-        '</ncx>\n');
+        // simple fallback for pages that cannot be rendered
+        zipWriteFile(zipWritter, "OEBPS/sb2epub/blank.xhtml",
+            '<?xml version="1.0" encoding="utf-8"?>\n' +
+            '<!DOCTYPE html>\n' +
+            '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
+            '  <head></head>\n' +
+            '  <body></body>\n' +
+            '</html>\n');
 
-    // simple fallback for pages that cannot be rendered
-    zipWriteFile(zipWritter, "OEBPS/sb2epub/blank.xhtml",
-        '<?xml version="1.0" encoding="utf-8"?>\n' +
-        '<!DOCTYPE html>\n' +
-        '<html xmlns="http://www.w3.org/1999/xhtml">\n' +
-        '  <head></head>\n' +
-        '  <body></body>\n' +
-        '</html>\n');
+        // finish
+        setTimeout(finish, 0);
+    };
 
-    if (includeAllFiles) {
-        zipAddDir(zipWritter, input, "OEBPS/scrapbook");
-    } else {
-        var excludeRegex = new RegExp("^OEBPS\\/scrapbook\\/(?:" + excludeEntries.join("|") + ")(?:\\/|$)", "i");
-        zipAddDir(zipWritter, input, "OEBPS/scrapbook", null, excludeRegex);
-    }
+    var finish = function () {
+        zipClose(zipWritter);
+        convert_finish();
+    };
 
-    zipClose(zipWritter);
-
-    // finish
-    convert_finish();
-
-    function indent(count) {
-        return (new Array(count+1)).join(" ");
-    }
+    handleCover(bookMeta.cover);
 }
 
 function convert_sb2maff2(input, output) {
@@ -2081,11 +2114,17 @@ function convert_sb2maff2(input, output) {
     var zw = zipOpen(output);
     zipWriteFile(zw, id + "/index.rdf", rdfContent);
     zipWriteFile(zw, id + "/index.html", indexContent);
-    zipAddDir(zw, input, id + "/ScrapBook");
-    zipClose(zw);
-
-    // finished
-    convert_finish();
+    zipAddDirAsync(zw, input, id + "/ScrapBook", null, null, {
+        onTask: function (file, subPath) {
+            if (!file.isFile()) return;
+            print("compressing file: '" + file.path + "' ...");
+        },
+        onComplete: function () {
+            zipClose(zw);
+            // finished
+            convert_finish();
+        }
+    });
 }
 
 function convert_sb2zip2(input, output, topDirName) {
@@ -2112,11 +2151,17 @@ function convert_sb2zip2(input, output, topDirName) {
     }
 
     var zw = zipOpen(output);
-    zipAddDir(zw, input, overwriteName);
-    zipClose(zw);
-
-    // finished
-    convert_finish();
+    zipAddDirAsync(zw, input, overwriteName, null, null, {
+        onTask: function (file, subPath) {
+            if (!file.isFile()) return;
+            print("compressing file: '" + file.path + "' ...");
+        },
+        onComplete: function () {
+            zipClose(zw);
+            // finished
+            convert_finish();
+        }
+    });
 }
 
 function print(txt) {
@@ -2133,6 +2178,73 @@ function warn(txt) {
 function error(txt) {
     errorCount++;
     print("ERROR: " + txt);
+}
+
+/**
+ * Recursively walk down the resource tree and fires the hook for every entry res
+ *
+ * @param container
+ * The resource container to run this async task.
+ *
+ * @param hook
+ * The hook that fires on each file meet, which is an object that provides two methods:
+ *
+ * @param hook.onTask
+ * function (res, depth) {}
+ * depth is 0-based (the initial given dir is depth 0); skips looking into the container if return true 
+ *
+ * @param hook.onComplete
+ * function () {}
+ */
+function forResTreeAsync(container, hook, includeRoot) {
+    var hasOnTask = hook && hook.onTask,
+        hasOnComplete = hook && hook.onComplete,
+        threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var resEnums = [], resEnum, startTime;
+    
+    var nextResEntry = function () {
+        if (!startTime) startTime = Date.now();
+        while (resEnums.length) {
+            resEnum = resEnums[resEnums.length - 1];
+            if (resEnum.hasMoreElements()) {
+                var entry = resEnum.getNext();
+                handleEntry(entry);
+                if (Date.now() - startTime > threadTimeout) {
+                    startTime = false;
+                    setTimeout(nextResEntry, 0);
+                    return;
+                }
+                continue;
+            }
+            resEnums.pop();
+        }
+        finish();
+    };
+    
+    var handleEntry = function (entry) {
+        var interrupt = false;
+        if (hasOnTask) {
+            interrupt = hook.onTask(entry, resEnums.length);
+        }
+        if (!interrupt && sbConvData.isContainer(entry)) {
+            sbConvCommon.RDFC.Init(sbConvData.data, entry);
+            resEnums.push(sbConvCommon.RDFC.GetElements());
+        }
+    };
+
+    var finish = function () {
+        if (hasOnComplete) {
+            hook.onComplete();
+        }
+    };
+
+    if (includeRoot) {
+        handleEntry(container);
+    } else {
+        sbConvCommon.RDFC.Init(sbConvData.data, container);
+        resEnums.push(sbConvCommon.RDFC.GetElements());
+    }
+    nextResEntry();
 }
 
 function loadXMLFile(file, callback, that) {
@@ -2208,6 +2320,65 @@ function getDescHtmlFiles(aFolder, aIncludeSubdir) {
         }
     }
     return result;
+}
+
+/**
+ * Recursively walk down the directory tree and fires the hook for every entry(dir or file)
+ *
+ * @param dir
+ * The directory to run this async task.
+ *
+ * @param hook
+ * The hook that fires on each file meet, which is an object that provides two methods:
+ *
+ * @param hook.onTask
+ * function (entry, depth) {}
+ * depth is 0-based (the initial given dir is depth 0); skips subdirectory if return true 
+ *
+ * @param hook.onComplete
+ * function () {}
+ */
+function forFilesAsync(dir, hook) {
+    var hasOnTask = hook && hook.onTask, hasOnComplete = hook && hook.onComplete, threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var dirEnums = [], dirEnum, startTime;
+    
+    var nextDirEntry = function () {
+        if (!startTime) startTime = Date.now();
+        while (dirEnums.length) {
+            dirEnum = dirEnums[dirEnums.length - 1];
+            if (dirEnum.hasMoreElements()) {
+                var entry = dirEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
+                handleEntry(entry);
+                if (Date.now() - startTime > threadTimeout) {
+                    startTime = false;
+                    setTimeout(nextDirEntry, 0);
+                    return;
+                }
+                continue;
+            }
+            dirEnums.pop();
+        }
+        finish();
+    };
+    
+    var handleEntry = function (entry) {
+        var interrupt = false;
+        if (hasOnTask) {
+            interrupt = hook.onTask(entry, dirEnums.length);
+        }
+        if (!interrupt && entry.isDirectory()) {
+            dirEnums.push(entry.directoryEntries);
+        }
+    };
+
+    var finish = function () {
+        if (hasOnComplete) {
+            hook.onComplete();
+        }
+    };
+
+    handleEntry(dir);
+    nextDirEntry();
 }
 
 /**
@@ -2346,6 +2517,68 @@ function zipAddDir(zipWritter, dir, subPath, includeRegex, excludeRegex) {
             zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
         }
     }
+}
+
+/**
+ * Recursively walk down the directory tree and add every entry to zip
+ *
+ * @param zipWritter
+ * The opened zip writter to write file into.
+ *
+ * @param dir
+ * The directory tree to add files from.
+ *
+ * @param subPath
+ * Add files to the sub path in the zip.
+ * Path separator must use "/".
+ * subPath can be "", which means entries directly under the given dir will be placed at top level
+ * subPath can be a subfolder, such as "subfolder/here"
+ *
+ * @param includeRegex
+ * entries whose calculated zip inner path does not match this regex will be skipped.
+ *
+ * @param excludeRegex
+ * entries whose calculated zip inner path does match this regex will be skipped.
+ *
+ * @param hook
+ * The observer that fires on each task.
+ * Must be an object that provides two methods:
+ *
+ * @param hook.onTask
+ * function (entry, saveInZipAs, depth) {}
+ *
+ * @param hook.onComplete
+ * function () {}
+ */
+function zipAddDirAsync(zipWritter, dir, subPath, includeRegex, excludeRegex, hook) {
+    var hasOnTask = hook && !!hook.onTask, hasOnComplete = hook && !!hook.onComplete;
+    var pathBasePattern = dir.path;
+    var pathBaseReplace = (typeof subPath !== "undefined") ? subPath : dir.leafName;
+    
+    forFilesAsync(dir, {
+        onTask: function (entry, depth) {
+            var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
+            saveInZipAs = saveInZipAs.replace(/\\/g,'/');
+            saveInZipAs = saveInZipAs.replace(/^\//, "");
+
+            if (includeRegex && !includeRegex.test(saveInZipAs)) {
+                return true;
+            } else if (excludeRegex && excludeRegex.test(saveInZipAs)) {
+                return true;
+            } else {
+                var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
+                if (hasOnTask) {
+                    hook.onTask(entry, saveInZipAs, depth);
+                }
+                zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
+            }
+        },
+        onComplete: function () {
+            if (hasOnComplete) {
+                hook.onComplete();
+            }
+        }
+    });
 }
 
 function zipClose(zipWritter) {

@@ -219,6 +219,14 @@
                 return aDefaultValue;
             }
         },
+
+        getIntPref : function(aName, aDefaultValue) {
+            try {
+                return PREF.getIntPref(aName);
+            } catch(ex) {
+                return aDefaultValue;
+            }
+        },
         
         copyUnicharPref : function(aName, aDefaultValue) {
             try {
