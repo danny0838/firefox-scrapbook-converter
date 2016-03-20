@@ -1,7 +1,20 @@
+ScrapBook X File Converter 1.1.0b2
+----------------
+
+- NEW: Import source pack into .maff format for ScrapBook-to-Evernote conversion.
+- NEW: Support ScrapBook --> maff.
+- NEW: Support ScrapBook --> zip.
+- NEW: Support whole ScrapBook --> epub.
+- NEW: Support whole ScrapBook --> maff.
+- NEW: Support whole ScrapBook --> zip.
+- UPDATE: Improve error handling system. Now shows total errors and warnings at last.
+- FIXED: Forbid the user from switching ScrapBook when a conversion dialog is active.
+
+
 ScrapBook X File Converter 1.1.0b1
 ----------------
 
-- NEW: Support ScrapBook -> Evernote.
+- NEW: Support ScrapBook --> Evernote (.enex).
 - UPDATE: Separate different converters into individual dialog.
 
 
