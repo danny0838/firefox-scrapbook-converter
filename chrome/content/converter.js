@@ -2560,6 +2560,7 @@ function zipAddDirAsync(zipWritter, dir, subPath, includeRegex, excludeRegex, ho
             var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
             saveInZipAs = saveInZipAs.replace(/\\/g,'/');
             saveInZipAs = saveInZipAs.replace(/^\//, "");
+            if (!saveInZipAs) return;
 
             if (includeRegex && !includeRegex.test(saveInZipAs)) {
                 return true;
