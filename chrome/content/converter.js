@@ -2420,10 +2420,10 @@ function getUniqueDir(dir, name) {
     return destDir;
 }
 
-function zipDetermineCompresssionLevel(filename) {
+function zipDetermineCompresssionLevel(file) {
     // only compress known text-based files
     // @TODO: better algorithm, maybe MIME-based or other detection techniques?
-    return /\.(html?|xht(ml)?|xml|rdf|txt|css|js|json)$/i.test(filename) ? nsIZipWriter.COMPRESSION_BEST : nsIZipWriter.COMPRESSION_NONE;
+    return /\.(html?|xht(ml)?|xml|rdf|txt|css|js|json)$/i.test(file.leafName) ? nsIZipWriter.COMPRESSION_BEST : nsIZipWriter.COMPRESSION_NONE;
 }
 
 /* borrowed from Firefox addon UnZIP */
@@ -2479,7 +2479,7 @@ function zipWriteFile(zipWritter, saveInZipAs, content) {
 }
 
 function zipAddFile(zipWritter, saveInZipAs, file) {
-    var compressionLevel = zipDetermineCompresssionLevel(file.leafName);
+    var compressionLevel = zipDetermineCompresssionLevel(file);
     zipWritter.addEntryFile(saveInZipAs, compressionLevel, file, false);
 }
 
@@ -2513,7 +2513,7 @@ function zipAddDir(zipWritter, dir, subPath, includeRegex, excludeRegex) {
                dirArr.push(entry);
             }
 
-            var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
+            var compressionLevel = zipDetermineCompresssionLevel(entry);
             zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
         }
     }
@@ -2566,7 +2566,7 @@ function zipAddDirAsync(zipWritter, dir, subPath, includeRegex, excludeRegex, ho
             } else if (excludeRegex && excludeRegex.test(saveInZipAs)) {
                 return true;
             } else {
-                var compressionLevel = zipDetermineCompresssionLevel(entry.leafName);
+                var compressionLevel = zipDetermineCompresssionLevel(entry);
                 if (hasOnTask) {
                     hook.onTask(entry, saveInZipAs, depth);
                 }
