@@ -179,7 +179,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.enex/i)) ) continue;
-            print("converting file: '" + file.path + "'");
+            verbose("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
@@ -240,7 +240,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 
             // set paths
             var destDir = getUniqueDir(output, item.title);
-            print("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
+            verbose("exporting note: '" + item.title + "' --> '" + destDir.leafName + "'");
             // -- create index.dat and index.html beforehand to prevent overwrite
             var indexDat = destDir.clone(); indexDat.append("index.dat");
             sbConvCommon.writeFile(indexDat, "", "UTF-8", true);
@@ -525,7 +525,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
         while (files.length) {
             file = files.shift();
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.maff/i)) ) continue;
-            print("converting file: '" + file.path + "'");
+            verbose("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
@@ -597,7 +597,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
 
             // output
             var destDir = getUniqueDir(output, item.title);
-            print("exporting page: '" + item.title + "' --> '" + destDir.leafName + "'");
+            verbose("exporting page: '" + item.title + "' --> '" + destDir.leafName + "'");
             var pageDirFiles = pageDir.directoryEntries;
             while (pageDirFiles.hasMoreElements()) {
                 var pageDirFile = pageDirFiles.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -629,14 +629,14 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
             file = files.shift();
             if ( !(file.exists() && file.isFile()) ) continue;
             if (file.leafName.match(/\.(x?html|htm|xht)$/i)) {
-                print("converting HTML pack: '" + file.path + "'");
+                verbose("converting HTML pack: '" + file.path + "'");
                 subPath = getSubPath(input, file);
                 subPath.pop();
                 subPath = subPath.join("\t");
                 parseHtmlPack(file);
             }
             else {
-                print("converting file: '" + file.path + "'");
+                verbose("converting file: '" + file.path + "'");
                 subPath = getSubPath(input, file);
                 subPath.pop();
                 subPath = subPath.join("\t");
@@ -704,7 +704,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
 
         // output
         var destDir = getUniqueDir(output, item.title);
-        print("exporting html: '" + item.title + "' --> '" + destDir.leafName + "'");
+        verbose("exporting html: '" + item.title + "' --> '" + destDir.leafName + "'");
         var indexDat = destDir.clone(); indexDat.append("index.dat");
         sbConvCommon.writeIndexDat(item, indexDat);
         file.copyTo(destDir, "index.html");
@@ -761,7 +761,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
 
         // output
         var destDir = getUniqueDir(output, item.title);
-        print("exporting file: '" + item.title + "' --> '" + destDir.leafName + "'");
+        verbose("exporting file: '" + item.title + "' --> '" + destDir.leafName + "'");
         var indexDat = destDir.clone(); indexDat.append("index.dat");
         sbConvCommon.writeIndexDat(item, indexDat);
         file.copyTo(destDir, file.leafName);
@@ -829,16 +829,16 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var destFile = output.clone();
             destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".enex");
             sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
-            print("exporting file: '" + destFile.leafName + "'");
+            verbose("exporting file: '" + destFile.leafName + "'");
         }
         convert_finish();
     }
     
     function parseScrapBook(dir, indexFile, indexData, enExportDoc) {
-        print("converting ScrapBook data: '" + dir.path + "'");
+        verbose("converting ScrapBook data: '" + dir.path + "'");
         var item = sbConvCommon.parseIndexDat(indexData);
         if (["folder", "separator"].indexOf(item.type) !== -1) {
-            print("skip item of type: '" + item.type + "'");
+            verbose("skip item of type: '" + item.type + "'");
             return;
         }
         
@@ -1038,7 +1038,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             var destFile = output.clone();
             destFile.append(dir.leafName + ".enex");
             sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
-            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
         }
     }
 
@@ -1392,7 +1392,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         var destFile = output.clone();
         destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".maff");
         var zipWritter = zipOpen(destFile);
-        print("generating file: '" + destFile.leafName + "' ...");
+        verbose("generating file: '" + destFile.leafName + "' ...");
     }
 
     var dirs = input.directoryEntries;
@@ -1422,19 +1422,19 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
 
     function dirsFinish() {
         if (mergeOutput) {
-            print("exported file: '" + destFile.leafName + "'");
+            verbose("exported file: '" + destFile.leafName + "'");
             zipClose(zipWritter);
         }
         convert_finish();
     }
     
     function parseScrapBook(dir, indexFile, indexData) {
-        print("converting ScrapBook data: '" + dir.path + "'");
+        verbose("converting ScrapBook data: '" + dir.path + "'");
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
         if (["folder", "separator"].indexOf(item.type) !== -1) {
-            print("skip item of type: '" + item.type + "'");
+            verbose("skip item of type: '" + item.type + "'");
             return;
         }
 
@@ -1444,7 +1444,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         } else {
             var destFile = output.clone();
             destFile.append(dir.leafName + ".maff");
-            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
             var zw = zipOpen(destFile);
         }
 
@@ -1517,7 +1517,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         var destFile = output.clone();
         destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".zip");
         var zipWritter = zipOpen(destFile);
-        print("generating file: '" + destFile.leafName + "' ...");
+        verbose("generating file: '" + destFile.leafName + "' ...");
     }
 
     var dirs = input.directoryEntries;
@@ -1547,19 +1547,19 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
 
     function dirsFinish() {
         if (mergeOutput) {
-            print("exported file: '" + destFile.leafName + "'");
+            verbose("exported file: '" + destFile.leafName + "'");
             zipClose(zipWritter);
         }
         convert_finish();
     }
     
     function parseScrapBook(dir, indexFile, indexData) {
-        print("compressing ScrapBook data: '" + dir.path + "'");
+        verbose("compressing ScrapBook data: '" + dir.path + "'");
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
         if (["folder", "separator"].indexOf(item.type) !== -1) {
-            print("skip item of type: '" + item.type + "'");
+            verbose("skip item of type: '" + item.type + "'");
             return;
         }
 
@@ -1583,7 +1583,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         } else {
             var destFile = output.clone();
             destFile.append(dir.leafName + ".zip");
-            print("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
             var zw = zipOpen(destFile);
         }
 
@@ -1617,7 +1617,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
     print("book cover: " + (bookMeta.cover || "no"));
     print("");
 
-    print("generating file: '" + output.leafName + "' ...");
+    verbose("generating file: '" + output.leafName + "' ...");
 
     // record the internal modified time
     bookMeta.internalModified = sbConvCommon.getW3CTimeStamp();
@@ -1736,7 +1736,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                     return false;
                 }
 
-                print("compressing file: '" + file.path + "' ...");
+                verbose("compressing file: '" + file.path + "' ...");
 
                 var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
                 if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
@@ -1792,7 +1792,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                 var title = sbConvData.getProperty(res, "title");
                 var source = sbConvData.getProperty(res, "source");
 
-                print("processing item " + id + " (" + title + ") ...");
+                verbose("processing item " + id + " (" + title + ") ...");
 
                 switch (type) {
                     case "folder":
@@ -2076,7 +2076,7 @@ function convert_sb2maff2(input, output) {
     print("output directory: " + output.path);
     print("");
 
-    print("generating file: '" + output.leafName + "' ...");
+    verbose("generating file: '" + output.leafName + "' ...");
 
     var date = (new Date());
     var id = date.valueOf() + "_" + Math.floor(Math.random() * 1000);
@@ -2117,7 +2117,7 @@ function convert_sb2maff2(input, output) {
     zipAddDirAsync(zw, input, id + "/ScrapBook", null, null, {
         onTask: function (file, subPath) {
             if (!file.isFile()) return;
-            print("compressing file: '" + file.path + "' ...");
+            verbose("compressing file: '" + file.path + "' ...");
         },
         onComplete: function () {
             zipClose(zw);
@@ -2134,7 +2134,7 @@ function convert_sb2zip2(input, output, topDirName) {
     print("top directory name: " + topDirName);
     print("");
 
-    print("generating file: '" + output.leafName + "' ...");
+    verbose("generating file: '" + output.leafName + "' ...");
 
     // determine top level folder name
     switch (topDirName) {
@@ -2154,7 +2154,7 @@ function convert_sb2zip2(input, output, topDirName) {
     zipAddDirAsync(zw, input, overwriteName, null, null, {
         onTask: function (file, subPath) {
             if (!file.isFile()) return;
-            print("compressing file: '" + file.path + "' ...");
+            verbose("compressing file: '" + file.path + "' ...");
         },
         onComplete: function () {
             zipClose(zw);
@@ -2168,6 +2168,11 @@ function print(txt) {
     var field = document.getElementById("sbconvConverterStatus");
     field.value += txt + "\n";
     field.selectionStart = field.selectionEnd = field.value.length;
+}
+
+function verbose(txt) {
+    if (sbConvCommon.getBoolPref('noVerbose', false)) return;
+    print(txt);
 }
 
 function warn(txt) {
