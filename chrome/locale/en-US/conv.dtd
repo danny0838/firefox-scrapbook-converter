@@ -37,7 +37,7 @@
 <!ENTITY sb2epub.source "Source publication:">
 <!ENTITY sb2epub.cover "Cover image:">
 
-<!ENTITY sb2maff2.note "Please output HTML tree (with frames) and update fulltext cache before running this.">
+<!ENTITY sb2maff2.entryPage "Entry page:">
 
 <!ENTITY sb2zip2.topDirName "Top Directory Name">
 <!ENTITY sb2zip2.topDirName.none "No top directory">

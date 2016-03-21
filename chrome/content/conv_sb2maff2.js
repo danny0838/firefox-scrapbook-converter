@@ -13,13 +13,21 @@ function pickFileSave(targetId, defaultName) {
 
 window.addEventListener("load", function () {
     document.getElementById("inputPath").value = sbConvCommon.getScrapBookDir().path;
+    document.getElementById("entryPage").placeholder = "tree/frame.html";
 
     document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
+        var elem = document.getElementById("entryPage");
+        if (!elem.value) {
+            elem.value = elem.placeholder;
+            elem.setAttribute("value", elem.value);
+        }
+
         var data = {
             method: "sb2maff2",
             input: document.getElementById("inputPath").value,
             output: document.getElementById("inputPath").value, // dummy value to prevent check fail
             outputFile: document.getElementById("outputPath").value,
+            entryPage: document.getElementById("entryPage").value,
         };
         window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
     });

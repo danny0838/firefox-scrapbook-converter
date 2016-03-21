@@ -144,7 +144,7 @@ function convert(data) {
             break;
         case "sb2maff2":
             output.initWithPath(data.outputFile);
-            convert_sb2maff2(input, output);
+            convert_sb2maff2(input, output, data.entryPage);
             break;
         case "sb2zip2":
             output.initWithPath(data.outputFile);
@@ -2076,10 +2076,11 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
     handleCover(bookMeta.cover);
 }
 
-function convert_sb2maff2(input, output) {
+function convert_sb2maff2(input, output, entryPage) {
     print("convert method: whole ScrapBook --> .maff");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("entry page: " + entryPage);
     print("");
 
     verbose("generating file: '" + output.leafName + "' ...");
@@ -2087,12 +2088,6 @@ function convert_sb2maff2(input, output) {
     var date = (new Date());
     var id = date.valueOf() + "_" + Math.floor(Math.random() * 1000);
     var title = sbConvCommon.getSbUnicharPref("data.title", "") || "ScrapBook";
-    var frameFile = input.clone(); frameFile.append("tree"); frameFile.append("frame.html");
-
-    if (!frameFile.exists()) {
-        error("tree/frame.html not generated. Please output HTML with frames first.");
-        return;
-    }
 
     var rdfContent = '<?xml version="1.0"?>\n' +
         '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
@@ -2110,10 +2105,10 @@ function convert_sb2maff2(input, output) {
             '<html>\n' +
             '  <head>\n' +
             '    <meta charset="UTF-8">\n' +
-            '    <meta http-equiv="refresh" content="0;URL=./ScrapBook/tree/frame.html">\n' +
+            '    <meta http-equiv="refresh" content="0;URL=./ScrapBook/' + sbConvCommon.escapeFileName(entryPage) + '">\n' +
             '  </head>\n' +
             '  <body>\n' +
-            '    <a href="ScrapBook/tree/frame.html">ScrapBook</a>\n' +
+            '    #META REFRESH <a href="ScrapBook/' + sbConvCommon.escapeFileName(entryPage) + '">' + sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(entryPage)) + '</a>\n' +
             '  </body>\n' +
             '</html>\n';
 

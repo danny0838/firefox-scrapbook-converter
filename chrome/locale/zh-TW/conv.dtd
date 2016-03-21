@@ -37,7 +37,7 @@
 <!ENTITY sb2epub.source "原始出版品:">
 <!ENTITY sb2epub.cover "封面圖片:">
 
-<!ENTITY sb2maff2.note "請先輸出 HTML 資料列表（包含頁框）並更新全文搜尋快取後再執行本操作">
+<!ENTITY sb2maff2.entryPage "入口頁面:">
 
 <!ENTITY sb2zip2.topDirName "頂層目錄名稱">
 <!ENTITY sb2zip2.topDirName.none "不產生頂層目錄">
