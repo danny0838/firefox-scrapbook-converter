@@ -90,8 +90,18 @@ window.addEventListener("load", function () {
     });
 
     document.getElementById("epub_coverPick").addEventListener("command", function () {
+        var oldDirectory = null, oldFilename = null;
+        try {
+            var oldFile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+            oldFile.initWithPath(document.getElementById("epub_cover").value);
+            oldDirectory = oldFile.parent;
+            oldFilename = oldFile.leafName;
+        } catch (ex) {}
+
         var FP = Components.classes['@mozilla.org/filepicker;1'].createInstance(Components.interfaces.nsIFilePicker);
         FP.init(window, null, FP.modeOpen);
+        FP.displayDirectory = oldDirectory;
+        FP.defaultString = oldFilename;
         FP.appendFilters(FP.filterImages);
         if ( FP.show() != FP.returnOK ) return;
         updateCoverImage(FP.file.path);
