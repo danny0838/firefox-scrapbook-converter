@@ -2009,12 +2009,12 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
             '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookMeta.id) + '</dc:identifier>\n' +
             '    <dc:title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</dc:title>\n' +
             '    <dc:language>' + sbConvCommon.escapeHTML(bookMeta.language) + '</dc:language>\n' +
-            '    <dc:creator>' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
-            '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' +
-            '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' +
-            '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' +
+            (bookMeta.author ? '    <dc:creator>' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' : "") +
+            (bookMeta.contributor ? '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' : "") +
+            (bookMeta.publisher ? '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' : "") +
+            (bookMeta.description ? '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' : "") +
             '    <dc:date>' + sbConvCommon.escapeHTML(bookMeta.date) + '</dc:date>\n' +
-            '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' +
+            (bookMeta.source ? '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' : "") +
             '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookMeta.internalModified) + '</meta>\n' +
             (infoTree.hasCover ? '    <meta name="cover" content="cover" />\n' : "") +
             '  </metadata>\n' +
