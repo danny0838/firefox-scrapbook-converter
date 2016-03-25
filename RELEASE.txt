@@ -1,3 +1,12 @@
+ScrapBook X File Converter 1.1.0b3
+----------------
+
+- UPDATE: Allow customization of the entry page path for whole-ScrapBook-to-maff conversion.
+- UPDATE: ScrapBook-to-epub conversion now default to use previous image path when picking the file.
+- FIXED: Export of epub terminates if the cover image is not specified.
+- FIXED: Several issues that cause the generated epub file to be malformed.
+
+
 ScrapBook X File Converter 1.1.0b2
 ----------------
 
