@@ -2005,11 +2005,11 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
         zipWriteFile(zipWritter, "OEBPS/content.opf",
             '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
             '<package version="3.0" xmlns="http://www.idpf.org/2007/opf" unique-identifier="pub-id">\n' +
-            '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">\n' +
+            '  <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">\n' +
             '    <dc:identifier id="pub-id">' + sbConvCommon.escapeHTML(bookMeta.id) + '</dc:identifier>\n' +
             '    <dc:title>' + sbConvCommon.escapeHTML(bookMeta.title) + '</dc:title>\n' +
             '    <dc:language>' + sbConvCommon.escapeHTML(bookMeta.language) + '</dc:language>\n' +
-            '    <dc:creator opf:role="aut">' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
+            '    <dc:creator>' + sbConvCommon.escapeHTML(bookMeta.author) + '</dc:creator>\n' +
             '    <dc:contributor>' + sbConvCommon.escapeHTML(bookMeta.contributor) + '</dc:contributor>\n' +
             '    <dc:publisher>' + sbConvCommon.escapeHTML(bookMeta.publisher) + '</dc:publisher>\n' +
             '    <dc:description>' + sbConvCommon.escapeHTML(bookMeta.description) + '</dc:description>\n' +
