@@ -35,7 +35,6 @@
     <checkbox id="includeAllFiles" label="&sb2epub.includeAllFiles;" persist="checked" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
     <groupbox style="margin-top: 10px;">
         <caption label="&sb2epub.meta;" />
-        <description style="margin: 5px;">&sb2epub.help;</description>
         <hbox>
             <label>&sb2epub.id;</label>
             <textbox id="epub_id" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
@@ -84,4 +83,5 @@
             <spacer flex="1"/>
         </hbox>
     </groupbox>
+    <description style="margin: 5px; color: red;">&sb2epub.help;</description>
 </dialog>

@@ -25,7 +25,6 @@
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
 <!ENTITY sb2epub.meta "E-Book Metadata">
-<!ENTITY sb2epub.help "Leave blank to use default values.">
 <!ENTITY sb2epub.id "ID:">
 <!ENTITY sb2epub.title "Title:">
 <!ENTITY sb2epub.language "Language:">
@@ -36,6 +35,7 @@
 <!ENTITY sb2epub.date "E-Book publication date:">
 <!ENTITY sb2epub.source "Source publication:">
 <!ENTITY sb2epub.cover "Cover image:">
+<!ENTITY sb2epub.help "Note: Make sure the source ScrapBook files satisfy epub 3 specification so that the generated epub file will pass validation.">
 
 <!ENTITY sb2maff2.entryPage "Entry page:">
 
