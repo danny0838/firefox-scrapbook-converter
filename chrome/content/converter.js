@@ -1678,7 +1678,10 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
     };
 
     var handleCover = function (coverFilePath) {
-        if (!coverFilePath) return;
+        if (!coverFilePath) {
+            setTimeout(handleGeneralFiles, 0);
+            return;
+        }
 
         // convert path to file object
         try {
