@@ -1,3 +1,10 @@
+ScrapBook X File Converter 1.1.0
+----------------
+
+- UPDATE: Allow customization of the entry page path for whole-ScrapBook-to-maff conversion.
+- UPDATE: ScrapBook-to-epub conversion now default to use previous image path when picking the file.
+
+
 ScrapBook X File Converter 1.1.0b2
 ----------------
 
