@@ -1748,8 +1748,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                 if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
                     var opf_id = 'file' + fileIndex;
                     var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
-                    var innerSubPath = subPath.replace(/^.*\//, "");
-                    infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(innerSubPath) + '" media-type="' + mime + '" fallback="blank" />\n';
+                    infoTree.manifest += indent(4) + '<item id="' + opf_id + '" href="' + sbConvCommon.escapeHTML(subPath) + '" media-type="' + mime + '" fallback="blank" />\n';
                     fileIndex++;
                     spine_tails.push(opf_id);
                 }
