@@ -1747,7 +1747,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
 
                 verbose("compressing file: '" + file.path + "' ...");
 
-                var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+                var subPath = "scrapbook/" + encodeURI(getSubPath(input, file).join("/"));
                 if (!/^scrapbook\/data\/\d{14}\//.test(subPath)) {
                     var opf_id = 'file' + fileIndex;
                     var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
@@ -1896,7 +1896,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             file = files.shift();
                             if ( !(file.exists() && file.isFile()) ) continue;
 
-                            var subPath = "scrapbook/" + sbConvCommon.escapeFileName(getSubPath(input, file).join("/"));
+                            var subPath = "scrapbook/" + encodeURI(getSubPath(input, file).join("/"));
                             var opf_id = 'file' + fileIndex;
                             fileIndex++;
                             var mime = sbConvCommon.getFileMime(file) || "application/octet-stream";
