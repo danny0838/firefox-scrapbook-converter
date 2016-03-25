@@ -5,8 +5,9 @@
 <!DOCTYPE prefwindow SYSTEM "chrome://sbconv/locale/converter.dtd">
 
 <dialog id="sbconvConverterWindow"
-        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         title="&window.title;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        windowtype="scrapbook"
         buttons="cancel"
         onload="init();"
         width="600"
@@ -15,6 +16,7 @@
 
     <!-- JavaScript -->
     <script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
+    <script type="application/x-javascript" src="chrome://scrapbook/content/trade.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/lib/md5.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/lib/maf.js" />
     <script type="application/x-javascript" src="chrome://sbconv/content/common.js" />

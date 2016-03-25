@@ -1,0 +1,45 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet href="chrome://global/skin/" type="text/css" ?>
+
+<!--locale-->
+<!DOCTYPE dialog [
+    <!ENTITY % mainDTD SYSTEM "chrome://sbconv/locale/conv.dtd">
+    %mainDTD;
+    <!ENTITY % prefDTD SYSTEM "chrome://sbconv/locale/prefsDialog.dtd">
+    %prefDTD;
+]>
+
+<dialog id="sbconvConverterOptionWindow"
+        title="&action.sb2zip2;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        windowtype="scrapbook"
+        width="500"
+        height="400">
+
+    <!--JavaScript-->
+    <script type="application/x-javascript" src="chrome://scrapbook/content/common.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/common.js" />
+    <script type="application/x-javascript" src="chrome://sbconv/content/conv_sb2zip2.js" />
+
+    <!-- Options -->
+    <hbox>
+        <label disabled="true">&input;</label>
+        <textbox id="inputPath" flex="1" disabled="true" />
+        <button id="inputPick" class="dialog" label="&pick;" disabled="true" />
+    </hbox>
+    <hbox>
+        <label>&output;</label>
+        <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
+        <button id="outputPick" class="dialog" label="&pick;" />
+    </hbox>
+    <hbox align="center">
+        <label value="&sb2zip2.topDirName;:" />
+        <menulist id="topDirName" value="none" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+            <menupopup>
+                <menuitem value="none" label="&sb2zip2.topDirName.none;" />
+                <menuitem value="dir" label="&sb2zip2.topDirName.dir;" />
+                <menuitem value="title" label="&sb2zip2.topDirName.title;" />
+            </menupopup>
+        </menulist>
+    </hbox>
+</dialog>
