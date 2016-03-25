@@ -2014,7 +2014,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
             '    <dc:date>' + sbConvCommon.escapeHTML(bookMeta.date) + '</dc:date>\n' +
             '    <dc:source>' + sbConvCommon.escapeHTML(bookMeta.source) + '</dc:source>\n' +
             '    <meta property="dcterms:modified">' + sbConvCommon.escapeHTML(bookMeta.internalModified) + '</meta>\n' +
-            (infoTree.hasCover ? '<meta name="cover" content="cover" />\n' : "") +
+            (infoTree.hasCover ? '    <meta name="cover" content="cover" />\n' : "") +
             '  </metadata>\n' +
             '  <manifest>\n' +
             '    <item id="toc" properties="nav" href="toc.xhtml" media-type="application/xhtml+xml" /><!-- epub3 -->\n' +
