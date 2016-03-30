@@ -47,6 +47,22 @@
             return oSBCommon.readFile(aFile);
         },
 
+        readFileBinary : function (aFile) {
+            try {
+                var istream = Components.classes['@mozilla.org/network/file-input-stream;1'].createInstance(Components.interfaces.nsIFileInputStream);
+                istream.init(aFile, -1, -0, false);
+                var bstream = Components.classes["@mozilla.org/binaryinputstream;1"].createInstance(Components.interfaces.nsIBinaryInputStream);
+                bstream.setInputStream(istream);
+                var bytes = bstream.readBytes(bstream.available());
+                bstream.close();
+                istream.close();
+                return bytes;
+            }
+            catch(ex) {
+                return false;
+            }
+        },
+
         getScrapBookDir : function() {
             return oSBCommon.getScrapBookDir();
         },

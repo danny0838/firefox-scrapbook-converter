@@ -1042,7 +1042,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             }
 
             if (item.modify) zipFile.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
-            var data = readBinary(zipFile);
+            var data = sbConvCommon.readFileBinary(zipFile);
             var data_b64 = window.btoa(data);
             var data_hash = hex_md5(data);
             zipFile.remove(true);
@@ -1187,7 +1187,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         }
                         var filename = resFile.leafName;
                         var mime = sbConvCommon.getFileMime(resFile);
-                        var data_bin = readBinary(resFile);
+                        var data_bin = sbConvCommon.readFileBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
                     }
@@ -1273,7 +1273,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         }
                         var filename = resFile.leafName;
                         var mime = sbConvCommon.getFileMime(resFile);
-                        var data_bin = readBinary(resFile);
+                        var data_bin = sbConvCommon.readFileBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
                     }
@@ -1362,7 +1362,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                 // data
                 var filename = metaRefreshTarget.leafName;
                 var mime = sbConvCommon.getFileMime(metaRefreshTarget);
-                var data_bin = readBinary(metaRefreshTarget);
+                var data_bin = sbConvCommon.readFileBinary(metaRefreshTarget);
                 var data_b64 = window.btoa(data_bin);
                 var data_hash = hex_md5(data_bin);
                 // -- resource
@@ -1412,22 +1412,6 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         nodeName = nodeName.toLowerCase();
         if (typeof(attrName) === "undefined") return typeof(evernoteAllowedElements[nodeName]) !== "undefined";
         return typeof(evernoteAllowedElements[nodeName][attrName]) !== "undefined";
-    };
-
-    var readBinary = function (aFile) {
-        try {
-            var istream = Components.classes['@mozilla.org/network/file-input-stream;1'].createInstance(Components.interfaces.nsIFileInputStream);
-            istream.init(aFile, -1, -0, false);
-            var bstream = Components.classes["@mozilla.org/binaryinputstream;1"].createInstance(Components.interfaces.nsIBinaryInputStream);
-            bstream.setInputStream(istream);
-            var bytes = bstream.readBytes(bstream.available());
-            bstream.close();
-            istream.close();
-            return bytes;
-        }
-        catch(ex) {
-            return false;
-        }
     };
 
     // en-export
