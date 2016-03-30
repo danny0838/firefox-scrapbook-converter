@@ -498,9 +498,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 
         // check if it's enex, skip if not
         if (xmlDoc && xmlDoc.documentElement.nodeName == "en-export") {
-            var notesDOM = xmlDoc.getElementsByTagName("note");
-            var notes = [];
-            for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
+            var notes = Array.prototype.slice.call(xmlDoc.getElementsByTagName("note"));
             notesNext();
         }
         else {
