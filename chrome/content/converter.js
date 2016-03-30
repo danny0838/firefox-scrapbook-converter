@@ -82,7 +82,7 @@ function init() {
         error("no arguments.");
         return;
     }
-    var data = window.arguments[0];
+    var data = args[0];
     convert(data);
 }
 
@@ -158,7 +158,7 @@ function convert(data) {
 
 function convert_finish() {
     print("");
-    print("done in " + ((new Date()) - startTime) + " milliseconds." +
+    print("done in " + (Date.now() - startTime) + " milliseconds." +
         " (" + errorCount + " errors, " + warnCount + " warnings)");
     document.getElementById("sbconvConverterWindow").buttons = "accept";
 }
