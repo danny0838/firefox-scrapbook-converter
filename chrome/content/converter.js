@@ -172,20 +172,21 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    var files = getDescFiles(input, includeSubdir);
-    var file = null;
-    var subPath = null;
+    var fileEnum = enumFiles(input, includeSubdir);
     filesNext();
 
     function filesNext() {
-        while (files.length) {
-            file = files.shift();
+        var file, subPath;
+        while (fileEnum.hasMoreElements()) {
+            file = fileEnum.getNext();
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.enex/i)) ) continue;
             verbose("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
-            loadXMLFile(file, parseEnex, this);
+            loadXMLFile(file, function (xmlDoc) {
+                parseEnex(xmlDoc, file, subPath);
+            }, this);
             return;
         }
         // finished
@@ -196,7 +197,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
         convert_finish();
     }
 
-    function parseEnex(xmlDoc) {
+    function parseEnex(xmlDoc, file, subPath) {
         // check if it's enex, skip if not
         if (xmlDoc && xmlDoc.documentElement.nodeName == "en-export") {
             var notesDOM = xmlDoc.getElementsByTagName("note");
@@ -519,20 +520,19 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    var files = getDescFiles(input, includeSubdir);
-    var file = null;
-    var subPath = null;
+    var fileEnum = enumFiles(input, includeSubdir);
     filesNext();
 
     function filesNext() {
-        while (files.length) {
-            file = files.shift();
+        var file, subPath;
+        while (fileEnum.hasMoreElements()) {
+            file = fileEnum.getNext();
             if ( !(file.exists() && file.isFile() && file.leafName.match(/\.maff/i)) ) continue;
             verbose("converting file: '" + file.path + "'");
             subPath = getSubPath(input, file);
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
-            parseMaf(file);
+            parseMaf(file, subPath);
             return;
         }
         // finished
@@ -543,7 +543,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
         convert_finish();
     }
 
-    function parseMaf(file) {
+    function parseMaf(file, subPath) {
         var tmpDir = getUniqueDir(output, ".tmp_" + file.leafName);
         try {
             extractZip(file, tmpDir);
@@ -629,42 +629,75 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    var files = getDescHtmlFiles(input, includeSubdir);
-    var file = null;
-    var subPath = null;
-    filesNext();
+    // use a special looping strategy to properly manage support folders
+    var dirs = [input],
+        dirIndex = 0,
+        fileEnum = dirs[dirIndex].directoryEntries,
+        supportFolders = {};
 
-    function filesNext() {
-        while (files.length) {
-            file = files.shift();
+    var dirsNext = function () {
+        while (++dirIndex < dirs.length) {
+            var dir = dirs[dirIndex];
+            if ( supportFolders[dir.path] ) continue;
+            fileEnum = dir.directoryEntries;
+            filesNext();
+            return;
+        }
+        // finished
+        dirsFinish();
+    };
+
+    var filesNext = function () {
+        var file, subPath;
+        while (fileEnum.hasMoreElements()) {
+            file = fileEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
+            if (file.isDirectory() && includeSubdir) {
+                dirs.push(file);
+                continue;
+            }
             if ( !(file.exists() && file.isFile()) ) continue;
             if (file.leafName.match(/\.(x?html|htm|xht)$/i)) {
                 verbose("converting HTML pack: '" + file.path + "'");
+                var supportFolder = getSupportFolder(file);
                 subPath = getSubPath(input, file);
                 subPath.pop();
                 subPath = subPath.join("\t");
-                parseHtmlPack(file);
+                parseHtmlPack(file, supportFolder, subPath);
             }
             else {
                 verbose("converting file: '" + file.path + "'");
                 subPath = getSubPath(input, file);
                 subPath.pop();
                 subPath = subPath.join("\t");
-                parseFile(file);
+                parseFile(file, subPath);
             }
             // next file (async)
             setTimeout(filesNext, 0);
             return;
         }
-        // finished
-        filesFinish();
-    }
+        dirsNext();
+    };
 
-    function filesFinish() {
+    var dirsFinish = function () {
         convert_finish();
-    }
+    };
 
-    function parseHtmlPack(file) {
+    var getSupportFolder = function (file) {
+        var filename = file.leafName;
+        var supportFolder = file.parent; supportFolder.append(filename.replace(/\.\w+$/, ".files"));
+        if (supportFolder.exists() && supportFolder.isDirectory()) {
+            supportFolders[supportFolder.path] = true;
+            return supportFolder;
+        }
+        var supportFolder = file.parent; supportFolder.append(filename.replace(/\.\w+$/, "_files"));
+        if (supportFolder.exists() && supportFolder.isDirectory()) {
+            supportFolders[supportFolder.path] = true;
+            return supportFolder;
+        }
+        return false;
+    };
+
+    var parseHtmlPack = function (file, supportFolder, subPath) {
         // load html file
         var htmlTxt = sbConvCommon.readFile(file);
         var htmlDoc = loadHTML(htmlTxt).documentElement;
@@ -720,29 +753,17 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         file.copyTo(destDir, "index.html");
 
         // -- support folder files
-        copySupportFolder();
+        if (supportFolder) {
+            supportFolder.copyTo(destDir, supportFolder.leafName);
+        }
 
         function parseHtmlPackTime(time) {
             var date = new Date(time);
             return sbConvCommon.getTimeStamp(date);
         }
+    };
 
-        function copySupportFolder() {
-            var filename = file.leafName;
-            var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
-            if (support.exists()) {
-                support.copyTo(destDir, support.leafName);
-                return;
-            }
-            var support = file.parent; support.append(filename.replace(/\.\w+$/, "_files"));
-            if (support.exists()) {
-                support.copyTo(destDir, support.leafName);
-                return;
-            }
-        }
-    }
-
-    function parseFile(file) {
+    var parseFile = function (file, subPath) {
         // create item
         var item = sbConvCommon.newItem();
 
@@ -784,7 +805,9 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
             var date = new Date(time);
             return sbConvCommon.getTimeStamp(date);
         }
-    }
+    };
+
+    filesNext();
 }
 
 function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePackFormat, mergeOutput) {
@@ -1895,9 +1918,9 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                     default:
                         var dir = sbConvCommon.getContentDir(id, true);
                         if (!dir) break;
-                        var files = getDescFiles(dir, true), file;
-                        while (files.length) {
-                            file = files.shift();
+                        var fileEnum = enumFiles(dir, true), file;
+                        while (fileEnum.hasMoreElements()) {
+                            file = fileEnum.getNext();
                             if ( !(file.exists() && file.isFile()) ) continue;
 
                             var subPath = "scrapbook/" + encodeURI(getSubPath(input, file).join("/"));
@@ -2290,109 +2313,72 @@ function loadHTML(str) {
     return parser.parseFromString(str, "text/html");
 }
 
-function getDescFiles(aFolder, aIncludeSubdir) {
-    var dirs = [aFolder], result = [];
-    for (var i=0; i<dirs.length; i++) {
-        var files = dirs[i].directoryEntries;
-        while (files.hasMoreElements()) {
-            var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if (file.isDirectory() && aIncludeSubdir) {
-                dirs.push(file);
-            }
-            else {
-                result.push(file);
-            }
-        }
-    }
-    return result;
-}
-
 /**
- * similar to getDescFiles, but only gets html files and skips looking into the support folders
+ * Returns the iterator for the given directory that travels all subdirectories and files
  */
-function getDescHtmlFiles(aFolder, aIncludeSubdir) {
-    var dirs = [aFolder], result = [], forbidden = {};
-    for (var i=0; i<dirs.length; i++) {
-        if (forbidden[dirs[i].path]) continue;  // skip looking into support folders
-        var files = dirs[i].directoryEntries;
-        while (files.hasMoreElements()) {
-            var file = files.getNext().QueryInterface(Components.interfaces.nsIFile);
-            if (file.isDirectory() && aIncludeSubdir) {
-                dirs.push(file);
-            }
-            else {
-                result.push(file);
-                var filename = file.leafName;
-                if (filename.match(/\.(x?html|htm|xht)$/i)) {
-                    // add support folder names to the forbidden list
-                    var support = file.parent; support.append(filename.replace(/\.\w+$/, ".files"));
-                    forbidden[support.path] = true;
-                    var support = file.parent; support.append(filename.replace(/\.\w+$/, "_files"));
-                    forbidden[support.path] = true;
-                }
-            }
-        }
-    }
-    return result;
-}
+function enumFiles(dir, includeSubdir) {
+    var dirEnums = [], dirEnum, canSkip;
 
-/**
- * Recursively walk down the directory tree and fires the hook for every entry(dir or file)
- *
- * @param dir
- * The directory to run this async task.
- *
- * @param hook
- * The hook that fires on each file meet, which is an object that provides two methods:
- *
- * @param hook.onTask
- * function (entry, depth) {}
- * depth is 0-based (the initial given dir is depth 0); skips subdirectory if return true 
- *
- * @param hook.onComplete
- * function () {}
- */
-function forFilesAsync(dir, hook) {
-    var hasOnTask = hook && hook.onTask, hasOnComplete = hook && hook.onComplete, threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
-    var dirEnums = [], dirEnum, startTime;
-    
-    var nextDirEntry = function () {
-        if (!startTime) startTime = Date.now();
-        while (dirEnums.length) {
-            dirEnum = dirEnums[dirEnums.length - 1];
-            if (dirEnum.hasMoreElements()) {
-                var entry = dirEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
-                handleEntry(entry);
-                if (Date.now() - startTime > threadTimeout) {
-                    startTime = false;
-                    setTimeout(nextDirEntry, 0);
-                    return;
-                }
-                continue;
-            }
-            dirEnums.pop();
-        }
-        finish();
-    };
-    
-    var handleEntry = function (entry) {
-        var interrupt = false;
-        if (hasOnTask) {
-            interrupt = hook.onTask(entry, dirEnums.length);
-        }
-        if (!interrupt && entry.isDirectory()) {
+    var addEntryToEnums = function (entry) {
+        if (entry.isDirectory()) {
+            canSkip = true;
             dirEnums.push(entry.directoryEntries);
         }
     };
 
-    var finish = function () {
-        if (hasOnComplete) {
-            hook.onComplete();
+    addEntryToEnums(dir);
+
+    var iterator = {};
+    
+    iterator.hasMoreElements = function () {
+        while (dirEnums.length) {
+            dirEnum = dirEnums[dirEnums.length - 1];
+            if (dirEnum.hasMoreElements()) {
+                return true;
+            }
+            dirEnums.pop();
+        }
+        return false;
+    };
+
+    iterator.getNext = function () {
+        while (dirEnums.length) {
+            dirEnum = dirEnums[dirEnums.length - 1];
+            if (dirEnum.hasMoreElements()) {
+                var entry = dirEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
+                if (includeSubdir) {
+                    canSkip = false;
+                    addEntryToEnums(entry);
+                }
+                return entry;
+            }
+            dirEnums.pop();
+        }
+        return;
+    };
+
+    iterator.getNextWithDepth = function () {
+        while (dirEnums.length) {
+            dirEnum = dirEnums[dirEnums.length - 1];
+            if (dirEnum.hasMoreElements()) {
+                var entry = dirEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
+                var result = [entry, dirEnums.length];
+                addEntryToEnums(entry);
+                return result;
+            }
+            dirEnums.pop();
+        }
+        return;
+    };
+
+    iterator.skipSubdir = function () {
+        if (canSkip) {
+            canSkip = false;
+            dirEnums.pop();
         }
     };
 
-    handleEntry(dir);
-    nextDirEntry();
+    return iterator;
 }
 
 /**
@@ -2565,35 +2551,58 @@ function zipAddDir(zipWritter, dir, subPath, includeRegex, excludeRegex) {
  * function () {}
  */
 function zipAddDirAsync(zipWritter, dir, subPath, includeRegex, excludeRegex, hook) {
-    var hasOnTask = hook && !!hook.onTask, hasOnComplete = hook && !!hook.onComplete;
+    var hasOnTask = hook && !!hook.onTask,
+        hasOnComplete = hook && !!hook.onComplete,
+        threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200),
+        startTime;
     var pathBasePattern = dir.path;
     var pathBaseReplace = (typeof subPath !== "undefined") ? subPath : dir.leafName;
-    
-    forFilesAsync(dir, {
-        onTask: function (entry, depth) {
-            var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
-            saveInZipAs = saveInZipAs.replace(/\\/g,'/');
-            saveInZipAs = saveInZipAs.replace(/^\//, "");
-            if (!saveInZipAs) return;
 
-            if (includeRegex && !includeRegex.test(saveInZipAs)) {
-                return true;
-            } else if (excludeRegex && excludeRegex.test(saveInZipAs)) {
-                return true;
-            } else {
-                var compressionLevel = zipDetermineCompresssionLevel(entry);
-                if (hasOnTask) {
-                    hook.onTask(entry, saveInZipAs, depth);
-                }
-                zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
+    var filesEnum = enumFiles(dir);
+    
+    var nextEntry = function () {
+        if (!startTime) startTime = Date.now();
+        while (filesEnum.hasMoreElements()) {
+            var [entry, depth] = filesEnum.getNextWithDepth();
+            if (hasOnTask) {
+                interrupt = handleEntry(entry, depth);
+                if (interrupt) filesEnum.skipSubdir();
             }
-        },
-        onComplete: function () {
-            if (hasOnComplete) {
-                hook.onComplete();
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(nextEntry, 0);
+                return;
             }
         }
-    });
+        finish();
+    };
+
+    var handleEntry = function (entry, depth) {
+        var saveInZipAs = entry.path.replace(pathBasePattern, pathBaseReplace);
+        saveInZipAs = saveInZipAs.replace(/\\/g,'/');
+        saveInZipAs = saveInZipAs.replace(/^\//, "");
+        if (!saveInZipAs) return;
+
+        if (includeRegex && !includeRegex.test(saveInZipAs)) {
+            return true;
+        } else if (excludeRegex && excludeRegex.test(saveInZipAs)) {
+            return true;
+        } else {
+            var compressionLevel = zipDetermineCompresssionLevel(entry);
+            if (hasOnTask) {
+                hook.onTask(entry, saveInZipAs, depth);
+            }
+            zipWritter.addEntryFile(saveInZipAs, compressionLevel, entry, false);
+        }
+    };
+
+    var finish = function () {
+        if (hasOnComplete) {
+            hook.onComplete();
+        }
+    };
+
+    nextEntry();
 }
 
 function zipClose(zipWritter) {
