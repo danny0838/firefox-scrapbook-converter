@@ -197,21 +197,25 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     var parseEnex = function (xmlDoc, file, subPath) {
 
         var notesNext= function () {
+            if (!startTime) startTime = Date.now();
             var note = notes.shift();
-            if (note) {
+            while (note) {
                 parseNote(note);
+                // next
+                if (Date.now() - startTime > threadTimeout) {
+                    startTime = false;
+                    setTimeout(notesNext, 0);
+                    return;
+                }
+                note = notes.shift();
             }
-            else {
-                notesFinish();
-                return;
-            }
-            // next note (async)
-            setTimeout(notesNext, 0);
+            // finished
+            notesFinish();
         };
 
         var notesFinish = function () {
-            // next file (async)
-            setTimeout(filesNext, 0);
+            // next file
+            filesNext();
         };
 
         var parseNote = function (note) {
@@ -507,6 +511,8 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
         }
     };
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
     var fileEnum = enumFiles(input, includeSubdir);
 
     filesNext();
@@ -522,6 +528,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("");
 
     var filesNext = function () {
+        newThread = false;
         var file, subPath;
         while (fileEnum.hasMoreElements()) {
             file = fileEnum.getNext();
@@ -531,7 +538,10 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             if (!includeFileName) subPath.pop();
             subPath = subPath.join("\t");
             parseMaf(file, subPath);
-            return;
+            // if a new thread has started, terminate the old thread
+            if (newThread) {
+                return;
+            }
         }
         // finished
         filesFinish();
@@ -544,15 +554,20 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
     var parseMaf = function (file, subPath) {
 
         var pagesNext = function () {
-            if (pageDirs.hasMoreElements()) {
+            if (!startTime) startTime = Date.now();
+            while (pageDirs.hasMoreElements()) {
                 var pageDir = pageDirs.getNext().QueryInterface(Components.interfaces.nsIFile);
                 parseMafPage(pageDir);
-                // next page (async)
-                setTimeout(pagesNext, 0);
+                // next
+                if (Date.now() - startTime > threadTimeout) {
+                    startTime = false;
+                    newThread = true;
+                    setTimeout(pagesNext, 0);
+                    return;
+                }
             }
-            else {
-                pagesFinish();
-            }
+            // finished
+            pagesFinish();
         };
 
         var pagesFinish = function () {
@@ -562,8 +577,10 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             } catch (ex) {
                 console.error(ex);
             }
-            // next file (async)
-            setTimeout(filesNext, 0);
+            // if we reach here from a new thread, call filesNext()
+            if (newThread) {
+                filesNext();
+            }
         };
 
         var parseMafPage = function (pageDir) {
@@ -615,6 +632,8 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
         pagesNext();
     };
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime, newThread;
     var fileEnum = enumFiles(input, includeSubdir);
 
     filesNext();
@@ -645,6 +664,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     };
 
     var filesNext = function () {
+        if (!startTime) startTime = Date.now();
         var file, subPath;
         while (fileEnum.hasMoreElements()) {
             file = fileEnum.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -668,9 +688,12 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
                 subPath = subPath.join("\t");
                 parseFile(file, subPath);
             }
-            // next file (async)
-            setTimeout(filesNext, 0);
-            return;
+            // next
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(filesNext, 0);
+                return;
+            }
         }
         dirsNext();
     };
@@ -804,6 +827,8 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         }
     };
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
     var dirs = [input],
         dirIndex = 0,
         fileEnum = dirs[dirIndex].directoryEntries,
@@ -825,6 +850,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     print("");
 
     var dirsNext = function () {
+        if (!startTime) startTime = Date.now();
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -838,9 +864,12 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             } catch (ex) {
                 error(ex);
             }
-            // next dir (async)
-            setTimeout(dirsNext, 0);
-            return;
+            // next
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(dirsNext, 0);
+                return;
+            }
         }
         // finished
         dirsFinish();
@@ -1411,6 +1440,8 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     enExportElem.setAttribute("application", "ScrapBook X Converter");
     enExportElem.setAttribute("version", "1.0.x");
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
     var dirs = input.directoryEntries;
 
     dirsNext();
@@ -1425,6 +1456,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
     print("");
 
     var dirsNext = function () {
+        if (!startTime) startTime = Date.now();
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -1438,9 +1470,12 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
             } catch (ex) {
                 error(ex);
             }
-            // next dir (async)
-            setTimeout(dirsNext, 0);
-            return;
+            // next
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(dirsNext, 0);
+                return;
+            }
         }
         // finished
         dirsFinish();
@@ -1532,6 +1567,8 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         verbose("generating file: '" + destFile.leafName + "' ...");
     }
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
     var dirs = input.directoryEntries;
 
     dirsNext();
@@ -1546,6 +1583,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     print("");
 
     var dirsNext = function () {
+        if (!startTime) startTime = Date.now();
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -1559,9 +1597,12 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
             } catch (ex) {
                 error(ex);
             }
-            // next dir (async)
-            setTimeout(dirsNext, 0);
-            return;
+            // next
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(dirsNext, 0);
+                return;
+            }
         }
         // finished
         dirsFinish();
@@ -1634,6 +1675,8 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         verbose("generating file: '" + destFile.leafName + "' ...");
     }
 
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
     var dirs = input.directoryEntries;
 
     dirsNext();
