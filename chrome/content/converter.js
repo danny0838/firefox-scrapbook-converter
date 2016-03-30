@@ -172,10 +172,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    var fileEnum = enumFiles(input, includeSubdir);
-    filesNext();
-
-    function filesNext() {
+    var filesNext = function () {
         var file, subPath;
         while (fileEnum.hasMoreElements()) {
             file = fileEnum.getNext();
@@ -191,26 +188,15 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
         }
         // finished
         filesFinish();
-    }
+    };
 
-    function filesFinish() {
+    var filesFinish = function () {
         convert_finish();
-    }
+    };
 
-    function parseEnex(xmlDoc, file, subPath) {
-        // check if it's enex, skip if not
-        if (xmlDoc && xmlDoc.documentElement.nodeName == "en-export") {
-            var notesDOM = xmlDoc.getElementsByTagName("note");
-            var notes = [];
-            for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
-            notesNext();
-        }
-        else {
-            warn("skip invalid enex: '" + file.path + "'");
-            notesFinish();
-        }
+    var parseEnex = function (xmlDoc, file, subPath) {
 
-        function notesNext() {
+        var notesNext= function () {
             var note = notes.shift();
             if (note) {
                 parseNote(note);
@@ -221,14 +207,136 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
             // next note (async)
             setTimeout(notesNext, 0);
-        }
+        };
 
-        function notesFinish() {
+        var notesFinish = function () {
             // next file (async)
             setTimeout(filesNext, 0);
-        }
+        };
 
-        function parseNote(note) {
+        var parseNote = function (note) {
+
+            var parseEnexTime = function (time) {
+                if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
+                    var date = new Date(
+                        parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
+                        parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
+                    );
+                    var date = new Date(date.valueOf() - date.getTimezoneOffset() * 60 * 1000);
+                    return sbConvCommon.getTimeStamp(date);
+                }
+                return false;
+            };
+
+            var parseEnexContent = function (data) {
+                // replace invalid HTML format <badtag /> with <badtag></badtag>
+                data = data.replace(/<(([^\s>]+)(?: [^>]+)?)\/>/g, function(){
+                    if ( ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"].indexOf(arguments[2].toLowerCase()) !== -1 ) return arguments[0];
+                    return "<" + arguments[1] + "></" + arguments[2] + ">";
+                });
+
+                var html = false;
+                var htmlDoc = loadHTML(data);
+
+                try {
+                    var ennote = htmlDoc.getElementsByTagName("en-note")[0];
+                    // handle Evernote special objects
+                    // -- en-todo
+                    var nodes = ennote.getElementsByTagName("en-todo");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        // new node in replace of the old one
+                        var node2 = htmlDoc.createElement("INPUT");
+                        node2.setAttribute("type", "checkbox");
+                        node2.setAttribute("data-sb-obj", "todo");
+                        if (node.getAttribute("checked")=="true") node2.setAttribute("checked", "checked");
+                        node.parentNode.insertBefore(node2, node);
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
+                    // -- en-media
+                    var nodes = ennote.getElementsByTagName("en-media");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        var mime = node.getAttribute("type");
+                        var hash = node.getAttribute("hash");
+                        var metadata = resHash2Data[hash];
+                        var filename = metadata.filename;
+                        // new node in replace of the old one
+                        if (mime && mime.match(/image\/(bmp|jpeg|gif|png|svg)/)) {
+                            var node2 = htmlDoc.createElement("IMG");
+                            node2.setAttribute("src", filename);
+                            node2.setAttribute("alt", filename);
+                            node.parentNode.insertBefore(node2, node);
+                        }
+                        else {
+                            var node2 = htmlDoc.createElement("A");
+                            node2.setAttribute("href", filename);
+                            node2.textContent = filename;
+                            node.parentNode.insertBefore(node2, node);
+                        }
+                        ["align", "alt", "longdesc", "height", "width", "border", "hspace", "vspace", "usemap", "style", "title", "lang", "xml:lang", "dir"].forEach(function(attr){
+                            if (node.hasAttribute(attr)) node2.setAttribute(attr, node.getAttribute(attr));
+                        }, this);
+                        for (var j in metadata) {
+                            if (j != "filename" && j != "attributes") {
+                                node2.setAttribute("data-evernote-" + j, metadata[j]);
+                            }
+                        }
+                        for (var j in metadata.attributes) {
+                            node2.setAttribute("data-evernote-attributes-" + j, metadata.attributes[j]);
+                        }
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
+                    // -- en-crypt
+                    var nodes = ennote.getElementsByTagName("en-crypt");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        // new node in replace of the old one
+                        var node2 = htmlDoc.createElement("IMG");
+                        node2.setAttribute("title", "Evernote Crypt");
+                        node2.setAttribute("alt", node.textContent);  // crypted data string
+                        ["hint", "cipher", "length"].forEach(function(attr){
+                            if (node.hasAttribute(attr)) node2.setAttribute("data-evernote-" + attr, node.getAttribute(attr));
+                        }, this);
+                        node2.setAttribute("src", evernoteCryptImage);  // crypt image
+                        node.parentNode.insertBefore(node2, node);
+                        // remove the old node
+                        node.parentNode.removeChild(node);
+                    }
+                    // -- span (highlight)
+                    var nodes = ennote.getElementsByTagName("span");
+                    for (var i=nodes.length-1; i>=0; i--) {
+                        var node = nodes[i];
+                        if (!node.hasAttribute("style") || !node.getAttribute("style").match(/(-evernote-highlight:\s*true;)/i)) continue;
+                        node.setAttribute("style", node.getAttribute("style").replace(RegExp.$1, ""));
+                        node.setAttribute("class", "linemarker-marked-line");
+                        node.setAttribute("data-sb-obj", "linemarker");
+                    }
+
+                    // set output html
+                    html = '<!DOCTYPE html>\n'
+                        + '<html>\n'
+                        + '<head>\n'
+                        + '  <meta charset="UTF-8">\n'
+                        + '  <title data-sb-obj="title">' + item.title + '</title>\n'
+                        + '  <meta name="viewport" content="width=device-width">\n'
+                        + '</head>\n'
+                        + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
+                        + '</html>\n';
+                } catch(ex){
+                    console.debug(ex);
+                }
+
+                if (html === false) {
+                    warn("cannot read en-note data from '" + item.title + "' and export the original xhtml as fallback.");
+                    html = data;
+                }
+
+                return html;
+            };
+
             var item = sbConvCommon.newItem();
             var resHash2Data = {};
 
@@ -343,133 +451,12 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             sbConvCommon.writeIndexDat(item, indexDat);
             sbConvCommon.writeFile(indexHTML, content, "UTF-8", true);
             if (item.modify) indexHTML.lastModifiedTime = sbConvCommon.getLastModifiedTime(item.modify);
-
-            function parseEnexTime(time) {
-                if (time.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/)) {
-                    var date = new Date(
-                        parseInt(RegExp.$1, 10), parseInt(RegExp.$2, 10) - 1, parseInt(RegExp.$3, 10),
-                        parseInt(RegExp.$4, 10), parseInt(RegExp.$5, 10), parseInt(RegExp.$6, 10)
-                    );
-                    var date = new Date(date.valueOf() - date.getTimezoneOffset() * 60 * 1000);
-                    return sbConvCommon.getTimeStamp(date);
-                }
-                return false;
-            }
-
-            function parseEnexContent(data) {
-                // replace invalid HTML format <badtag /> with <badtag></badtag>
-                data = data.replace(/<(([^\s>]+)(?: [^>]+)?)\/>/g, function(){
-                    if ( ["area", "base", "br", "col", "command", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source", "track", "wbr"].indexOf(arguments[2].toLowerCase()) !== -1 ) return arguments[0];
-                    return "<" + arguments[1] + "></" + arguments[2] + ">";
-                });
-
-                var html = false;
-                var htmlDoc = loadHTML(data);
-
-                try {
-                    var ennote = htmlDoc.getElementsByTagName("en-note")[0];
-                    // handle Evernote special objects
-                    // -- en-todo
-                    var nodes = ennote.getElementsByTagName("en-todo");
-                    for (var i=nodes.length-1; i>=0; i--) {
-                        var node = nodes[i];
-                        // new node in replace of the old one
-                        var node2 = htmlDoc.createElement("INPUT");
-                        node2.setAttribute("type", "checkbox");
-                        node2.setAttribute("data-sb-obj", "todo");
-                        if (node.getAttribute("checked")=="true") node2.setAttribute("checked", "checked");
-                        node.parentNode.insertBefore(node2, node);
-                        // remove the old node
-                        node.parentNode.removeChild(node);
-                    }
-                    // -- en-media
-                    var nodes = ennote.getElementsByTagName("en-media");
-                    for (var i=nodes.length-1; i>=0; i--) {
-                        var node = nodes[i];
-                        var mime = node.getAttribute("type");
-                        var hash = node.getAttribute("hash");
-                        var metadata = resHash2Data[hash];
-                        var filename = metadata.filename;
-                        // new node in replace of the old one
-                        if (mime && mime.match(/image\/(bmp|jpeg|gif|png|svg)/)) {
-                            var node2 = htmlDoc.createElement("IMG");
-                            node2.setAttribute("src", filename);
-                            node2.setAttribute("alt", filename);
-                            node.parentNode.insertBefore(node2, node);
-                        }
-                        else {
-                            var node2 = htmlDoc.createElement("A");
-                            node2.setAttribute("href", filename);
-                            node2.textContent = filename;
-                            node.parentNode.insertBefore(node2, node);
-                        }
-                        ["align", "alt", "longdesc", "height", "width", "border", "hspace", "vspace", "usemap", "style", "title", "lang", "xml:lang", "dir"].forEach(function(attr){
-                            if (node.hasAttribute(attr)) node2.setAttribute(attr, node.getAttribute(attr));
-                        }, this);
-                        for (var j in metadata) {
-                            if (j != "filename" && j != "attributes") {
-                                node2.setAttribute("data-evernote-" + j, metadata[j]);
-                            }
-                        }
-                        for (var j in metadata.attributes) {
-                            node2.setAttribute("data-evernote-attributes-" + j, metadata.attributes[j]);
-                        }
-                        // remove the old node
-                        node.parentNode.removeChild(node);
-                    }
-                    // -- en-crypt
-                    var nodes = ennote.getElementsByTagName("en-crypt");
-                    for (var i=nodes.length-1; i>=0; i--) {
-                        var node = nodes[i];
-                        // new node in replace of the old one
-                        var node2 = htmlDoc.createElement("IMG");
-                        node2.setAttribute("title", "Evernote Crypt");
-                        node2.setAttribute("alt", node.textContent);  // crypted data string
-                        ["hint", "cipher", "length"].forEach(function(attr){
-                            if (node.hasAttribute(attr)) node2.setAttribute("data-evernote-" + attr, node.getAttribute(attr));
-                        }, this);
-                        node2.setAttribute("src", evernoteCryptImage);  // crypt image
-                        node.parentNode.insertBefore(node2, node);
-                        // remove the old node
-                        node.parentNode.removeChild(node);
-                    }
-                    // -- span (highlight)
-                    var nodes = ennote.getElementsByTagName("span");
-                    for (var i=nodes.length-1; i>=0; i--) {
-                        var node = nodes[i];
-                        if (!node.hasAttribute("style") || !node.getAttribute("style").match(/(-evernote-highlight:\s*true;)/i)) continue;
-                        node.setAttribute("style", node.getAttribute("style").replace(RegExp.$1, ""));
-                        node.setAttribute("class", "linemarker-marked-line");
-                        node.setAttribute("data-sb-obj", "linemarker");
-                    }
-
-                    // set output html
-                    html = '<!DOCTYPE html>\n'
-                        + '<html>\n'
-                        + '<head>\n'
-                        + '  <meta charset="UTF-8">\n'
-                        + '  <title data-sb-obj="title">' + item.title + '</title>\n'
-                        + '  <meta name="viewport" content="width=device-width">\n'
-                        + '</head>\n'
-                        + nodeToTag(ennote, "body", ["bgcolor", "text", "style", "title", "lang", "xml:lang", "dir"]) + '\n'
-                        + '</html>\n';
-                } catch(ex){
-                    console.debug(ex);
-                }
-
-                if (html === false) {
-                    warn("cannot read en-note data from '" + item.title + "' and export the original xhtml as fallback.");
-                    html = data;
-                }
-
-                return html;
-            }
-        }
+        };
 
         /**
          * reads data from aNode and returns a new node in string
          */
-        function nodeToTag(aNode, aTagName, aAllowedAttrs) {
+        var nodeToTag = function (aNode, aTagName, aAllowedAttrs) {
             if (!aTagName) aTagName = aNode.tagName;
             aTagName = aTagName.toLowerCase();
             if (!aAllowedAttrs) aAllowedAttrs = [];
@@ -482,9 +469,9 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
             tag += ">" + aNode.innerHTML + "</" + aTagName + ">";
             return tag;
-        }
+        };
 
-        function getUniqueFile(dir, name, mime) {
+        var getUniqueFile = function (dir, name, mime) {
             if (name) {
                 var name = sbConvCommon.validateFileName(name);
             }
@@ -507,8 +494,24 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
             while ( destFile.exists() );
             return destFile;
+        };
+
+        // check if it's enex, skip if not
+        if (xmlDoc && xmlDoc.documentElement.nodeName == "en-export") {
+            var notesDOM = xmlDoc.getElementsByTagName("note");
+            var notes = [];
+            for (var i=0, I=notesDOM.length; i<I; i++) notes.push(notesDOM[i]);
+            notesNext();
         }
-    }
+        else {
+            warn("skip invalid enex: '" + file.path + "'");
+            notesFinish();
+        }
+    };
+
+    var fileEnum = enumFiles(input, includeSubdir);
+
+    filesNext();
 }
 
 function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId) {
@@ -520,10 +523,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    var fileEnum = enumFiles(input, includeSubdir);
-    filesNext();
-
-    function filesNext() {
+    var filesNext = function () {
         var file, subPath;
         while (fileEnum.hasMoreElements()) {
             file = fileEnum.getNext();
@@ -537,26 +537,15 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
         }
         // finished
         filesFinish();
-    }
+    };
 
-    function filesFinish() {
+    var filesFinish = function () {
         convert_finish();
-    }
+    };
 
-    function parseMaf(file, subPath) {
-        var tmpDir = getUniqueDir(output, ".tmp_" + file.leafName);
-        try {
-            extractZip(file, tmpDir);
-        } catch(ex) {
-            // not zip or corrupted zip
-            warn("skip invalid maff: '" + file.path + "'");
-            pagesFinish();
-            return;
-        }
-        var pageDirs = tmpDir.directoryEntries;
-        pagesNext();
+    var parseMaf = function (file, subPath) {
 
-        function pagesNext() {
+        var pagesNext = function () {
             if (pageDirs.hasMoreElements()) {
                 var pageDir = pageDirs.getNext().QueryInterface(Components.interfaces.nsIFile);
                 parseMafPage(pageDir);
@@ -566,9 +555,9 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             else {
                 pagesFinish();
             }
-        }
+        };
 
-        function pagesFinish() {
+        var pagesFinish = function () {
             // @FIXME: Exception is frequently seen here if the page is skipped. Cause to be determined.
             try {
                 tmpDir.remove(true);
@@ -577,9 +566,9 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             }
             // next file (async)
             setTimeout(filesNext, 0);
-        }
+        };
 
-        function parseMafPage(pageDir) {
+        var parseMafPage = function (pageDir) {
             // read RDF data
             var rdfFile = pageDir.clone(); rdfFile.append("index.rdf");
             var ds = new MaffDataSource();
@@ -592,7 +581,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             item.title = ds.getMafProperty(res.title);
             item.source = ds.getMafProperty(res.originalUrl);
             item.chars = ds.getMafProperty(res.charset);
-            item.id = item.create = item.modify = parseMafTime(ds.getMafProperty(res.archiveTime));
+            item.id = item.create = item.modify = sbConvCommon.getTimeStamp(new Date(ds.getMafProperty(res.archiveTime)));
             if (uniqueId) item.id = getUniqueId(item.id);
             item.folder = subPath;
 
@@ -612,13 +601,25 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
                 var pageDirFile = pageDirFiles.getNext().QueryInterface(Components.interfaces.nsIFile);
                 pageDirFile.moveTo(destDir, pageDirFile.leafName);
             }
+        };
 
-            function parseMafTime(time) {
-                var date = new Date(time);
-                return sbConvCommon.getTimeStamp(date);
-            }
+        var tmpDir = getUniqueDir(output, ".tmp_" + file.leafName);
+        try {
+            extractZip(file, tmpDir);
+        } catch(ex) {
+            // not zip or corrupted zip
+            warn("skip invalid maff: '" + file.path + "'");
+            pagesFinish();
+            return;
         }
-    }
+        var pageDirs = tmpDir.directoryEntries;
+
+        pagesNext();
+    };
+
+    var fileEnum = enumFiles(input, includeSubdir);
+
+    filesNext();
 }
 
 function convert_html2sb(input, output, includeSubdir, uniqueId) {
@@ -629,12 +630,10 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
 
-    // use a special looping strategy to properly manage support folders
-    var dirs = [input],
-        dirIndex = 0,
-        fileEnum = dirs[dirIndex].directoryEntries,
-        supportFolders = {};
-
+    /**
+     * Use a special looping strategy to properly manage support folders.
+     * For each directory: process all files first, and then subdirectories.
+     */
     var dirsNext = function () {
         while (++dirIndex < dirs.length) {
             var dir = dirs[dirIndex];
@@ -807,6 +806,11 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
         }
     };
 
+    var dirs = [input],
+        dirIndex = 0,
+        fileEnum = dirs[dirIndex].directoryEntries,
+        supportFolders = {};
+
     filesNext();
 }
 
@@ -822,20 +826,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
-    // en-export
-    var enExport = '<?xml version="1.0" encoding="UTF-8"?>\n'
-        + '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export2.dtd">\n'
-        + '<en-export>\n</en-export>';
-    var enExportDoc = loadXML(enExport);
-    var enExportElem = enExportDoc.documentElement;
-    enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
-    enExportElem.setAttribute("application", "ScrapBook X Converter");
-    enExportElem.setAttribute("version", "1.0.x");
-
-    var dirs = input.directoryEntries;
-    dirsNext();
-
-    function dirsNext() {
+    var dirsNext = function () {
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -855,9 +846,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         }
         // finished
         dirsFinish();
-    }
+    };
 
-    function dirsFinish() {
+    var dirsFinish = function () {
         if (mergeOutput) {
             var destFile = output.clone();
             destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".enex");
@@ -865,9 +856,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             verbose("exporting file: '" + destFile.leafName + "'");
         }
         convert_finish();
-    }
+    };
     
-    function parseScrapBook(dir, indexFile, indexData, enExportDoc) {
+    var parseScrapBook = function (dir, indexFile, indexData, enExportDoc) {
         verbose("converting ScrapBook data: '" + dir.path + "'");
         var item = sbConvCommon.parseIndexDat(indexData);
         if (["folder", "separator"].indexOf(item.type) !== -1) {
@@ -1073,9 +1064,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             sbConvCommon.writeFile(destFile, XMLString(enExportDoc), "UTF-8", true);
             verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
         }
-    }
+    };
 
-    function parseScrapBookContent(indexFile, item, enNoteDoc, enNoteElem, enExportDoc, noteElem) {
+    var parseScrapBookContent = function (indexFile, item, enNoteDoc, enNoteElem, enExportDoc, noteElem) {
         if ( !(indexFile.exists() && indexFile.isFile()) ) return;
         var html = sbConvCommon.readFile(indexFile);
         var charset = item.chars || "UTF-8";
@@ -1083,6 +1074,38 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         var htmlDoc = loadHTML(html);
         var body = htmlDoc.body;
         if (!body) return;
+
+        var getFileFromUrl = function (url) {
+            var base = sbConvCommon.convertFilePathToURL(indexFile.parent.path);
+            var url = sbConvCommon.resolveURL(base, url);
+            var file = sbConvCommon.convertURLToFile(url);
+            return file;
+        };
+
+        // copy Evernote available attributes and childNodes from sourceNode to targetNode recursively
+        // no namespace, use lower case name
+        var copyNodeFromHtmlToXml = function (sourceNode, targetNode) {
+            // copy attributes
+            Array.prototype.slice.call(sourceNode.attributes).forEach(function(attr){
+                if (isEvernoteAllowed(targetNode.nodeName, attr.name)) {
+                    targetNode.setAttribute(attr.name, attr.value);
+                }
+            });
+            if (!sourceNode.hasChildNodes()) return;
+            Array.prototype.slice.call(sourceNode.childNodes).forEach(function(elem){
+                if (elem.nodeType === 1) {
+                    if (isEvernoteAllowed(elem.nodeName)) {
+                        var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
+                        targetNode.appendChild(newElem);
+                        copyNodeFromHtmlToXml(elem, newElem);
+                    }
+                }
+                else {
+                    var newElem = elem.cloneNode(true);
+                    targetNode.appendChild(newElem);
+                }
+            });
+        };
 
         // parse elements
         var metaRefreshTarget = false;
@@ -1341,41 +1364,9 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             }
         }
         copyNodeFromHtmlToXml(body, enNoteElem);
+    };
 
-        function getFileFromUrl(url) {
-            var base = sbConvCommon.convertFilePathToURL(indexFile.parent.path);
-            var url = sbConvCommon.resolveURL(base, url);
-            var file = sbConvCommon.convertURLToFile(url);
-            return file;
-        }
-
-        // copy Evernote available attributes and childNodes from sourceNode to targetNode recursively
-        // no namespace, use lower case name
-        function copyNodeFromHtmlToXml(sourceNode, targetNode) {
-            // copy attributes
-            Array.prototype.slice.call(sourceNode.attributes).forEach(function(attr){
-                if (isEvernoteAllowed(targetNode.nodeName, attr.name)) {
-                    targetNode.setAttribute(attr.name, attr.value);
-                }
-            });
-            if (!sourceNode.hasChildNodes()) return;
-            Array.prototype.slice.call(sourceNode.childNodes).forEach(function(elem){
-                if (elem.nodeType === 1) {
-                    if (isEvernoteAllowed(elem.nodeName)) {
-                        var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
-                        targetNode.appendChild(newElem);
-                        copyNodeFromHtmlToXml(elem, newElem);
-                    }
-                }
-                else {
-                    var newElem = elem.cloneNode(true);
-                    targetNode.appendChild(newElem);
-                }
-            });
-        }
-    }
-
-    function parseScrapBookTime(time) {
+    var parseScrapBookTime = function (time) {
         var date = sbConvCommon.timeStampToDate(time);
         if (date) {
             var date = new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000);
@@ -1388,15 +1379,15 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             return y.toString() + m.toString() + d.toString() + "T" + h.toString() + i.toString() + s.toString() + "Z";
         }
         return false;
-    }
+    };
 
-    function isEvernoteAllowed(nodeName, attrName) {
+    var isEvernoteAllowed = function (nodeName, attrName) {
         nodeName = nodeName.toLowerCase();
         if (typeof(attrName) === "undefined") return typeof(evernoteAllowedElements[nodeName]) !== "undefined";
         return typeof(evernoteAllowedElements[nodeName][attrName]) !== "undefined";
-    }
+    };
 
-    function readBinary(aFile) {
+    var readBinary = function (aFile) {
         try {
             var istream = Components.classes['@mozilla.org/network/file-input-stream;1'].createInstance(Components.interfaces.nsIFileInputStream);
             istream.init(aFile, -1, -0, false);
@@ -1410,7 +1401,21 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         catch(ex) {
             return false;
         }
-    }
+    };
+
+    // en-export
+    var enExport = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        + '<!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export2.dtd">\n'
+        + '<en-export>\n</en-export>';
+    var enExportDoc = loadXML(enExport);
+    var enExportElem = enExportDoc.documentElement;
+    enExportElem.setAttribute("export-date", parseScrapBookTime(sbConvCommon.getTimeStamp()));
+    enExportElem.setAttribute("application", "ScrapBook X Converter");
+    enExportElem.setAttribute("version", "1.0.x");
+
+    var dirs = input.directoryEntries;
+
+    dirsNext();
 }
 
 function convert_sb2maff(input, output, topDirName, mergeOutput) {
@@ -1421,17 +1426,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
-    if (mergeOutput) {
-        var destFile = output.clone();
-        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".maff");
-        var zipWritter = zipOpen(destFile);
-        verbose("generating file: '" + destFile.leafName + "' ...");
-    }
-
-    var dirs = input.directoryEntries;
-    dirsNext();
-
-    function dirsNext() {
+    var dirsNext = function () {
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -1451,17 +1446,17 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         }
         // finished
         dirsFinish();
-    }
+    };
 
-    function dirsFinish() {
+    var dirsFinish = function () {
         if (mergeOutput) {
             verbose("exported file: '" + destFile.leafName + "'");
             zipClose(zipWritter);
         }
         convert_finish();
-    }
+    };
     
-    function parseScrapBook(dir, indexFile, indexData) {
+    var parseScrapBook = function (dir, indexFile, indexData) {
         verbose("converting ScrapBook data: '" + dir.path + "'");
 
         // load item data
@@ -1530,7 +1525,18 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
             zipAddDir(zw, dir, overwriteName);
             zipClose(zw);
         }
+    };
+
+    if (mergeOutput) {
+        var destFile = output.clone();
+        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".maff");
+        var zipWritter = zipOpen(destFile);
+        verbose("generating file: '" + destFile.leafName + "' ...");
     }
+
+    var dirs = input.directoryEntries;
+
+    dirsNext();
 }
 
 function convert_sb2zip(input, output, topDirName, mergeOutput) {
@@ -1541,22 +1547,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("");
 
-    if (mergeOutput) {
-        if (topDirName === "none") {
-            error("mergeOutput cannot be used with no top directory name");
-            return;
-        }
-        
-        var destFile = output.clone();
-        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".zip");
-        var zipWritter = zipOpen(destFile);
-        verbose("generating file: '" + destFile.leafName + "' ...");
-    }
-
-    var dirs = input.directoryEntries;
-    dirsNext();
-
-    function dirsNext() {
+    var dirsNext = function () {
         while (dirs.hasMoreElements()) {
             try {
                 var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
@@ -1576,17 +1567,17 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         }
         // finished
         dirsFinish();
-    }
+    };
 
-    function dirsFinish() {
+    var dirsFinish = function () {
         if (mergeOutput) {
             verbose("exported file: '" + destFile.leafName + "'");
             zipClose(zipWritter);
         }
         convert_finish();
-    }
+    };
     
-    function parseScrapBook(dir, indexFile, indexData) {
+    var parseScrapBook = function (dir, indexFile, indexData) {
         verbose("compressing ScrapBook data: '" + dir.path + "'");
 
         // load item data
@@ -1631,7 +1622,23 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
             zipAddDir(zw, dir, overwriteName);
             zipClose(zw);
         }
+    };
+
+    if (mergeOutput) {
+        if (topDirName === "none") {
+            error("mergeOutput cannot be used with no top directory name");
+            return;
+        }
+        
+        var destFile = output.clone();
+        destFile.append("ScrapBook-" + sbConvCommon.getTimeStamp() + ".zip");
+        var zipWritter = zipOpen(destFile);
+        verbose("generating file: '" + destFile.leafName + "' ...");
     }
+
+    var dirs = input.directoryEntries;
+
+    dirsNext();
 }
 
 function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
