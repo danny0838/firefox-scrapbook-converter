@@ -2107,14 +2107,16 @@ function convert_sb2maff2(input, output, entryPage) {
         '  </RDF:Description>\n' +
         '</RDF:RDF>\n';
 
+    var entryFile = sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(sbConvCommon.validateFileName(entryPage)));
+        
     var indexContent = "<!DOCTYPE html>\n" +
             '<html>\n' +
             '  <head>\n' +
             '    <meta charset="UTF-8">\n' +
-            '    <meta http-equiv="refresh" content="0;URL=./ScrapBook/' + sbConvCommon.escapeFileName(entryPage) + '">\n' +
+            '    <meta http-equiv="refresh" content="0;URL=./ScrapBook/' + entryFile + '">\n' +
             '  </head>\n' +
             '  <body>\n' +
-            '    #META REFRESH <a href="ScrapBook/' + sbConvCommon.escapeFileName(entryPage) + '">' + sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(entryPage)) + '</a>\n' +
+            '    #META REFRESH <a href="ScrapBook/' + entryFile + '">' + entryFile + '</a>\n' +
             '  </body>\n' +
             '</html>\n';
 
