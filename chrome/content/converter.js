@@ -170,6 +170,8 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("include filename: " + (includeFileName ? "yes" : "no"));
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
+    print("");
+
     var files = getDescFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
@@ -516,6 +518,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
     print("include filename: " + (includeFileName ? "yes" : "no"));
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
+
     var files = getDescFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
@@ -625,6 +628,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
     print("prevent duplicate ID: " + (uniqueId ? "yes" : "no"));
     print("");
+
     var files = getDescHtmlFiles(input, includeSubdir);
     var file = null;
     var subPath = null;
