@@ -1998,9 +1998,9 @@ function convert_sb2sf(input, output) {
             // @TODO: potential mistranslation?
             return cssText.replace(new RegExp([
                 /\/\*[\s\S]*?\*\//,                                             //  /* comment */
-                /(@import\s*(["'])\s*((?:\\.|[^\2])*?)\2)/,                     //  @import "..."
-                /(@import\s+url\(\s*(["']?)\s*((?:\\.|[^\5])*?)\s*\5\s*\))/,    //  @import url(...)
-                /(url\(\s*(["']?)\s*((?:\\.|[^\8])*?)\s*\8\s*\))/               //  url(...)
+                /(@import\s*(["'])\s*((?:\\.|[^\\])*?)\2)/,                     //  @import "..."
+                /(@import\s+url\(\s*(["']?)\s*((?:\\.|[^\\])*?)\s*\5\s*\))/,    //  @import url(...)
+                /(url\(\s*(["']?)\s*((?:\\.|[^\\])*?)\s*\8\s*\))/               //  url(...)
             ].map(function (r) { return r.source; }).join("|"), "ig"), function () {
                 if (arguments[1]) {
                     var url = arguments[3];
