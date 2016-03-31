@@ -1761,7 +1761,6 @@ function convert_sb2sf(input, output) {
                                 });
                             })(elem.getAttribute("srcset")));
                         }
-                    case "embed" : 
                     case "source":  // in <audio> and <vedio>
                     case "track" :  // in <audio> and <vedio>
                     case "script":
@@ -1772,11 +1771,21 @@ function convert_sb2sf(input, output) {
                             }
                         }
                         break;
+                    case "embed" : 
+                        if (elem.hasAttribute("src")) {
+                            var linkUrl = elem.getAttribute("src");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                // modifying the link could cause an error, catch it
+                                try { elem.setAttribute("src", "about:blank"); } catch (ex) {}
+                            }
+                        }
+                        break;
                     case "object":
                         if (elem.hasAttribute("data")) {
                             var linkUrl = elem.getAttribute("data");
                             if (linkUrl.indexOf("://") === -1) {  // relative-linked file
-                                elem.setAttribute("data", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                                // modifying the link could cause an error, catch it
+                                try { elem.setAttribute("data", "about:blank"); } catch (ex) {}
                             }
                         }
                         break;
@@ -1784,7 +1793,8 @@ function convert_sb2sf(input, output) {
                         if (elem.hasAttribute("archive")) {
                             var linkUrl = elem.getAttribute("archive");
                             if (linkUrl.indexOf("://") === -1) {  // relative-linked file
-                                elem.setAttribute("archive", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                                // modifying the link could cause an error, catch it
+                                try { elem.setAttribute("archive", "about:blank"); } catch (ex) {}
                             }
                         }
                         break;
