@@ -138,6 +138,9 @@ function convert(data) {
         case "sb2zip":
             convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
             break;
+        case "sb2sf":
+            convert_sb2sf(input, output);
+            break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
             convert_sb2epub(input, output, data.includeAllFiles, data.bookMeta);
@@ -1658,6 +1661,426 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         var zipWritter = zipOpen(destFile);
         verbose("generating file: '" + destFile.leafName + "' ...");
     }
+
+    var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
+    var startTime;
+    var dirs = input.directoryEntries;
+
+    dirsNext();
+}
+
+function convert_sb2sf(input, output) {
+    print("convert method: ScrapBook data --> single .html");
+    print("input directory: " + input.path);
+    print("output directory: " + output.path);
+    print("");
+
+    var dirsNext = function () {
+        if (!startTime) startTime = Date.now();
+        while (dirs.hasMoreElements()) {
+            try {
+                var dir = dirs.getNext().QueryInterface(Components.interfaces.nsIFile);
+                if ( !(dir.exists() && dir.isDirectory()) ) continue;
+                var indexData = dir.clone();
+                indexData.append("index.dat");
+                if ( !(indexData.exists() && indexData.isFile()) ) continue;
+                var indexFile = dir.clone();
+                indexFile.append("index.html");
+                parseScrapBook(dir, indexFile, indexData);
+            } catch (ex) {
+                error(ex);
+            }
+            // next
+            if (Date.now() - startTime > threadTimeout) {
+                startTime = false;
+                setTimeout(dirsNext, 0);
+                return;
+            }
+        }
+        // finished
+        dirsFinish();
+    };
+
+    var dirsFinish = function () {
+        convert_finish();
+    };
+
+    var parseScrapBook = function (dir, indexFile, indexData) {
+
+        var parsePageContent = function (indexFile, recurseChain) {
+            // check if it's an HTML file
+            // if not, return an object representing the file
+            var mime = sbConvCommon.getFileMime(indexFile) || "application/octet-stream";
+            if (["text/html", "application/xhtml+xml"].indexOf(mime) < 0) {
+                return {
+                    file: indexFile,
+                    mime: mime,
+                };
+            }
+            
+            // read index.html
+            var html = sbConvCommon.readFile(indexFile);
+            html = sbConvCommon.convertToUnicode(html, charset);
+            var htmlDoc = loadHTML(html);
+            var body = htmlDoc.body;
+            if (!body) {
+                error("'" + indexFile + "' is not a valid html file.");
+                return;
+            }
+
+            var baseUrl = sbConvCommon.convertFilePathToURL(indexFile.path);
+
+            // check meta refresh
+            if (metaRefreshAvailable > 0) {
+                var metaRefreshTarget;
+                Array.prototype.slice.call(htmlDoc.getElementsByTagName("meta")).forEach(function (elem) {
+                    if (metaRefreshTarget) return;
+                    if ( !(elem.hasAttribute("http-equiv") && elem.getAttribute("http-equiv").toLowerCase() === "refresh" && elem.getAttribute("content").match(/^(\d+;\s*url=)(.*)$/i)) ) return;
+                    metaRefreshTarget = getFileFromUrl(baseUrl, RegExp.$2);
+                });
+                if (metaRefreshTarget) {
+                    metaRefreshAvailable--;
+                    return parsePageContent(metaRefreshTarget, recurseChain);
+                }
+            }
+
+            // parse elements
+            Array.prototype.slice.call(htmlDoc.getElementsByTagName("*")).forEach(function(elem){
+                if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
+
+                switch (elem.nodeName.toLowerCase()) {
+                    case "img":
+                        if (elem.hasAttribute("srcset")) {
+                            elem.setAttribute("srcset", (function (srcset) {
+                                return srcset.replace(/(\s*)([^ ,][^ ]*[^ ,])(\s*(?: [^ ,]+)?\s*(?:,|$))/g, function (m, m1, m2, m3) {
+                                    var linkUrl = m2;
+                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                        linkUrl = getResDataUri(linkUrl, baseUrl, indexFile, recurseChain);
+                                    }
+                                    return m1 + linkUrl + m3;
+                                });
+                            })(elem.getAttribute("srcset")));
+                        }
+                    case "embed" : 
+                    case "source":  // in <audio> and <vedio>
+                    case "track" :  // in <audio> and <vedio>
+                    case "script":
+                        if (elem.hasAttribute("src")) {
+                            var linkUrl = elem.getAttribute("src");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                elem.setAttribute("src", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                            }
+                        }
+                        break;
+                    case "object":
+                        if (elem.hasAttribute("data")) {
+                            var linkUrl = elem.getAttribute("data");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                elem.setAttribute("data", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                            }
+                        }
+                        break;
+                    case "applet":
+                        if (elem.hasAttribute("archive")) {
+                            var linkUrl = elem.getAttribute("archive");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                elem.setAttribute("archive", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                            }
+                        }
+                        break;
+                    case "body" : 
+                    case "table" : 
+                    case "tr" : 
+                    case "th" : 
+                    case "td" : 
+                        if (elem.hasAttribute("background")) {
+                            var linkUrl = elem.getAttribute("background");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                elem.setAttribute("background", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                            }
+                        }
+                        break;
+                    case "input" :
+                        switch (elem.type.toLowerCase()) {
+                            case "image":
+                                if (elem.hasAttribute("src")) {
+                                    var linkUrl = elem.getAttribute("src");
+                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                        elem.setAttribute("src", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                                    }
+                                }
+                                break;
+                        }
+                        break;
+                    case "link" : 
+                        // gets "" if rel attribute not defined
+                        switch (elem.rel.toLowerCase()) {
+                            case "stylesheet" :
+                                if (elem.hasAttribute("href")) {
+                                    var linkUrl = elem.getAttribute("href");
+                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                        elem.setAttribute("href", getResDataUriCss(linkUrl, baseUrl, indexFile, recurseChain));
+                                    }
+                                }
+                                break;
+                            case "shortcut icon" :
+                            case "icon" :
+                            default :
+                                if (elem.hasAttribute("href")) {
+                                    var linkUrl = elem.getAttribute("href");
+                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                        elem.setAttribute("href", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
+                                    }
+                                }
+                                break;
+                        }
+                        break;
+                    case "style" :
+                        elem.textContent = parseCssText(elem.textContent, baseUrl, indexFile, recurseChain);
+                        break;
+                    case "a" : 
+                    case "area" : 
+                        if (elem.hasAttribute("href")) {
+                            var linkUrl = elem.getAttribute("href");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                var [dataUri, downloadName] = getResDataUriAnchor(linkUrl, baseUrl, indexFile, recurseChain);
+                                elem.setAttribute("href", dataUri);
+                                if (downloadName && !elem.hasAttribute("download")) {
+                                    elem.setAttribute("download", downloadName);
+                                }
+                            }
+                        }
+                        break;
+                    case "frame"  : 
+                    case "iframe" : 
+                        if (elem.hasAttribute("src")) {
+                            var linkUrl = elem.getAttribute("src");
+                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                elem.setAttribute("src", getResDataUriFrame(linkUrl, baseUrl, indexFile, recurseChain));
+                            }
+                        }
+                        break;
+                }
+
+                if (elem.hasAttribute("style")) {
+                    elem.setAttribute("style", parseCssText(elem.getAttribute("style"), baseUrl, indexFile, recurseChain));
+                }
+            });
+
+            return doctypeToString(htmlDoc.doctype) + htmlDoc.documentElement.outerHTML;
+        };
+
+        var doctypeToString = function (aDoctype) {
+            if ( !aDoctype ) return "";
+            var ret = "<!DOCTYPE " + aDoctype.name;
+            if ( aDoctype.publicId ) ret += ' PUBLIC "' + aDoctype.publicId + '"';
+            if ( aDoctype.systemId ) ret += ' "'        + aDoctype.systemId + '"';
+            ret += ">\n";
+            return ret;
+        };
+
+        var getFileFromUrl = function (base, url) {
+            var url = sbConvCommon.resolveURL(base, url);
+            var file = sbConvCommon.convertURLToFile(url);
+            return file;
+        };
+
+        var getResDataUri = function (linkUrl, baseUrl, baseFile, recurseChain) {
+            var linkFile = getFileFromUrl(baseUrl, linkUrl);
+            if (linkFile && linkFile.exists() && linkFile.isFile()) {
+                // link to self, keep the hash
+                if (linkFile.equals(baseFile)) {
+                    return sbConvCommon.splitURLByAnchor(linkUrl)[1];
+                }
+                var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
+                var data_bin = sbConvCommon.readFileBinary(linkFile);
+                var data_b64 = window.btoa(data_bin);
+                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                return data_uri;
+            }
+            return "about:blank";
+        };
+
+        var getResDataUriCss = function (linkUrl, baseUrl, baseFile, recurseChain) {
+            var linkFile = getFileFromUrl(baseUrl, linkUrl);
+            if (linkFile && linkFile.exists() && linkFile.isFile()) {
+                // link to self, keep the hash
+                if (linkFile.equals(baseFile)) {
+                    return sbConvCommon.splitURLByAnchor(linkUrl)[1];
+                }
+                // circular reference, keep original link, which should be invalid
+                if (recurseChain.indexOf(linkFile.path) >= 0) {
+                    error("Circular reference of CSS from '" + baseFile.path + "' to '" + linkFile.path + "' is not parsed.")
+                    return linkUrl;
+                }
+                // use a heuristic to translate url(...) to dataURI
+                // @TODO: handle @document, etc
+                var data_bin = parseCssText(
+                    sbConvCommon.readFileBinary(linkFile),
+                    sbConvCommon.convertFilePathToURL(linkFile.path),
+                    linkFile,
+                    recurseChain.concat(baseFile.path)
+                );
+                var data_b64 = window.btoa(data_bin);
+                var data_uri = "data:text/css;" + "base64," + data_b64;
+                return data_uri;
+            }
+            return "about:blank";
+        };
+
+        var getResDataUriAnchor = function (linkUrl, baseUrl, baseFile, recurseChain) {
+            var linkFile = getFileFromUrl(baseUrl, linkUrl);
+            if (linkFile && linkFile.exists() && linkFile.isFile()) {
+                // link to self, keep the hash
+                if (linkFile.equals(baseFile)) {
+                    return [sbConvCommon.splitURLByAnchor(linkUrl)[1], false];
+                }
+                var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
+                // link to a web page
+                if (["text/html", "application/xhtml+xml"].indexOf(mime) >= 0) {
+                    // if it's a site capture, replace the link with source url whenever possible
+                    var url = file2url(linkFile);
+                    if (url) {
+                        // pass
+                    // keep 1 depth, which is index.html to another page
+                    } else if (recurseChain.length == 0) {
+                        var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
+                        var data_bin = sbConvCommon.convertFromUnicode(linkContent, charset);
+                        var data_b64 = window.btoa(data_bin);
+                        var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                        url = data_uri;
+                    // keep origin url, it will probably be invalid for a dataURI document
+                    // but at least we keep the reference
+                    } else {
+                        url = linkUrl;
+                    }
+                    return [url, false];
+                // link to a media, keep it
+                } else {
+                    var data_bin = sbConvCommon.readFileBinary(linkFile);
+                    var data_b64 = window.btoa(data_bin);
+                    var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                    return [data_uri, linkFile.leafName];
+                }
+            }
+            return ["about:blank", false];
+        };
+
+        var getResDataUriFrame = function (linkUrl, baseUrl, baseFile, recurseChain) {
+            var linkFile = getFileFromUrl(baseUrl, linkUrl);
+            if (linkFile && linkFile.exists() && linkFile.isFile()) {
+                // frame content cannot be self, blank it
+                if (linkFile.equals(baseFile)) {
+                    return "about:blank";
+                }
+                // circular reference, keep original link, which will not work for a dataURI page
+                if (recurseChain.indexOf(linkFile.path) >= 0) {
+                    error("Circular reference of frame from '" + baseFile.path + "' to '" + linkFile.path + "' is not parsed.")
+                    return linkUrl;
+                }
+                // retrieve the page content
+                var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
+                if (typeof linkContent === "string") {
+                    var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
+                    var data_bin = sbConvCommon.convertFromUnicode(linkContent, charset);
+                } else {
+                    var mime = linkContent.mime;
+                    var data_bin = sbConvCommon.readFileBinary(linkContent.file);
+                }
+                var data_b64 = window.btoa(data_bin);
+                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                return data_uri;
+            }
+            return "about:blank";
+        };
+
+        var parseCssText = function (cssText, baseUrl, baseFile, recurseChain) {
+            // @TODO: potential mistranslation?
+            return cssText.replace(new RegExp([
+                /\/\*[\s\S]*?\*\//,                                             //  /* comment */
+                /(@import\s*(["'])\s*((?:\\.|[^\2])*?)\2)/,                     //  @import "..."
+                /(@import\s+url\(\s*(["']?)\s*((?:\\.|[^\5])*?)\s*\5\s*\))/,    //  @import url(...)
+                /(url\(\s*(["']?)\s*((?:\\.|[^\8])*?)\s*\8\s*\))/               //  url(...)
+            ].map(function (r) { return r.source; }).join("|"), "ig"), function () {
+                if (arguments[1]) {
+                    var url = arguments[3];
+                    if (url.indexOf("://") === -1) {  // relative-linked file
+                        var newUrl = getResDataUriCss(url, baseUrl, baseFile, recurseChain);
+                        return "@import " + arguments[2] + newUrl + arguments[2];
+                    }
+                } else if (arguments[4]) {
+                    var url = arguments[6];
+                    if (url.indexOf("://") === -1) {  // relative-linked file
+                        var newUrl = getResDataUriCss(url, baseUrl, baseFile, recurseChain);
+                        return "@import url(" + arguments[5] + newUrl + arguments[5] + ")";
+                    }
+                } else if (arguments[7]) {
+                    var url = arguments[9];
+                    if (url.indexOf("://") === -1) {  // relative-linked file
+                        var newUrl = getResDataUri(url, baseUrl, baseFile, recurseChain);
+                        return "url(" + arguments[8] + newUrl + arguments[8] + ")";
+                    }
+                }
+                return arguments[0];
+            });
+        };
+
+        var file2url = function (file) {
+            if (!file2url.hashArray) {
+                file2url.hashArray = {};
+                if (item.type === "site") {
+                    var file2urlFile = dir.clone(); file2urlFile.append("sb-file2url.txt");
+                    if (file2urlFile.exists() && file2urlFile.isFile()) {
+                        sbCommonUtils.convertToUnicode(sbCommonUtils.readFile(file2urlFile), "UTF-8").split("\n").forEach(function (line) {
+                            var [f, u] = line.split("\t");
+                            file2url.hashArray[f] = u;
+                        });
+                    } else {
+                        error("Unable to retrieve source url due to missing sb-file2url.txt");
+                    }
+                }
+            }
+            return file2url.hashArray[file.leafName];
+        };
+
+        var outputHtml = function (data) {  
+        };
+        
+        verbose("converting ScrapBook data: '" + dir.path + "'");
+
+        // load item data
+        var item = sbConvCommon.parseIndexDat(indexData);
+        if (["folder", "separator"].indexOf(item.type) !== -1) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+        var charset = item.chars || "UTF-8";
+        
+        // generate main content
+        var metaRefreshAvailable = 5;
+        var content = parsePageContent(indexFile, []);
+
+        if (typeof content === "string") {
+            // determine the output filename
+            var destFile = output.clone();
+            destFile.append(dir.leafName + ".html");
+
+            // output
+            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            sbConvCommon.writeFile(destFile, content, charset);
+        } else {
+            // determine the output filename
+            var { file: indexFile, mime: mime } = content;
+            var fileExt = sbConvCommon.splitFileName(indexFile.leafName)[1];
+            fileExt = sbConvCommon.getMimePrimaryExtension(mime, fileExt);
+            var destFile = output.clone();
+            destFile.append(dir.leafName + "." + fileExt);
+
+            // output
+            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            indexFile.copyTo(destFile.parent, destFile.leafName);
+        }
+    };
 
     var threadTimeout = sbConvCommon.getIntPref("threadTimeout", 200);
     var startTime;

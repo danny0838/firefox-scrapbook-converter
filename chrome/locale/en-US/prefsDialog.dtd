@@ -5,6 +5,7 @@
 <!ENTITY action.sb2enex "Convert ScrapBook data to .enex">
 <!ENTITY action.sb2maff "Convert ScrapBook data to .maff">
 <!ENTITY action.sb2zip "Convert ScrapBook data to .zip">
+<!ENTITY action.sb2sf "Convert ScrapBook data to single .html">
 <!ENTITY action.sb2epub "Convert current ScrapBook to .epub">
 <!ENTITY action.sb2maff2 "Convert current ScrapBook to .maff">
 <!ENTITY action.sb2zip2 "Convert current ScrapBook to .zip">

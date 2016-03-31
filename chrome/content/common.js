@@ -128,6 +128,16 @@
         convertToUnicode : function(aString, aCharset) {
             return oSBCommon.convertToUnicode(aString, aCharset);
         },
+
+        convertFromUnicode : function(aString, aCharset) {
+            var UNICODE = Components.classes['@mozilla.org/intl/scriptableunicodeconverter'].getService(Components.interfaces.nsIScriptableUnicodeConverter);
+            UNICODE.charset = aCharset;
+            return UNICODE.ConvertFromUnicode(aString);
+        },
+
+        splitURLByAnchor : function(aURL) {
+            return oSBCommon.splitURLByAnchor(aURL);
+        },
         
         splitFileName : function(aFileName) {
             return oSBCommon.splitFileName(aFileName);
@@ -164,6 +174,14 @@
                 return MIME.getTypeFromFile(aFile);
             }
             catch(ex) {}
+            return false;
+        },
+
+        getMimePrimaryExtension : function(aString, aExtension) {
+            try {
+                var MIME = Components.classes["@mozilla.org/mime;1"].getService(Components.interfaces.nsIMIMEService);
+                return MIME.getPrimaryExtension(aString, aExtension);
+            } catch(ex) {}
             return false;
         },
 
