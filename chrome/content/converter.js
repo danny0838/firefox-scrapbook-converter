@@ -337,7 +337,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
                 }
 
                 if (html === false) {
-                    warn("cannot read en-note data from '" + item.title + "' and export the original xhtml as fallback.");
+                    error("cannot read en-note data from '" + item.title + "'. Export the original xhtml as fallback.");
                     html = data;
                 }
 
@@ -509,7 +509,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
             notesNext();
         }
         else {
-            warn("skip invalid enex: '" + file.path + "'");
+            error("Invalid enex file: '" + file.path + "', skipped.");
             notesFinish();
         }
     };
@@ -604,7 +604,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             item.folder = subPath;
 
             if (indexLeafName !== "index.html") {
-                warn("'" + item.title + "' (" + item.id + ") has index file other than index.html, and is not supported.");
+                warn("Converting maff files with index file other than index.html is not supported: '" + item.title + "' (" + item.id + ").");
                 return;
             }
 
@@ -626,7 +626,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             extractZip(file, tmpDir);
         } catch(ex) {
             // not zip or corrupted zip
-            warn("skip invalid maff: '" + file.path + "'");
+            error("Invalid maff file: '" + file.path + "', skipped.");
             pagesFinish();
             return;
         }
@@ -1005,7 +1005,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (importSourcePackFormat === "maff") {
             var rdfFile = dir.clone(); rdfFile.append("index.rdf");
             if (rdfFile.exists()) {
-                warn("skip importing maff since '" + rdfFile.path + "' already exists.");
+                warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
                 specialCheck = false;
             }
         }
@@ -1500,7 +1500,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         // if already exists, throw an error
         var rdfFile = dir.clone(); rdfFile.append("index.rdf");
         if (rdfFile.exists()) {
-            warn("skip since file '" + rdfFile.path + "' already exists.");
+            warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
             return;
         }
 
