@@ -1,3 +1,11 @@
+ScrapBook X File Converter 1.1.0b4
+----------------
+
+- NEW: Support ScrapBook --> single file.
+- UPDATE: Adjusted several messages.
+- UPDATE: Internal code optimization. Improved performance and reduced running delay.
+
+
 ScrapBook X File Converter 1.1.0b3
 ----------------
 
