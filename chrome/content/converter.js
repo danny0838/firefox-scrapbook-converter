@@ -1670,7 +1670,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
 }
 
 function convert_sb2sf(input, output) {
-    print("convert method: ScrapBook data --> single .html");
+    print("convert method: ScrapBook data --> single file");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("");
