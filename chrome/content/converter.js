@@ -1918,10 +1918,10 @@ function convert_sb2sf(input, output) {
                 if (linkFile.equals(baseFile)) {
                     return sbConvCommon.splitURLByAnchor(linkUrl)[1];
                 }
-                // circular reference, keep original link, which should be invalid
+                // circular reference is unsupported, blank it
                 if (recurseChain.indexOf(linkFile.path) >= 0) {
-                    error("Circular reference of CSS from '" + baseFile.path + "' to '" + linkFile.path + "' is not parsed.")
-                    return linkUrl;
+                    error("Circular reference of CSS from '" + baseFile.path + "' to '" + linkFile.path + "', blanked.");
+                    return "about:blank";
                 }
                 // use a heuristic to translate url(...) to dataURI
                 // @TODO: handle @document, etc
@@ -1959,10 +1959,9 @@ function convert_sb2sf(input, output) {
                         var data_b64 = window.btoa(data_bin);
                         var data_uri = "data:" + mime + ";" + "base64," + data_b64;
                         url = data_uri;
-                    // keep origin url, it will probably be invalid for a dataURI document
-                    // but at least we keep the reference
+                    // unsupported, blank it
                     } else {
-                        url = linkUrl;
+                        url = "about:blank";
                     }
                     return [url, false];
                 // link to a media, keep it
@@ -1981,12 +1980,13 @@ function convert_sb2sf(input, output) {
             if (linkFile && linkFile.exists() && linkFile.isFile()) {
                 // frame content cannot be self, blank it
                 if (linkFile.equals(baseFile)) {
+                    error("Circular reference of frame from '" + baseFile.path + "' to '" + baseFile.path + "', blanked.");
                     return "about:blank";
                 }
-                // circular reference, keep original link, which will not work for a dataURI page
+                // circular reference is unsupported, blank it
                 if (recurseChain.indexOf(linkFile.path) >= 0) {
-                    error("Circular reference of frame from '" + baseFile.path + "' to '" + linkFile.path + "' is not parsed.")
-                    return linkUrl;
+                    error("Circular reference of frame from '" + baseFile.path + "' to '" + linkFile.path + "', blanked.");
+                    return "about:blank";
                 }
                 // retrieve the page content
                 var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
