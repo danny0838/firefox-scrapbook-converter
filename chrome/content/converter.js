@@ -1504,7 +1504,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
             return;
         }
 
-		// determine top level folder name
+        // determine top level folder name
         switch (topDirName) {
             case "id":
                 var overwriteName = item.id;
@@ -1532,7 +1532,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
             '  </RDF:Description>\n' +
             '</RDF:RDF>\n';
 
-		// add zip file or entry
+        // add zip file or entry
         if (mergeOutput) {
             if (topDirName === "id" && overwriteName !== getUniqueId(overwriteName)) {
                 warn("skip due to duplicate path: " + overwriteName);
@@ -1637,7 +1637,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
             var zw = zipOpen(destFile);
         }
 
-		// add zip file or entry
+        // add zip file or entry
         if (mergeOutput) {
             if (topDirName === "id" && overwriteName !== getUniqueId(overwriteName)) {
                 warn("skip due to duplicate path: " + overwriteName);
