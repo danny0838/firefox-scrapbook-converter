@@ -604,8 +604,14 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             item.folder = subPath;
 
             if (indexLeafName !== "index.html") {
-                warn("Converting maff files with index file other than index.html is not supported: '" + item.title + "' (" + item.id + ").");
-                return;
+                var indexFile = pageDir.clone(); indexFile.append("index.html");
+                if (!indexFile.exists()) {
+                    var metaRefresh = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(indexLeafName) + '"></head><body></body></html>';
+                    sbConvCommon.writeFile(indexFile, metaRefresh, "UTF-8", true);
+                } else {
+                    warn("Converting a maff page with non-index index.html is not supported: '" + item.title + "' (" + item.id + ").");
+                    return;
+                }
             }
 
             var indexDat = pageDir.clone(); indexDat.append("index.dat");
