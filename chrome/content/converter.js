@@ -1082,14 +1082,21 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
             // --
             noteElem.appendChild(resource);
 
-            // en-media and a simple box
-            var box = enNoteDoc.createElement("div");
-            box.setAttribute("style", "margin-top: 1em; border-top: 1px solid #000; padding: 1em;");
-            var elem = enNoteDoc.createElement("en-media");
-            elem.setAttribute("hash", data_hash);
-            elem.setAttribute("type", "text/html");
-            box.appendChild(elem);
-            enNoteElem.appendChild(box);
+            // append the media
+            if (importIndexHTML) {
+                var box = enNoteDoc.createElement("div");
+                box.setAttribute("style", "margin-top: 1em; border-top: 1px solid #000; padding: 1em;");
+                var elem = enNoteDoc.createElement("en-media");
+                elem.setAttribute("hash", data_hash);
+                elem.setAttribute("type", "text/html");
+                box.appendChild(elem);
+                enNoteElem.appendChild(box);
+            } else {
+                var elem = enNoteDoc.createElement("en-media");
+                elem.setAttribute("hash", data_hash);
+                elem.setAttribute("type", "text/html");
+                enNoteElem.appendChild(elem);
+            }
         }
 
         // output
