@@ -1147,13 +1147,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         var metaRefreshTarget = false;
         Array.prototype.forEach.call(htmlDoc.getElementsByTagName("*"), function(elem){
             if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
-            switch (elem.nodeName) {
-                case "META":
+            switch (elem.nodeName.toLowerCase()) {
+                case "meta":
                     if (metaRefreshTarget) break;  // only the first one should work
                     if ( !(elem.hasAttribute("http-equiv") && elem.getAttribute("http-equiv").toLowerCase() === "refresh" && elem.getAttribute("content").match(/^(\d+;\s*url=)(.*)$/i)) ) break;
                     metaRefreshTarget = getFileFromUrl(RegExp.$2);
                     return;
-                case "IMG":
+                case "img":
                     if (!elem.hasAttribute("src")) break;
                     // en-crypt
                     if (elem.getAttribute("title") === "Evernote Crypt" && elem.hasAttribute("alt") && elem.getAttribute("src") === evernoteCryptImage) {
@@ -1251,7 +1251,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
                     return;
-                case "A":
+                case "a":
                     if (!elem.hasAttribute("href")) break;
                     // en-media
                     var href = elem.getAttribute("href");
@@ -1340,7 +1340,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     elem.parentNode.insertBefore(mediaElem, elem);
                     elem.parentNode.removeChild(elem);
                     return;
-                case "INPUT":
+                case "input":
                     // en-todo
                     if (!(elem.getAttribute("type") === "checkbox" && elem.getAttribute("data-sb-obj") === "todo")) break;
                     var todoElem = enNoteDoc.createElement("en-todo");
@@ -1348,7 +1348,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     elem.parentNode.insertBefore(todoElem, elem);
                     elem.parentNode.removeChild(elem);
                     return;
-                case "SPAN":
+                case "span":
                     // highlight
                     if (!(elem.getAttribute("data-sb-obj") === "linemarker" && elem.getAttribute("style") === "background-color: rgb(255, 250, 165);")) break;
                     elem.setAttribute("style", "background-color:rgb(255, 250, 165);-evernote-highlight:true;");
