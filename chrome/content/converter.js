@@ -1122,13 +1122,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         // no namespace, use lower case name
         var copyNodeFromHtmlToXml = function (sourceNode, targetNode) {
             // copy attributes
-            Array.prototype.slice.call(sourceNode.attributes).forEach(function(attr){
+            Array.prototype.forEach.call(sourceNode.attributes, function(attr){
                 if (isEvernoteAllowed(targetNode.nodeName, attr.name)) {
                     targetNode.setAttribute(attr.name, attr.value);
                 }
             });
             if (!sourceNode.hasChildNodes()) return;
-            Array.prototype.slice.call(sourceNode.childNodes).forEach(function(elem){
+            Array.prototype.forEach.call(sourceNode.childNodes, function(elem){
                 if (elem.nodeType === 1) {
                     if (isEvernoteAllowed(elem.nodeName)) {
                         var newElem = targetNode.ownerDocument.createElement(elem.nodeName.toLowerCase());
@@ -1145,7 +1145,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
 
         // parse elements
         var metaRefreshTarget = false;
-        Array.prototype.slice.call(htmlDoc.getElementsByTagName("*")).forEach(function(elem){
+        Array.prototype.forEach.call(htmlDoc.getElementsByTagName("*"), function(elem){
             if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
             switch (elem.nodeName) {
                 case "META":
@@ -1243,7 +1243,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     noteElem.appendChild(resourceElem);
                     // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
-                    Array.prototype.slice.call(elem.attributes).forEach(function(attr){
+                    Array.prototype.forEach.call(elem.attributes, function(attr){
                         mediaElem.setAttribute(attr.name, attr.value);
                     });
                     mediaElem.setAttribute("hash", data_hash);
@@ -1332,7 +1332,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     noteElem.appendChild(resourceElem);
                     // -- media
                     var mediaElem = enNoteDoc.createElement("en-media");
-                    Array.prototype.slice.call(elem.attributes).forEach(function(attr){
+                    Array.prototype.forEach.call(elem.attributes, function(attr){
                         mediaElem.setAttribute(attr.name, attr.value);
                     });
                     mediaElem.setAttribute("hash", data_hash);
@@ -1358,13 +1358,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         // if there is a meta-refresh, leave only the redirect target file
         if (metaRefreshTarget) {
             // clear already-added body and resources
-            Array.prototype.slice.call(body.attributes).forEach(function(attr){
+            Array.prototype.forEach.call(body.attributes, function(attr){
                 body.removeAttribute(attr.name);
             });
-            Array.prototype.slice.call(body.childNodes).forEach(function(elem){
+            Array.prototype.forEach.call(body.childNodes, function(elem){
                 elem.parentNode.removeChild(elem);
             });
-            Array.prototype.slice.call(noteElem.getElementsByTagName("resource")).forEach(function(elem){
+            Array.prototype.forEach.call(noteElem.getElementsByTagName("resource"), function(elem){
                 elem.parentNode.removeChild(elem);
             });
             if (metaRefreshTarget.exists() && metaRefreshTarget.isFile()) {
@@ -1739,7 +1739,7 @@ function convert_sb2sf(input, output) {
             // check meta refresh
             if (metaRefreshAvailable > 0) {
                 var metaRefreshTarget;
-                Array.prototype.slice.call(htmlDoc.getElementsByTagName("meta")).forEach(function (elem) {
+                Array.prototype.forEach.call(htmlDoc.getElementsByTagName("meta"), function (elem) {
                     if (metaRefreshTarget) return;
                     if ( !(elem.hasAttribute("http-equiv") && elem.getAttribute("http-equiv").toLowerCase() === "refresh" && elem.getAttribute("content").match(/^(\d+;\s*url=)(.*)$/i)) ) return;
                     metaRefreshTarget = getFileFromUrl(baseUrl, RegExp.$2);
@@ -1751,7 +1751,7 @@ function convert_sb2sf(input, output) {
             }
 
             // parse elements
-            Array.prototype.slice.call(htmlDoc.getElementsByTagName("*")).forEach(function(elem){
+            Array.prototype.forEach.call(htmlDoc.getElementsByTagName("*"), function(elem){
                 if (!elem.parentNode) return;  // skip nodes that are already removed from the DOM
 
                 switch (elem.nodeName.toLowerCase()) {
