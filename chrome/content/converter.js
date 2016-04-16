@@ -1187,8 +1187,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         else {
                             break;
                         }
-                    }
-                    else if (src.indexOf("://") === -1) {  // relative-linked file
+                    } else if (src.indexOf(":") === -1) {  // relative-linked file
                         var resFile = getFileFromUrl(src);
                         if ( !(resFile && resFile.exists() && resFile.isFile()) ) {
                             elem.setAttribute("src", sbConvCommon.convertFilePathToURL(resFile.path));
@@ -1199,8 +1198,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         var data_bin = sbConvCommon.readFileBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
-                    }
-                    else {  // general URL
+                    } else {
+                        if (src.indexOf("http:") === -1 && src.indexOf("https:") === -1 && src.indexOf("file:") === -1) {
+                            // Evernote incompatible protocols
+                            elem.setAttribute("src", "file:///#");
+                        }
                         break;
                     }
                     // -- resource
@@ -1273,8 +1275,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         else {
                             break;
                         }
-                    }
-                    else if (href.indexOf("://") === -1) {  // relative-linked file
+                    } else if (href.indexOf(":") === -1) {  // relative-linked file
                         var resFile = getFileFromUrl(href);
                         if ( !(resFile && resFile.exists() && resFile.isFile()) ) {
                             elem.setAttribute("href", sbConvCommon.convertFilePathToURL(resFile.path));
@@ -1285,8 +1286,11 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                         var data_bin = sbConvCommon.readFileBinary(resFile);
                         var data_b64 = window.btoa(data_bin);
                         var data_hash = hex_md5(data_bin);
-                    }
-                    else {  // general URL
+                    } else {
+                        if (href.indexOf("http:") === -1 && href.indexOf("https:") === -1 && href.indexOf("file:") === -1) {
+                            // Evernote incompatible protocols
+                            elem.setAttribute("href", "file:///#");
+                        }
                         break;
                     }
                     // -- resource
@@ -2685,6 +2689,7 @@ function warn(txt) {
 
 function error(txt) {
     errorCount++;
+    console.error(txt);
     print("ERROR: " + txt);
 }
 
