@@ -1,3 +1,11 @@
+ScrapBook X File Converter 1.1.0b5
+----------------
+
+- FIEXD: Prevent an error for URLs not supported by Evernote for ScrapBook to Evernote.
+- UPDATE: Support converting maff files using non-index.html index file if index.html does not exist.
+- UPDATE: Code optimization.
+
+
 ScrapBook X File Converter 1.1.0b4
 ----------------
 
