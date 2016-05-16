@@ -1,0 +1,45 @@
+<!ENTITY pick "瀏覽...">
+<!ENTITY input "輸入:">
+<!ENTITY output "輸出:">
+<!ENTITY includeSubdir "包括子資料夾">
+<!ENTITY includeFileName "將檔名加入匯入資料夾路徑">
+<!ENTITY uniqueId "自動調整 ID 以避免重複">
+
+<!ENTITY mergeOutput "合併匯出為一個檔案">
+
+<!ENTITY sb2enex.addTags "加入標籤 (逗號分隔)">
+<!ENTITY sb2enex.folderAsTag "將所在目錄寫入標籤">
+<!ENTITY sb2enex.importIndexHTML "匯入 index.html 內容">
+<!ENTITY sb2enex.importCommentMetadata "匯入評註中的 &lt;evernote&gt; 元資料">
+<!ENTITY sb2enex.importSourcePack "匯入原始資料包">
+
+<!ENTITY sb2maff.topDirName "頂層目錄名稱">
+<!ENTITY sb2maff.topDirName.id "ScrapBook ID">
+<!ENTITY sb2maff.topDirName.maff "MAFF 預設">
+<!ENTITY sb2maff.topDirName.dir "目錄名稱">
+
+<!ENTITY sb2zip.topDirName "頂層目錄名稱">
+<!ENTITY sb2zip.topDirName.none "不產生頂層目錄">
+<!ENTITY sb2zip.topDirName.id "ScrapBook ID">
+<!ENTITY sb2zip.topDirName.dir "目錄名稱">
+
+<!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">
+<!ENTITY sb2epub.meta "電子書後設資料">
+<!ENTITY sb2epub.id "識別碼:">
+<!ENTITY sb2epub.title "標題:">
+<!ENTITY sb2epub.language "語文:">
+<!ENTITY sb2epub.author "作者:">
+<!ENTITY sb2epub.contributor "協力作者:">
+<!ENTITY sb2epub.publisher "出版者:">
+<!ENTITY sb2epub.description "描述:">
+<!ENTITY sb2epub.date "電子書出版時間:">
+<!ENTITY sb2epub.source "原始出版品:">
+<!ENTITY sb2epub.cover "封面圖片:">
+<!ENTITY sb2epub.help "注意：請確保 ScrapBook 原始檔案符合 epub 3 標準，以使匯出的 epub 檔案通過驗證。">
+
+<!ENTITY sb2maff2.entryPage "入口頁面:">
+
+<!ENTITY sb2zip2.topDirName "頂層目錄名稱">
+<!ENTITY sb2zip2.topDirName.none "不產生頂層目錄">
+<!ENTITY sb2zip2.topDirName.dir "使用 ScrapBook 目錄名稱">
+<!ENTITY sb2zip2.topDirName.title "使用 ScrapBook 名稱">

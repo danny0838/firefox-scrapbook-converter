@@ -4,37 +4,25 @@
 <?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
 
 <!--locale-->
-<!DOCTYPE prefwindow SYSTEM "chrome://sbconv/locale/prefsDialog.dtd">
+<!DOCTYPE main SYSTEM "chrome://sbconv/locale/prefsDialog.dtd">
 
 <prefwindow id="sbconvPrefWindow"
-            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
             title="&window.title;"
-            width="500"
-            height="400">
-
-    <!--JavaScript-->
-    <script type="application/x-javascript" src="chrome://sbconv/content/prefsDialog.js" />
+            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+            windowtype="scrapbook"
+            buttons="cancel">
 
     <prefpane id="pane1" label="">
-        <groupbox>
-            <caption label="&options;"/>
-            <hbox>
-                <label>&input;</label>
-                <textbox id="inputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);"/>
-                <button id="inputPick" class="dialog" label="&pick;" oncommand="return onInputBrowse();"/>
-            </hbox>
-            <hbox>
-                <label>&output;</label>
-                <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
-                <button id="outputPick" class="dialog" label="&pick;" oncommand="return onOutputBrowse();"/>
-            </hbox>
-            <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked" checked="true" />
-            <checkbox id="includeFileName" label="&includeFileName;" persist="checked" checked="true" />
-            <checkbox id="uniqueId" label="&uniqueId;" persist="checked" />
-        </groupbox>
-        <button label="&action.enex2sb;" oncommand="convert('enex2sb');" />
-        <button label="&action.maf2sb;" oncommand="convert('maf2sb');" />
-        <button label="&action.html2sb;" oncommand="convert('html2sb');" />
+        <button label="&action.enex2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_enex2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.maff2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_maff2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.html2sb;" oncommand="window.openDialog('chrome://sbconv/content/conv_html2sb.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2enex;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2enex.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2maff;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2zip;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2zip.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2sf;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2sf.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2epub;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2epub.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2maff2;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2maff2.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
+        <button label="&action.sb2zip2;" oncommand="window.openDialog('chrome://sbconv/content/conv_sb2zip2.xul','ScrapBook:Converter:Conv','chrome,toolbar,centerscreen,resizable,modal');" />
     </prefpane>
 
 </prefwindow>

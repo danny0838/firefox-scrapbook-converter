@@ -1,0 +1,45 @@
+<!ENTITY pick "Browse...">
+<!ENTITY input "Input:">
+<!ENTITY output "Output:">
+<!ENTITY includeSubdir "Include subfolders">
+<!ENTITY includeFileName "Add file name to item folder path">
+<!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
+
+<!ENTITY mergeOutput "Merge output into one file">
+
+<!ENTITY sb2enex.addTags "Add tag (separated with comma)">
+<!ENTITY sb2enex.folderAsTag "Write folder to tag">
+<!ENTITY sb2enex.importIndexHTML "Import the content of index.html">
+<!ENTITY sb2enex.importCommentMetadata "Import metadata from &lt;evernote&gt; in the comment">
+<!ENTITY sb2enex.importSourcePack "Import source data pack">
+
+<!ENTITY sb2maff.topDirName "Top directory name">
+<!ENTITY sb2maff.topDirName.id "ScrapBook ID">
+<!ENTITY sb2maff.topDirName.maff "MAFF default">
+<!ENTITY sb2maff.topDirName.dir "Directory name">
+
+<!ENTITY sb2zip.topDirName "Top directory name">
+<!ENTITY sb2zip.topDirName.none "No top directory">
+<!ENTITY sb2zip.topDirName.id "ScrapBook ID">
+<!ENTITY sb2zip.topDirName.dir "目錄名稱">
+
+<!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
+<!ENTITY sb2epub.meta "E-Book Metadata">
+<!ENTITY sb2epub.id "ID:">
+<!ENTITY sb2epub.title "Title:">
+<!ENTITY sb2epub.language "Language:">
+<!ENTITY sb2epub.author "Author:">
+<!ENTITY sb2epub.contributor "Contributor:">
+<!ENTITY sb2epub.description "Description:">
+<!ENTITY sb2epub.publisher "Publisher:">
+<!ENTITY sb2epub.date "E-Book publication date:">
+<!ENTITY sb2epub.source "Source publication:">
+<!ENTITY sb2epub.cover "Cover image:">
+<!ENTITY sb2epub.help "Note: Make sure the source ScrapBook files satisfy epub 3 specification so that the generated epub file will pass validation.">
+
+<!ENTITY sb2maff2.entryPage "Entry page:">
+
+<!ENTITY sb2zip2.topDirName "Top Directory Name">
+<!ENTITY sb2zip2.topDirName.none "No top directory">
+<!ENTITY sb2zip2.topDirName.dir "Use ScrapBook directory name">
+<!ENTITY sb2zip2.topDirName.title "Use ScrapBook name">

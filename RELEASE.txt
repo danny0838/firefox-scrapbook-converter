@@ -1,3 +1,55 @@
+ScrapBook X File Converter 1.1.1
+----------------
+
+- Bumped version number to 1.1.1.
+
+
+ScrapBook X File Converter 1.1.0b5
+----------------
+
+- FIXED: Prevent an error for URLs not supported by Evernote for ScrapBook to Evernote.
+- UPDATE: Do not create a wrapper box if "Import source data pack" is checked while "Import the content of index.html" is not checked for ScrapBook to Evernote.
+- UPDATE: Support converting maff files using non-index.html index file if index.html does not exist.
+- UPDATE: Code optimization.
+
+
+ScrapBook X File Converter 1.1.0b4
+----------------
+
+- NEW: Support ScrapBook --> single file.
+- UPDATE: Adjusted several messages.
+- UPDATE: Internal code optimization. Improved performance and reduced running delay.
+
+
+ScrapBook X File Converter 1.1.0b3
+----------------
+
+- UPDATE: Allow customization of the entry page path for whole-ScrapBook-to-maff conversion.
+- UPDATE: ScrapBook-to-epub conversion now default to use previous image path when picking the file.
+- FIXED: Export of epub terminates if the cover image is not specified.
+- FIXED: Several issues that cause the generated epub file to be malformed.
+
+
+ScrapBook X File Converter 1.1.0b2
+----------------
+
+- NEW: Import source pack into .maff format for ScrapBook-to-Evernote conversion.
+- NEW: Support ScrapBook --> maff.
+- NEW: Support ScrapBook --> zip.
+- NEW: Support whole ScrapBook --> epub.
+- NEW: Support whole ScrapBook --> maff.
+- NEW: Support whole ScrapBook --> zip.
+- UPDATE: Improve error handling system. Now shows total errors and warnings at last.
+- FIXED: Forbid the user from switching ScrapBook when a conversion dialog is active.
+
+
+ScrapBook X File Converter 1.1.0b1
+----------------
+
+- NEW: Support ScrapBook --> Evernote (.enex).
+- UPDATE: Separate different converters into individual dialog.
+
+
 ScrapBook X File Converter 1.0.14
 ----------------
 
