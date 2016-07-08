@@ -1,3 +1,10 @@
+ScrapBook X File Converter 1.1.2
+----------------
+
+- FIXED: "Convert current ScrapBook to .maff" output has wrong entry page location.
+- FIXED: Wrong English language entries for "Convert ScrapBook data to .zip".
+
+
 ScrapBook X File Converter 1.1.1
 ----------------
 
