@@ -2612,7 +2612,9 @@ function convert_sb2maff2(input, output, entryPage) {
         '  </RDF:Description>\n' +
         '</RDF:RDF>\n';
 
-    var entryFile = sbConvCommon.escapeHTML(sbConvCommon.escapeFileName(sbConvCommon.validateFileName(entryPage)));
+    var entryFile = sbConvCommon.escapeHTML(entryPage.split("/").map(function (part) {
+        return sbConvCommon.escapeFileName(sbConvCommon.validateFileName(part));
+    }).join("/"));
         
     var indexContent = "<!DOCTYPE html>\n" +
             '<html>\n' +
