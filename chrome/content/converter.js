@@ -2337,7 +2337,6 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             indent(depth * 2) + '  </navLabel>\n' +
                             indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
-                        openedFolderDepth++;
                         break;
 
                     case "separator":
@@ -2363,8 +2362,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>---- ' + sbConvCommon.escapeHTML(title) + ' ----</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
-                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
-                            indent(depth * 2) + '</navPoint>\n';
+                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
                         break;
 
@@ -2392,8 +2390,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             indent(depth * 2) + '  <navLabel>\n' +
                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                             indent(depth * 2) + '  </navLabel>\n' +
-                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
-                            indent(depth * 2) + '</navPoint>\n';
+                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                         playOrder++;
                         break;
 
@@ -2462,8 +2459,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                                             indent(depth * 2) + '  <navLabel>\n' +
                                             indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                             indent(depth * 2) + '  </navLabel>\n' +
-                                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
-                                            indent(depth * 2) + '</navPoint>\n';
+                                            indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                                         playOrder++;
                                         continue;
                                     }
@@ -2476,8 +2472,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                                     indent(depth * 2) + '  <navLabel>\n' +
                                     indent(depth * 2) + '    <text>' + sbConvCommon.escapeHTML(title) + '</text>\n' +
                                     indent(depth * 2) + '  </navLabel>\n' +
-                                    indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n' +
-                                    indent(depth * 2) + '</navPoint>\n';
+                                    indent(depth * 2) + '  <content src="' + sbConvCommon.escapeHTML(subPath) + '" />\n';
                                 playOrder++;
                             } else {
                                 // add non-main entries to spine tails
@@ -2485,6 +2480,12 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
                             }
                         }
                         break;
+                }
+
+                if (sbConvData.isContainer(res)) {
+                    openedFolderDepth++;
+                } else {
+                    infoTree.ncx += indent(depth * 2) + '</navPoint>\n';
                 }
                 
             },
