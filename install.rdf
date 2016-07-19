@@ -11,7 +11,7 @@
 		<em:name>ScrapBook X File Converter</em:name>
 		<em:description>Converts ScrapBook data from and to other formats.</em:description>
 		<em:creator>Danny Lin</em:creator>
-		<em:homepageURL>https://github.com/danny0838/firefox-scrapbook-converter</em:homepageURL>
+		<em:homepageURL>http://addons.mozilla.org/firefox/addon/scrapbookx-converter</em:homepageURL>
 		<em:iconURL>chrome://sbconv/skin/sbconv.png</em:iconURL>
 		<em:optionsURL>chrome://sbconv/content/prefsDialog.xul</em:optionsURL>
 
