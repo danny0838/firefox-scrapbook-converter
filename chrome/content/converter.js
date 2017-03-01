@@ -1113,8 +1113,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if ( !(indexFile.exists() && indexFile.isFile()) ) return;
         var html = sbConvCommon.readFile(indexFile);
         var charset = item.chars || "UTF-8";
-        html = sbConvCommon.convertToUnicode(html, charset);
-        var htmlDoc = loadHTML(html);
+        var htmlDoc = loadHTML(html, charset);
         var body = htmlDoc.body;
         if (!body) return;
 
@@ -1737,8 +1736,7 @@ function convert_sb2sf(input, output) {
             
             // read index.html
             var html = sbConvCommon.readFile(indexFile);
-            html = sbConvCommon.convertToUnicode(html, charset);
-            var htmlDoc = loadHTML(html);
+            var htmlDoc = loadHTML(html, charset);
             var body = htmlDoc.body;
             if (!body) {
                 error("'" + indexFile + "' is not a valid html file.");
@@ -2794,9 +2792,17 @@ function XMLString(doc) {
     return sXML;
 }
 
-function loadHTML(str) {
+function loadHTML(str, charset) {
     var parser = new DOMParser();
-    return parser.parseFromString(str, "text/html");
+    if (charset) {
+        var doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, charset), "text/html");
+        if (doc.charset !== charset) {
+            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, doc.charset), "text/html");
+        }
+    } else {
+        var doc = parser.parseFromString(str, "text/html");
+    }
+    return doc;
 }
 
 /**
