@@ -139,7 +139,7 @@ function convert(data) {
             convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
             break;
         case "sb2sf":
-            convert_sb2sf(input, output);
+            convert_sb2sf(input, output, data.generateSubFolders);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
@@ -1113,8 +1113,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if ( !(indexFile.exists() && indexFile.isFile()) ) return;
         var html = sbConvCommon.readFile(indexFile);
         var charset = item.chars || "UTF-8";
-        html = sbConvCommon.convertToUnicode(html, charset);
-        var htmlDoc = loadHTML(html);
+        var htmlDoc = loadHTML(html, charset);
         var body = htmlDoc.body;
         if (!body) return;
 
@@ -1686,10 +1685,11 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     dirsNext();
 }
 
-function convert_sb2sf(input, output) {
+function convert_sb2sf(input, output, generateSubFolders) {
     print("convert method: ScrapBook data --> single file");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("generate subfolders: " + (generateSubFolders ? "yes" : "no"));
     print("");
 
     var dirsNext = function () {
@@ -1737,8 +1737,7 @@ function convert_sb2sf(input, output) {
             
             // read index.html
             var html = sbConvCommon.readFile(indexFile);
-            html = sbConvCommon.convertToUnicode(html, charset);
-            var htmlDoc = loadHTML(html);
+            var htmlDoc = loadHTML(html, charset);
             var body = htmlDoc.body;
             if (!body) {
                 error("'" + indexFile + "' is not a valid html file.");
@@ -1771,7 +1770,7 @@ function convert_sb2sf(input, output) {
                             elem.setAttribute("srcset", (function (srcset) {
                                 return srcset.replace(/(\s*)([^ ,][^ ]*[^ ,])(\s*(?: [^ ,]+)?\s*(?:,|$))/g, function (m, m1, m2, m3) {
                                     var linkUrl = m2;
-                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                    if (isRelativeLink(linkUrl)) {  // relative-linked file
                                         linkUrl = getResDataUri(linkUrl, baseUrl, indexFile, recurseChain);
                                     }
                                     return m1 + linkUrl + m3;
@@ -1783,7 +1782,7 @@ function convert_sb2sf(input, output) {
                     case "script":
                         if (elem.hasAttribute("src")) {
                             var linkUrl = elem.getAttribute("src");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 elem.setAttribute("src", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
                             }
                         }
@@ -1791,7 +1790,7 @@ function convert_sb2sf(input, output) {
                     case "embed" : 
                         if (elem.hasAttribute("src")) {
                             var linkUrl = elem.getAttribute("src");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 // modifying the link could cause an error, catch it
                                 try { elem.setAttribute("src", "about:blank"); } catch (ex) {}
                             }
@@ -1800,7 +1799,7 @@ function convert_sb2sf(input, output) {
                     case "object":
                         if (elem.hasAttribute("data")) {
                             var linkUrl = elem.getAttribute("data");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 // modifying the link could cause an error, catch it
                                 try { elem.setAttribute("data", "about:blank"); } catch (ex) {}
                             }
@@ -1809,7 +1808,7 @@ function convert_sb2sf(input, output) {
                     case "applet":
                         if (elem.hasAttribute("archive")) {
                             var linkUrl = elem.getAttribute("archive");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 // modifying the link could cause an error, catch it
                                 try { elem.setAttribute("archive", "about:blank"); } catch (ex) {}
                             }
@@ -1822,7 +1821,7 @@ function convert_sb2sf(input, output) {
                     case "td" : 
                         if (elem.hasAttribute("background")) {
                             var linkUrl = elem.getAttribute("background");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 elem.setAttribute("background", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
                             }
                         }
@@ -1832,7 +1831,7 @@ function convert_sb2sf(input, output) {
                             case "image":
                                 if (elem.hasAttribute("src")) {
                                     var linkUrl = elem.getAttribute("src");
-                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                    if (isRelativeLink(linkUrl)) {  // relative-linked file
                                         elem.setAttribute("src", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
                                     }
                                 }
@@ -1845,7 +1844,7 @@ function convert_sb2sf(input, output) {
                             case "stylesheet" :
                                 if (elem.hasAttribute("href")) {
                                     var linkUrl = elem.getAttribute("href");
-                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                    if (isRelativeLink(linkUrl)) {  // relative-linked file
                                         elem.setAttribute("href", getResDataUriCss(linkUrl, baseUrl, indexFile, recurseChain));
                                     }
                                 }
@@ -1855,7 +1854,7 @@ function convert_sb2sf(input, output) {
                             default :
                                 if (elem.hasAttribute("href")) {
                                     var linkUrl = elem.getAttribute("href");
-                                    if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                                    if (isRelativeLink(linkUrl)) {  // relative-linked file
                                         elem.setAttribute("href", getResDataUri(linkUrl, baseUrl, indexFile, recurseChain));
                                     }
                                 }
@@ -1869,7 +1868,7 @@ function convert_sb2sf(input, output) {
                     case "area" : 
                         if (elem.hasAttribute("href")) {
                             var linkUrl = elem.getAttribute("href");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 var [dataUri, downloadName] = getResDataUriAnchor(linkUrl, baseUrl, indexFile, recurseChain);
                                 elem.setAttribute("href", dataUri);
                                 if (downloadName && !elem.hasAttribute("download")) {
@@ -1882,7 +1881,7 @@ function convert_sb2sf(input, output) {
                     case "iframe" : 
                         if (elem.hasAttribute("src")) {
                             var linkUrl = elem.getAttribute("src");
-                            if (linkUrl.indexOf("://") === -1) {  // relative-linked file
+                            if (isRelativeLink(linkUrl)) {  // relative-linked file
                                 elem.setAttribute("src", getResDataUriFrame(linkUrl, baseUrl, indexFile, recurseChain));
                             }
                         }
@@ -1895,6 +1894,10 @@ function convert_sb2sf(input, output) {
             });
 
             return doctypeToString(htmlDoc.doctype) + htmlDoc.documentElement.outerHTML;
+        };
+
+        var isRelativeLink = function (url) {
+            return !/^[a-z][a-z0-9+.-]*:/i.test(url);
         };
 
         var doctypeToString = function (aDoctype) {
@@ -2087,24 +2090,37 @@ function convert_sb2sf(input, output) {
         var metaRefreshAvailable = 5;
         var content = parsePageContent(indexFile, []);
 
+        // determine the output file path
+        var destFile = output.clone(), destPath = [];
+        if (generateSubFolders) {
+            var folder = (item.folder || "").split("\t");
+            folder.forEach(function(subfoldername) {
+                destFile.append(sbConvCommon.validateFileName(subfoldername));
+                destPath.push(destFile.leafName);
+            });
+        }
+        if (!destFile.exists()) {
+            destFile.create(dir.DIRECTORY_TYPE, 0700);
+        }
+
         if (typeof content === "string") {
             // determine the output filename
-            var destFile = output.clone();
             destFile.append(dir.leafName + ".html");
+            destPath.push(destFile.leafName);
 
             // output
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             sbConvCommon.writeFile(destFile, content, charset);
         } else {
             // determine the output filename
             var { file: indexFile, mime: mime } = content;
             var fileExt = sbConvCommon.splitFileName(indexFile.leafName)[1];
             fileExt = sbConvCommon.getMimePrimaryExtension(mime, fileExt);
-            var destFile = output.clone();
             destFile.append(dir.leafName + "." + fileExt);
+            destPath.push(destFile.leafName);
 
             // output
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             indexFile.copyTo(destFile.parent, destFile.leafName);
         }
     };
@@ -2794,9 +2810,17 @@ function XMLString(doc) {
     return sXML;
 }
 
-function loadHTML(str) {
+function loadHTML(str, charset) {
     var parser = new DOMParser();
-    return parser.parseFromString(str, "text/html");
+    if (charset) {
+        var doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, charset), "text/html");
+        if (doc.charset !== charset) {
+            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, doc.charset), "text/html");
+        }
+    } else {
+        var doc = parser.parseFromString(str, "text/html");
+    }
+    return doc;
 }
 
 /**

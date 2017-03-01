@@ -6,6 +6,7 @@
 <!ENTITY uniqueId "自動調整 ID 以避免重複">
 
 <!ENTITY mergeOutput "合併匯出為一個檔案">
+<!ENTITY generateSubFolders "將子資料夾的項目匯出至相應的子目錄">
 
 <!ENTITY sb2enex.addTags "加入標籤 (逗號分隔)">
 <!ENTITY sb2enex.folderAsTag "將所在目錄寫入標籤">
