@@ -139,7 +139,7 @@ function convert(data) {
             convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
             break;
         case "sb2sf":
-            convert_sb2sf(input, output);
+            convert_sb2sf(input, output, data.generateSubFolders);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
@@ -1685,10 +1685,11 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
     dirsNext();
 }
 
-function convert_sb2sf(input, output) {
+function convert_sb2sf(input, output, generateSubFolders) {
     print("convert method: ScrapBook data --> single file");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("generate subfolders: " + (generateSubFolders ? "yes" : "no"));
     print("");
 
     var dirsNext = function () {
@@ -2089,24 +2090,37 @@ function convert_sb2sf(input, output) {
         var metaRefreshAvailable = 5;
         var content = parsePageContent(indexFile, []);
 
+        // determine the output file path
+        var destFile = output.clone(), destPath = [];
+        if (generateSubFolders) {
+            var folder = (item.folder || "").split("\t");
+            folder.forEach(function(subfoldername) {
+                destFile.append(sbConvCommon.validateFileName(subfoldername));
+                destPath.push(destFile.leafName);
+            });
+        }
+        if (!destFile.exists()) {
+            destFile.create(dir.DIRECTORY_TYPE, 0700);
+        }
+
         if (typeof content === "string") {
             // determine the output filename
-            var destFile = output.clone();
             destFile.append(dir.leafName + ".html");
+            destPath.push(destFile.leafName);
 
             // output
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             sbConvCommon.writeFile(destFile, content, charset);
         } else {
             // determine the output filename
             var { file: indexFile, mime: mime } = content;
             var fileExt = sbConvCommon.splitFileName(indexFile.leafName)[1];
             fileExt = sbConvCommon.getMimePrimaryExtension(mime, fileExt);
-            var destFile = output.clone();
             destFile.append(dir.leafName + "." + fileExt);
+            destPath.push(destFile.leafName);
 
             // output
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             indexFile.copyTo(destFile.parent, destFile.leafName);
         }
     };

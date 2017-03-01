@@ -6,6 +6,7 @@
 <!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
 
 <!ENTITY mergeOutput "Merge output into one file">
+<!ENTITY generateSubFolders "Export items in a subfolder into a corresponding subdirectory">
 
 <!ENTITY sb2enex.addTags "Add tag (separated with comma)">
 <!ENTITY sb2enex.folderAsTag "Write folder to tag">
