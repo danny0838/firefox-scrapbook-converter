@@ -2087,8 +2087,19 @@ function convert_sb2sf(input, output, generateSubFolders) {
         var charset = item.chars || "UTF-8";
         
         // generate main content
-        var metaRefreshAvailable = 5;
-        var content = parsePageContent(indexFile, []);
+        if (["bookmark"].indexOf(item.type) === -1) {
+            var metaRefreshAvailable = 5;
+            var content = parsePageContent(indexFile, []);
+        } else {
+            var content = '<!DOCTYPE html>\n' +
+                    '<html>\n' +
+                    '  <head>\n' +
+                    '    <meta charset="UTF-8">\n' +
+                    '    <title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+                    '    <meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
+                    '  </head>\n' +
+                    '</html>\n';
+        }
 
         // determine the output file path
         var destFile = output.clone(), destPath = [];
