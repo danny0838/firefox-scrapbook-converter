@@ -133,10 +133,10 @@ function convert(data) {
             convert_sb2enex(input, output, data.addTags, data.folderAsTag, data.importIndexHTML, data.importCommentMetadata, data.importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.topDirName, data.mergeOutput);
+            convert_sb2maff(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
+            convert_sb2zip(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2sf":
             convert_sb2sf(input, output, data.generateSubFolders);
@@ -1450,12 +1450,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     dirsNext();
 }
 
-function convert_sb2maff(input, output, topDirName, mergeOutput) {
+function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> .maff");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1506,9 +1507,20 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone();
+            var destFile = output.clone(), destPath = [];
+            if (generateSubFolders) {
+                var folder = (item.folder || "").split("\t");
+                folder.forEach(function(subfoldername) {
+                    destFile.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destFile.leafName);
+                });
+            }
+            if (!destFile.exists()) {
+                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            }
             destFile.append(dir.leafName + ".maff");
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            destPath.push(destFile.leafName);
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
         }
 
@@ -1577,12 +1589,13 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
     dirsNext();
 }
 
-function convert_sb2zip(input, output, topDirName, mergeOutput) {
+function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> .zip");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("top directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1647,9 +1660,20 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone();
+            var destFile = output.clone(), destPath = [];
+            if (generateSubFolders) {
+                var folder = (item.folder || "").split("\t");
+                folder.forEach(function(subfoldername) {
+                    destFile.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destFile.leafName);
+                });
+            }
+            if (!destFile.exists()) {
+                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            }
             destFile.append(dir.leafName + ".zip");
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            destPath.push(destFile.leafName);
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
         }
 
@@ -1925,7 +1949,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
                 var data_bin = sbConvCommon.readFileBinary(linkFile);
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -1952,7 +1976,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                     recurseChain.concat(baseFile.path)
                 );
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:text/css;" + "base64," + data_b64;
+                var data_uri = "data:text/css" + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -1977,7 +2001,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                         var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
                         var data_bin = sbConvCommon.convertFromUnicode(linkContent, charset);
                         var data_b64 = window.btoa(data_bin);
-                        var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                        var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                         url = data_uri;
                     // unsupported, blank it
                     } else {
@@ -1988,7 +2012,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 } else {
                     var data_bin = sbConvCommon.readFileBinary(linkFile);
                     var data_b64 = window.btoa(data_bin);
-                    var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                    var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                     return [data_uri, linkFile.leafName];
                 }
             }
@@ -2018,7 +2042,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                     var data_bin = sbConvCommon.readFileBinary(linkContent.file);
                 }
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -2072,9 +2096,6 @@ function convert_sb2sf(input, output, generateSubFolders) {
             }
             return file2url.hashArray[file.leafName];
         };
-
-        var outputHtml = function (data) {  
-        };
         
         verbose("converting ScrapBook data: '" + dir.path + "'");
 
@@ -2087,8 +2108,19 @@ function convert_sb2sf(input, output, generateSubFolders) {
         var charset = item.chars || "UTF-8";
         
         // generate main content
-        var metaRefreshAvailable = 5;
-        var content = parsePageContent(indexFile, []);
+        if (["bookmark"].indexOf(item.type) === -1) {
+            var metaRefreshAvailable = 5;
+            var content = parsePageContent(indexFile, []);
+        } else {
+            var content = '<!DOCTYPE html>\n' +
+                    '<html>\n' +
+                    '  <head>\n' +
+                    '    <meta charset="UTF-8">\n' +
+                    '    <title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+                    '    <meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
+                    '  </head>\n' +
+                    '</html>\n';
+        }
 
         // determine the output file path
         var destFile = output.clone(), destPath = [];
@@ -2814,8 +2846,25 @@ function loadHTML(str, charset) {
     var parser = new DOMParser();
     if (charset) {
         var doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, charset), "text/html");
-        if (doc.charset !== charset) {
-            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, doc.charset), "text/html");
+
+        // recheck charset
+        // e.g. a "file" typed item with big5 encoding still has an index.html with UTF-8 encoding
+        // doc.doctype is always UTF-8 when using DOMParser.parseFromString
+        var metas = doc.documentElement.getElementsByTagName("meta"), meta, docCharset;
+        for (var i=0, I=metas.length; i<I; ++i) {
+            meta = metas[i];
+            if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
+                meta.getAttribute("http-equiv").toLowerCase() == "content-type" && 
+                meta.getAttribute("content").match(/^[^;]*;\s*charset=(.*)$/i) ) {
+                docCharset = RegExp.$1;
+                break;
+            } else if ( meta.hasAttribute("charset") ) {
+                docCharset = meta.getAttribute("charset");
+                break;
+            }
+        }
+        if (docCharset && docCharset.toLowerCase() !== charset.toLowerCase()) {
+            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, docCharset), "text/html");
         }
     } else {
         var doc = parser.parseFromString(str, "text/html");

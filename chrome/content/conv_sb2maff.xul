@@ -41,4 +41,5 @@
         </menulist>
     </hbox>
     <checkbox id="mergeOutput" label="&mergeOutput;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="generateSubFolders" label="&generateSubFolders;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>
