@@ -1925,7 +1925,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
                 var data_bin = sbConvCommon.readFileBinary(linkFile);
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -1952,7 +1952,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                     recurseChain.concat(baseFile.path)
                 );
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:text/css;" + "base64," + data_b64;
+                var data_uri = "data:text/css" + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -1977,7 +1977,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                         var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
                         var data_bin = sbConvCommon.convertFromUnicode(linkContent, charset);
                         var data_b64 = window.btoa(data_bin);
-                        var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                        var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                         url = data_uri;
                     // unsupported, blank it
                     } else {
@@ -1988,7 +1988,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 } else {
                     var data_bin = sbConvCommon.readFileBinary(linkFile);
                     var data_b64 = window.btoa(data_bin);
-                    var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                    var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                     return [data_uri, linkFile.leafName];
                 }
             }
@@ -2018,7 +2018,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                     var data_bin = sbConvCommon.readFileBinary(linkContent.file);
                 }
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:" + mime + ";" + "base64," + data_b64;
+                var data_uri = "data:" + mime + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -2071,9 +2071,6 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 }
             }
             return file2url.hashArray[file.leafName];
-        };
-
-        var outputHtml = function (data) {  
         };
         
         verbose("converting ScrapBook data: '" + dir.path + "'");
