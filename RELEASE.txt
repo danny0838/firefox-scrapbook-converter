@@ -1,7 +1,7 @@
 ScrapBook X File Converter 1.1.4
 ----------------
 
-- NEW: Added an option for "Convert ScrapBook data to single file" to place an item in a subfolder into a corresponding subdirectory.
+- NEW: Added an option for "Convert ScrapBook data to single file" to export an item in a subfolder into a corresponding subdirectory.
 - FIXED: "Convert ScrapBook data to .enex" and "Convert ScrapBook data to single file" get an error if a non-UTF-8 file item has a non-ASCII character in the filename.
 - FIXED: "Convert ScrapBook data to single file" gets an error on a "javascript:" link.
 
