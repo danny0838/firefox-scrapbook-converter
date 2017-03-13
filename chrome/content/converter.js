@@ -2814,8 +2814,25 @@ function loadHTML(str, charset) {
     var parser = new DOMParser();
     if (charset) {
         var doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, charset), "text/html");
-        if (doc.charset !== charset) {
-            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, doc.charset), "text/html");
+
+        // recheck charset
+        // e.g. a "file" typed item with big5 encoding still has an index.html with UTF-8 encoding
+        // doc.doctype is always UTF-8 when using DOMParser.parseFromString
+        var metas = doc.documentElement.getElementsByTagName("meta"), meta, docCharset;
+        for (var i=0, I=metas.length; i<I; ++i) {
+            meta = metas[i];
+            if (meta.hasAttribute("http-equiv") && meta.hasAttribute("content") &&
+                meta.getAttribute("http-equiv").toLowerCase() == "content-type" && 
+                meta.getAttribute("content").match(/^[^;]*;\s*charset=(.*)$/i) ) {
+                docCharset = RegExp.$1;
+                break;
+            } else if ( meta.hasAttribute("charset") ) {
+                docCharset = meta.getAttribute("charset");
+                break;
+            }
+        }
+        if (docCharset && docCharset.toLowerCase() !== charset.toLowerCase()) {
+            doc = parser.parseFromString(sbConvCommon.convertToUnicode(str, docCharset), "text/html");
         }
     } else {
         var doc = parser.parseFromString(str, "text/html");
