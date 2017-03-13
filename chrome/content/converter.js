@@ -133,10 +133,10 @@ function convert(data) {
             convert_sb2enex(input, output, data.addTags, data.folderAsTag, data.importIndexHTML, data.importCommentMetadata, data.importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.topDirName, data.mergeOutput);
+            convert_sb2maff(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.topDirName, data.mergeOutput);
+            convert_sb2zip(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2sf":
             convert_sb2sf(input, output, data.generateSubFolders);
@@ -1450,12 +1450,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     dirsNext();
 }
 
-function convert_sb2maff(input, output, topDirName, mergeOutput) {
+function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> .maff");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1506,9 +1507,20 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone();
+            var destFile = output.clone(), destPath = [];
+            if (generateSubFolders) {
+                var folder = (item.folder || "").split("\t");
+                folder.forEach(function(subfoldername) {
+                    destFile.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destFile.leafName);
+                });
+            }
+            if (!destFile.exists()) {
+                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            }
             destFile.append(dir.leafName + ".maff");
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            destPath.push(destFile.leafName);
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
         }
 
@@ -1577,12 +1589,13 @@ function convert_sb2maff(input, output, topDirName, mergeOutput) {
     dirsNext();
 }
 
-function convert_sb2zip(input, output, topDirName, mergeOutput) {
+function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> .zip");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("top directory name: " + topDirName);
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1647,9 +1660,20 @@ function convert_sb2zip(input, output, topDirName, mergeOutput) {
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone();
+            var destFile = output.clone(), destPath = [];
+            if (generateSubFolders) {
+                var folder = (item.folder || "").split("\t");
+                folder.forEach(function(subfoldername) {
+                    destFile.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destFile.leafName);
+                });
+            }
+            if (!destFile.exists()) {
+                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            }
             destFile.append(dir.leafName + ".zip");
-            verbose("exporting file: '" + item.title + "' --> '" + destFile.leafName + "'");
+            destPath.push(destFile.leafName);
+            verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
         }
 

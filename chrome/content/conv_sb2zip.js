@@ -29,6 +29,7 @@ window.addEventListener("load", function () {
             output: document.getElementById("outputPath").value,
             topDirName: document.getElementById("topDirName").value,
             mergeOutput: document.getElementById("mergeOutput").checked,
+            generateSubFolders: document.getElementById("generateSubFolders").checked,
         };
         window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
     });
