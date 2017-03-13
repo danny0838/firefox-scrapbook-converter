@@ -1,3 +1,12 @@
+ScrapBook X File Converter 1.1.5
+----------------
+
+- NEW: Added an option for "Convert ScrapBook data to .maff" and "Convert ScrapBook data to .zip" to export an item in a subfolder into a corresponding subdirectory.
+- FIXED: "Convert ScrapBook data to .enex" and "Convert ScrapBook data to single file" get a mal-encoded content for an item with non-UTF-8 encoding.
+- FIXED: "Convert ScrapBook data to single file" now converts a bookmark item into a web page that redirects to the source URL.
+- UPDATE: Code optimization.
+
+
 ScrapBook X File Converter 1.1.4
 ----------------
 
