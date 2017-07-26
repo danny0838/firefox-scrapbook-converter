@@ -1534,6 +1534,12 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
             default:
                 var overwriteName = dir.leafName;
         }
+        
+        // generate index.html for bookmarks
+        if (item.type === "bookmark") {
+            var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        }
 
         // generate index.rdf content
         var rdfContent = generateRDF(item, "index.html");
@@ -1653,6 +1659,12 @@ function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolde
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
+        }
+        
+        // generate index.html for bookmarks
+        if (item.type === "bookmark") {
+            var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
         }
 
         // add zip file or entry
@@ -2086,18 +2098,11 @@ function convert_sb2sf(input, output, generateSubFolders) {
         var charset = item.chars || "UTF-8";
         
         // generate main content
-        if (["bookmark"].indexOf(item.type) === -1) {
+        if (item.type === "bookmark") {
+            var content = generateBookmarkIndex(item);
+        } else {
             var metaRefreshAvailable = 5;
             var content = parsePageContent(indexFile, []);
-        } else {
-            var content = '<!DOCTYPE html>\n' +
-                    '<html>\n' +
-                    '  <head>\n' +
-                    '    <meta charset="UTF-8">\n' +
-                    '    <title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
-                    '    <meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
-                    '  </head>\n' +
-                    '</html>\n';
         }
 
         // determine the output file path
@@ -2744,6 +2749,19 @@ function generateRDF(item, index) {
         '  </RDF:Description>\n' +
         '</RDF:RDF>\n';
     return rdfContent;
+}
+
+function generateBookmarkIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        (item.icon ? '<link rel="shortcut icon" href="' + sbConvCommon.escapeHTML(item.icon) + '">\n' : "") +
+        '</head>\n' +
+        '</html>\n';
+    return indexContent;
 }
 
 /**
