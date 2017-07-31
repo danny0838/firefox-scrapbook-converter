@@ -136,7 +136,7 @@ function convert(data) {
             convert_sb2maff(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
+            convert_sb2zip(input, output, data.topDirName, data.generateHtz, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2sf":
             convert_sb2sf(input, output, data.generateSubFolders);
@@ -1573,13 +1573,22 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
     dirsNext();
 }
 
-function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolders) {
+function convert_sb2zip(input, output, topDirName, generateHtz, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
-    print("top directory name: " + topDirName);
-    print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
-    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
+    if (generateHtz) {
+        topDirName = "none";
+        mergeOutput = false;
+        print("top directory name: " + "N/A");
+        print("generate htz: " + "yes");
+        print("merge output into one file: " + "N/A");
+    } else {
+        print("top directory name: " + topDirName);
+        print("generate htz: " + "no");
+        print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    }
+    print("generate subfolders: " + (mergeOutput ? "N/A" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1655,7 +1664,7 @@ function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolde
             if (!destFile.exists()) {
                 destFile.create(dir.DIRECTORY_TYPE, 0700);
             }
-            destFile.append(dir.leafName + ".zip");
+            destFile.append(dir.leafName + (generateHtz ? ".htz" : ".zip"));
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);

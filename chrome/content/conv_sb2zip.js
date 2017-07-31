@@ -19,8 +19,19 @@ function noMergeOutputAndTopDirNameNone() {
     }
 }
 
+function htzMode() {
+    if (document.getElementById("generateHtz").checked) {
+        document.getElementById("topDirName").disabled = true;
+        document.getElementById("mergeOutput").disabled = true;
+    } else {
+        document.getElementById("topDirName").disabled = false;
+        document.getElementById("mergeOutput").disabled = false;
+    }
+}
+
 window.addEventListener("load", function () {
     noMergeOutputAndTopDirNameNone();
+    htzMode();
 
     document.getElementById("sbconvConverterOptionWindow").addEventListener("dialogaccept", function () {
         var data = {
@@ -30,6 +41,7 @@ window.addEventListener("load", function () {
             topDirName: document.getElementById("topDirName").value,
             mergeOutput: document.getElementById("mergeOutput").checked,
             generateSubFolders: document.getElementById("generateSubFolders").checked,
+            generateHtz: document.getElementById("generateHtz").checked,
         };
         window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);
     });
@@ -40,6 +52,10 @@ window.addEventListener("load", function () {
 
     document.getElementById("outputPick").addEventListener("command", function () {
         return pickFolder("outputPath");
+    });
+
+    document.getElementById("generateHtz").addEventListener("command", function () {
+        htzMode();
     });
 
     document.getElementById("mergeOutput").addEventListener("command", function () {

@@ -23,6 +23,7 @@
 <!ENTITY sb2zip.topDirName.none "No top directory">
 <!ENTITY sb2zip.topDirName.id "ScrapBook ID">
 <!ENTITY sb2zip.topDirName.dir "Directory name">
+<!ENTITY sb2zip.generateHtz "Output as HTZ archive file">
 
 <!ENTITY sb2epub.includeAllFiles "Include all files in the ScrapBook directory">
 <!ENTITY sb2epub.meta "E-Book Metadata">

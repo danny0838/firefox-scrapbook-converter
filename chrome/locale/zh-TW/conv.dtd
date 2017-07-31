@@ -23,6 +23,7 @@
 <!ENTITY sb2zip.topDirName.none "不產生頂層目錄">
 <!ENTITY sb2zip.topDirName.id "ScrapBook ID">
 <!ENTITY sb2zip.topDirName.dir "目錄名稱">
+<!ENTITY sb2zip.generateHtz "輸出為 HTZ 封存檔案">
 
 <!ENTITY sb2epub.includeAllFiles "包含 ScrapBook 目錄下所有檔案">
 <!ENTITY sb2epub.meta "電子書後設資料">
