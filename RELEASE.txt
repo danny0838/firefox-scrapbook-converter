@@ -1,3 +1,14 @@
+ScrapBook X File Converter 1.2.0
+----------------
+
+- UPDATE: "Convert ScrapBook to MAFF/ZIP/Single file" now automatically generates an index file for a bookmark.
+- UPDATE: Adjusted UI text and several default settings.
+- NEW: Added an option for "Convert ScrapBook to ZIP" to export as HTZ file.
+- NEW: Added options for "Convert ScrapBook to MAFF/ZIP/Single file" to ignore separators and folders.
+- NEW: Improve the filename and support de-duplication for "Convert ScrapBook to MAFF/ZIP/Single file".
+- NEW: "Convert ScrapBook to Single file" now records the original filename of referenced resources.
+
+
 ScrapBook X File Converter 1.1.5
 ----------------
 
