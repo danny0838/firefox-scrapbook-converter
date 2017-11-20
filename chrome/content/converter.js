@@ -3047,9 +3047,7 @@ function getUniqueId(id) {
 
 function getUniqueDir(dir, name) {
     var name = name ? sbConvCommon.validateFileName(name).substring(0, 60) : "untitled";
-
-    // filter out invalid folder names (may create a folder in a different name)
-    name = name.replace(/^[\s]+/, "").replace(/[.\s]+$/, "");
+    name = sbConvCommon.validateFileName(name); // avoid potential bad name such as trailing space
 
     var num = 0, destDir, dirName;
     do {
