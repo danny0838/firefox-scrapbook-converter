@@ -32,7 +32,7 @@
     </hbox>
     <hbox align="center">
         <label value="&sb2zip.topDirName;:" />
-        <menulist id="topDirName" value="dir" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
+        <menulist id="topDirName" value="none" persist="value" onchange="this.setAttribute('value', this.value); document.persist(this, 'value');">
             <menupopup>
                 <menuitem id="topDirName_none" value="none" label="&sb2zip.topDirName.none;" />
                 <menuitem value="id" label="&sb2zip.topDirName.id;" />
