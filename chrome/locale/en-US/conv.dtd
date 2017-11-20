@@ -5,6 +5,9 @@
 <!ENTITY includeFileName "Add file name to item folder path">
 <!ENTITY uniqueId "Automatically adjust ID to prevent duplicate">
 
+<!ENTITY ignoreSeparator "Ignore separators">
+<!ENTITY ignoreFolder "Ignore folders">
+
 <!ENTITY mergeOutput "Merge output into one file">
 <!ENTITY generateSubFolders "Export items in a subfolder into a corresponding subdirectory">
 

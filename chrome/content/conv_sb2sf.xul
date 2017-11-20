@@ -30,5 +30,7 @@
         <textbox id="outputPath" flex="1" persist="value" onchange="this.setAttribute('value', this.value);" />
         <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
+    <checkbox id="ignoreSeparator" label="&ignoreSeparator;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
+    <checkbox id="ignoreFolder" label="&ignoreFolder;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
     <checkbox id="generateSubFolders" label="&generateSubFolders;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>

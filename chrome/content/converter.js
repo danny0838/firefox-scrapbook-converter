@@ -133,13 +133,13 @@ function convert(data) {
             convert_sb2enex(input, output, data.addTags, data.folderAsTag, data.importIndexHTML, data.importCommentMetadata, data.importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
+            convert_sb2maff(input, output, data.topDirName, data.ignoreSeparator, data.ignoreFolder, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.topDirName, data.generateHtz, data.mergeOutput, data.generateSubFolders);
+            convert_sb2zip(input, output, data.topDirName, data.ignoreSeparator, data.ignoreFolder, data.generateHtz, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2sf":
-            convert_sb2sf(input, output, data.generateSubFolders);
+            convert_sb2sf(input, output, data.ignoreSeparator, data.ignoreFolder, data.generateSubFolders);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
@@ -1439,11 +1439,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     dirsNext();
 }
 
-function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFolders) {
+function convert_sb2maff(input, output, topDirName, ignoreSeparator, ignoreFolder, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> MAFF");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry directory name: " + topDirName);
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
@@ -1487,7 +1489,12 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+        if (item.type === "folder" && ignoreFolder) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
@@ -1535,9 +1542,15 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
                 var overwriteName = dir.leafName;
         }
         
-        // generate index.html for bookmarks
+        // generate index.html for special items
         if (item.type === "bookmark") {
             var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        } else if (item.type === "separator") {
+            var indexContent = generateSeparatorIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        } else if (item.type === "folder") {
+            var indexContent = generateFolderIndex(item);
             zipWriteFile(zw, overwriteName + "/index.html", indexContent);
         }
 
@@ -1573,10 +1586,12 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
     dirsNext();
 }
 
-function convert_sb2zip(input, output, topDirName, generateHtz, mergeOutput, generateSubFolders) {
+function convert_sb2zip(input, output, topDirName, ignoreSeparator, ignoreFolder, generateHtz, mergeOutput, generateSubFolders) {
     print("convert method: ScrapBook data --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
     if (generateHtz) {
         topDirName = "none";
         mergeOutput = false;
@@ -1630,7 +1645,12 @@ function convert_sb2zip(input, output, topDirName, generateHtz, mergeOutput, gen
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+        if (item.type === "folder" && ignoreFolder) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
@@ -1670,9 +1690,15 @@ function convert_sb2zip(input, output, topDirName, generateHtz, mergeOutput, gen
             var zw = zipOpen(destFile);
         }
         
-        // generate index.html for bookmarks
+        // generate index.html for special items
         if (item.type === "bookmark") {
             var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
+        } else if (item.type === "separator") {
+            var indexContent = generateSeparatorIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
+        } else if (item.type === "folder") {
+            var indexContent = generateFolderIndex(item);
             zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
         }
 
@@ -1708,10 +1734,12 @@ function convert_sb2zip(input, output, topDirName, generateHtz, mergeOutput, gen
     dirsNext();
 }
 
-function convert_sb2sf(input, output, generateSubFolders) {
+function convert_sb2sf(input, output, ignoreSeparator, ignoreFolder, generateSubFolders) {
     print("convert method: ScrapBook data --> single file");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
     print("generate subfolders: " + (generateSubFolders ? "yes" : "no"));
     print("");
 
@@ -2100,15 +2128,25 @@ function convert_sb2sf(input, output, generateSubFolders) {
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
+        if (item.type === "folder" && ignoreFolder) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+
         var charset = item.chars || "UTF-8";
         
         // generate main content
         if (item.type === "bookmark") {
             var content = generateBookmarkIndex(item);
+        } else if (item.type === "separator") {
+            var content = generateSeparatorIndex(item);
+        } else if (item.type === "folder") {
+            var content = generateFolderIndex(item);
         } else {
             var metaRefreshAvailable = 5;
             var content = parsePageContent(indexFile, []);
@@ -2769,6 +2807,30 @@ function generateBookmarkIndex(item) {
         '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
         (item.icon ? '<link rel="shortcut icon" href="' + sbConvCommon.escapeHTML(item.icon) + '">\n' : "") +
         '</head>\n' +
+        '</html>\n';
+    return indexContent;
+}
+
+function generateSeparatorIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        '</head>\n' +
+        '<body>Separator</body>\n' +
+        '</html>\n';
+    return indexContent;
+}
+
+function generateFolderIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        '</head>\n' +
+        '<body>Folder</body>\n' +
         '</html>\n';
     return indexContent;
 }

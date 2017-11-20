@@ -14,6 +14,8 @@ window.addEventListener("load", function () {
             method: "sb2sf",
             input: document.getElementById("inputPath").value,
             output: document.getElementById("outputPath").value,
+            ignoreSeparator: document.getElementById("ignoreSeparator").checked,
+            ignoreFolder: document.getElementById("ignoreFolder").checked,
             generateSubFolders: document.getElementById("generateSubFolders").checked,
         };
         window.openDialog('chrome://sbconv/content/converter.xul','ScrapBook:Converter:Convert','chrome,toolbar,centerscreen,resizable,modal', data);

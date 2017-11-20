@@ -5,6 +5,9 @@
 <!ENTITY includeFileName "將檔名加入匯入資料夾路徑">
 <!ENTITY uniqueId "自動調整 ID 以避免重複">
 
+<!ENTITY ignoreSeparator "略過分隔線">
+<!ENTITY ignoreFolder "略過資料夾">
+
 <!ENTITY mergeOutput "合併匯出為一個檔案">
 <!ENTITY generateSubFolders "將子資料夾的項目匯出至相應的子目錄">
 
