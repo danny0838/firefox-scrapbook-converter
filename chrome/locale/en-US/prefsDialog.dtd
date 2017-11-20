@@ -1,11 +1,11 @@
 <!ENTITY window.title "ScrapBook File Converter">
-<!ENTITY action.enex2sb "Convert .enex to ScrapBook data">
-<!ENTITY action.maff2sb "Convert .maff to ScrapBook data">
+<!ENTITY action.enex2sb "Convert ENEX to ScrapBook data">
+<!ENTITY action.maff2sb "Convert MAFF to ScrapBook data">
 <!ENTITY action.html2sb "Convert HTML and files to ScrapBook data">
-<!ENTITY action.sb2enex "Convert ScrapBook data to .enex">
-<!ENTITY action.sb2maff "Convert ScrapBook data to .maff">
-<!ENTITY action.sb2zip "Convert ScrapBook data to .zip">
+<!ENTITY action.sb2enex "Convert ScrapBook data to ENEX">
+<!ENTITY action.sb2maff "Convert ScrapBook data to MAFF">
+<!ENTITY action.sb2zip "Convert ScrapBook data to ZIP">
 <!ENTITY action.sb2sf "Convert ScrapBook data to single file">
-<!ENTITY action.sb2epub "Convert current ScrapBook to .epub">
-<!ENTITY action.sb2maff2 "Convert current ScrapBook to .maff">
-<!ENTITY action.sb2zip2 "Convert current ScrapBook to .zip">
+<!ENTITY action.sb2epub "Convert current ScrapBook to EPUB">
+<!ENTITY action.sb2maff2 "Convert current ScrapBook to MAFF">
+<!ENTITY action.sb2zip2 "Convert current ScrapBook to ZIP">

@@ -133,13 +133,13 @@ function convert(data) {
             convert_sb2enex(input, output, data.addTags, data.folderAsTag, data.importIndexHTML, data.importCommentMetadata, data.importSourcePackFormat, data.mergeOutput);
             break;
         case "sb2maff":
-            convert_sb2maff(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
+            convert_sb2maff(input, output, data.topDirName, data.ignoreSeparator, data.ignoreFolder, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2zip":
-            convert_sb2zip(input, output, data.topDirName, data.mergeOutput, data.generateSubFolders);
+            convert_sb2zip(input, output, data.topDirName, data.ignoreSeparator, data.ignoreFolder, data.generateHtz, data.mergeOutput, data.generateSubFolders);
             break;
         case "sb2sf":
-            convert_sb2sf(input, output, data.generateSubFolders);
+            convert_sb2sf(input, output, data.ignoreSeparator, data.ignoreFolder, data.generateSubFolders);
             break;
         case "sb2epub":
             output.initWithPath(data.outputFile);
@@ -167,7 +167,7 @@ function convert_finish() {
 }
 
 function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId) {
-    print("convert method: .enex --> ScrapBook data");
+    print("convert method: ENEX --> ScrapBook data");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
@@ -522,7 +522,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 }
 
 function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId) {
-    print("convert method: .maff --> ScrapBook data");
+    print("convert method: MAFF --> ScrapBook data");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
@@ -609,7 +609,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
                     var metaRefresh = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(indexLeafName) + '"></head><body></body></html>';
                     sbConvCommon.writeFile(indexFile, metaRefresh, "UTF-8", true);
                 } else {
-                    warn("Converting a maff page with non-index index.html is not supported: '" + item.title + "' (" + item.id + ").");
+                    warn("Converting a MAFF page with non-index index.html is not supported: '" + item.title + "' (" + item.id + ").");
                     return;
                 }
             }
@@ -632,7 +632,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             extractZip(file, tmpDir);
         } catch(ex) {
             // not zip or corrupted zip
-            error("Invalid maff file: '" + file.path + "', skipped.");
+            error("Invalid MAFF file: '" + file.path + "', skipped.");
             pagesFinish();
             return;
         }
@@ -847,7 +847,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
 }
 
 function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePackFormat, mergeOutput) {
-    print("convert method: ScrapBook data --> .enex");
+    print("convert method: ScrapBook data --> ENEX");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
@@ -1011,7 +1011,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (importSourcePackFormat === "maff") {
             var rdfFile = dir.clone(); rdfFile.append("index.rdf");
             if (rdfFile.exists()) {
-                warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
+                warn("Converting ScrapBook data with index.rdf to MAFF is not supported: '" + rdfFile.path + "'.");
                 specialCheck = false;
             }
         }
@@ -1027,18 +1027,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     break;
                 case "maff":
                     // generate index.rdf content
-                    var rdfContent = '<?xml version="1.0"?>\n' +
-                        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
-                        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
-                        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
-                        '  <RDF:Description RDF:about="urn:root">\n' +
-                        '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
-                        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
-                        '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
-                        '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
-                        '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
-                        '  </RDF:Description>\n' +
-                        '</RDF:RDF>\n';
+                    var rdfContent = generateRDF(item, "index.html");
                     var overwriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + "_" + Math.floor(Math.random() * 1000);
 
                     var zipFile = output.clone();
@@ -1450,11 +1439,13 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
     dirsNext();
 }
 
-function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFolders) {
-    print("convert method: ScrapBook data --> .maff");
+function convert_sb2maff(input, output, topDirName, ignoreSeparator, ignoreFolder, mergeOutput, generateSubFolders) {
+    print("convert method: ScrapBook data --> MAFF");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry directory name: " + topDirName);
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
     print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
     print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
     print("");
@@ -1498,7 +1489,12 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+        if (item.type === "folder" && ignoreFolder) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
@@ -1507,18 +1503,18 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone(), destPath = [];
+            var destDir = output.clone(), destPath = [];
             if (generateSubFolders) {
                 var folder = (item.folder || "").split("\t");
                 folder.forEach(function(subfoldername) {
-                    destFile.append(sbConvCommon.validateFileName(subfoldername));
-                    destPath.push(destFile.leafName);
+                    destDir.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destDir.leafName);
                 });
             }
-            if (!destFile.exists()) {
-                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            if (!destDir.exists()) {
+                destDir.create(dir.DIRECTORY_TYPE, 0700);
             }
-            destFile.append(dir.leafName + ".maff");
+            var destFile = getUniqueFile(destDir, item.title + ".maff");
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
@@ -1528,7 +1524,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
         // if already exists, throw an error
         var rdfFile = dir.clone(); rdfFile.append("index.rdf");
         if (rdfFile.exists()) {
-            warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
+            warn("Converting ScrapBook data with index.rdf to MAFF is not supported: '" + rdfFile.path + "'.");
             return;
         }
 
@@ -1545,20 +1541,21 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
             default:
                 var overwriteName = dir.leafName;
         }
+        
+        // generate index.html for special items
+        if (item.type === "bookmark") {
+            var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        } else if (item.type === "separator") {
+            var indexContent = generateSeparatorIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        } else if (item.type === "folder") {
+            var indexContent = generateFolderIndex(item);
+            zipWriteFile(zw, overwriteName + "/index.html", indexContent);
+        }
 
         // generate index.rdf content
-        var rdfContent = '<?xml version="1.0"?>\n' +
-            '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
-            '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
-            '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
-            '  <RDF:Description RDF:about="urn:root">\n' +
-            '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
-            '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
-            '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
-            '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
-            '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
-            '  </RDF:Description>\n' +
-            '</RDF:RDF>\n';
+        var rdfContent = generateRDF(item, "index.html");
 
         // add zip file or entry
         if (mergeOutput) {
@@ -1589,13 +1586,24 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
     dirsNext();
 }
 
-function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolders) {
-    print("convert method: ScrapBook data --> .zip");
+function convert_sb2zip(input, output, topDirName, ignoreSeparator, ignoreFolder, generateHtz, mergeOutput, generateSubFolders) {
+    print("convert method: ScrapBook data --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
-    print("top directory name: " + topDirName);
-    print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
-    print("generate subfolders: " + (mergeOutput ? "skipped" : (generateSubFolders ? "yes" : "no")));
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
+    if (generateHtz) {
+        topDirName = "none";
+        mergeOutput = false;
+        print("top directory name: " + "N/A");
+        print("generate htz: " + "yes");
+        print("merge output into one file: " + "N/A");
+    } else {
+        print("top directory name: " + topDirName);
+        print("generate htz: " + "no");
+        print("merge output into one file: " + (mergeOutput ? "yes" : "no"));
+    }
+    print("generate subfolders: " + (mergeOutput ? "N/A" : (generateSubFolders ? "yes" : "no")));
     print("");
 
     var dirsNext = function () {
@@ -1637,7 +1645,12 @@ function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolde
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+        if (item.type === "folder" && ignoreFolder) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
@@ -1660,21 +1673,33 @@ function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolde
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone(), destPath = [];
+            var destDir = output.clone(), destPath = [];
             if (generateSubFolders) {
                 var folder = (item.folder || "").split("\t");
                 folder.forEach(function(subfoldername) {
-                    destFile.append(sbConvCommon.validateFileName(subfoldername));
-                    destPath.push(destFile.leafName);
+                    destDir.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destDir.leafName);
                 });
             }
-            if (!destFile.exists()) {
-                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            if (!destDir.exists()) {
+                destDir.create(dir.DIRECTORY_TYPE, 0700);
             }
-            destFile.append(dir.leafName + ".zip");
+            var destFile = getUniqueFile(destDir, item.title + (generateHtz ? ".htz" : ".zip"));
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
+        }
+        
+        // generate index.html for special items
+        if (item.type === "bookmark") {
+            var indexContent = generateBookmarkIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
+        } else if (item.type === "separator") {
+            var indexContent = generateSeparatorIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
+        } else if (item.type === "folder") {
+            var indexContent = generateFolderIndex(item);
+            zipWriteFile(zw, (overwriteName ? overwriteName + "/" : "") + "index.html", indexContent);
         }
 
         // add zip file or entry
@@ -1709,10 +1734,12 @@ function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolde
     dirsNext();
 }
 
-function convert_sb2sf(input, output, generateSubFolders) {
+function convert_sb2sf(input, output, ignoreSeparator, ignoreFolder, generateSubFolders) {
     print("convert method: ScrapBook data --> single file");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
+    print("ignore separators: " + (ignoreSeparator ? "yes" : "no"));
+    print("ignore folders: " + (ignoreFolder ? "yes" : "no"));
     print("generate subfolders: " + (generateSubFolders ? "yes" : "no"));
     print("");
 
@@ -1949,7 +1976,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 var mime = sbConvCommon.getFileMime(linkFile) || "application/octet-stream";
                 var data_bin = sbConvCommon.readFileBinary(linkFile);
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:" + mime + ";base64" + "," + data_b64;
+                var data_uri = "data:" + mime + ";filename=" + encodeURIComponent(linkFile.leafName) + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -1976,7 +2003,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                     recurseChain.concat(baseFile.path)
                 );
                 var data_b64 = window.btoa(data_bin);
-                var data_uri = "data:text/css" + ";base64" + "," + data_b64;
+                var data_uri = "data:text/css" + ";filename=" + encodeURIComponent(linkFile.leafName) + ";base64" + "," + data_b64;
                 return data_uri;
             }
             return "about:blank";
@@ -2001,7 +2028,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                         var linkContent = parsePageContent(linkFile, recurseChain.concat(baseFile.path));
                         var data_bin = sbConvCommon.convertFromUnicode(linkContent, charset);
                         var data_b64 = window.btoa(data_bin);
-                        var data_uri = "data:" + mime + ";base64" + "," + data_b64;
+                        var data_uri = "data:" + mime + ";filename=" + encodeURIComponent(linkFile.leafName) + ";base64" + "," + data_b64;
                         url = data_uri;
                     // unsupported, blank it
                     } else {
@@ -2012,7 +2039,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
                 } else {
                     var data_bin = sbConvCommon.readFileBinary(linkFile);
                     var data_b64 = window.btoa(data_bin);
-                    var data_uri = "data:" + mime + ";base64" + "," + data_b64;
+                    var data_uri = "data:" + mime + ";filename=" + encodeURIComponent(linkFile.leafName) + ";base64" + "," + data_b64;
                     return [data_uri, linkFile.leafName];
                 }
             }
@@ -2101,43 +2128,46 @@ function convert_sb2sf(input, output, generateSubFolders) {
 
         // load item data
         var item = sbConvCommon.parseIndexDat(indexData);
-        if (["folder", "separator"].indexOf(item.type) !== -1) {
+
+        if (item.type === "separator" && ignoreSeparator) {
             verbose("skip item of type: '" + item.type + "'");
             return;
         }
+        if (item.type === "folder" && ignoreFolder) {
+            verbose("skip item of type: '" + item.type + "'");
+            return;
+        }
+
         var charset = item.chars || "UTF-8";
         
         // generate main content
-        if (["bookmark"].indexOf(item.type) === -1) {
+        if (item.type === "bookmark") {
+            var content = generateBookmarkIndex(item);
+        } else if (item.type === "separator") {
+            var content = generateSeparatorIndex(item);
+        } else if (item.type === "folder") {
+            var content = generateFolderIndex(item);
+        } else {
             var metaRefreshAvailable = 5;
             var content = parsePageContent(indexFile, []);
-        } else {
-            var content = '<!DOCTYPE html>\n' +
-                    '<html>\n' +
-                    '  <head>\n' +
-                    '    <meta charset="UTF-8">\n' +
-                    '    <title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
-                    '    <meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
-                    '  </head>\n' +
-                    '</html>\n';
         }
 
         // determine the output file path
-        var destFile = output.clone(), destPath = [];
+        var destDir = output.clone(), destPath = [];
         if (generateSubFolders) {
             var folder = (item.folder || "").split("\t");
             folder.forEach(function(subfoldername) {
-                destFile.append(sbConvCommon.validateFileName(subfoldername));
-                destPath.push(destFile.leafName);
+                destDir.append(sbConvCommon.validateFileName(subfoldername));
+                destPath.push(destDir.leafName);
             });
         }
-        if (!destFile.exists()) {
-            destFile.create(dir.DIRECTORY_TYPE, 0700);
+        if (!destDir.exists()) {
+            destDir.create(dir.DIRECTORY_TYPE, 0700);
         }
 
         if (typeof content === "string") {
             // determine the output filename
-            destFile.append(dir.leafName + ".html");
+            var destFile = getUniqueFile(destDir, item.title + ".html");
             destPath.push(destFile.leafName);
 
             // output
@@ -2148,12 +2178,13 @@ function convert_sb2sf(input, output, generateSubFolders) {
             var { file: indexFile, mime: mime } = content;
             var fileExt = sbConvCommon.splitFileName(indexFile.leafName)[1];
             fileExt = sbConvCommon.getMimePrimaryExtension(mime, fileExt);
-            destFile.append(dir.leafName + "." + fileExt);
+            fileExt = fileExt ? ("." + fileExt) : "";
+            var destFile = getUniqueFile(destDir, item.title + fileExt);
             destPath.push(destFile.leafName);
 
             // output
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
-            indexFile.copyTo(destFile.parent, destFile.leafName);
+            indexFile.copyTo(destDir, destFile.leafName);
         }
     };
 
@@ -2165,7 +2196,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
 }
 
 function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
-    print("convert method: whole ScrapBook --> .epub");
+    print("convert method: whole ScrapBook --> EPUB");
     print("input directory: " + input.path);
     print("output file: " + output.path);
     print("include all files: " + (includeAllFiles ? "yes" : "no"));
@@ -2637,7 +2668,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
 }
 
 function convert_sb2maff2(input, output, entryPage) {
-    print("convert method: whole ScrapBook --> .maff");
+    print("convert method: whole ScrapBook --> MAFF");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry page: " + entryPage);
@@ -2693,7 +2724,7 @@ function convert_sb2maff2(input, output, entryPage) {
 }
 
 function convert_sb2zip2(input, output, topDirName) {
-    print("convert method: whole ScrapBook --> .zip");
+    print("convert method: whole ScrapBook --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("top directory name: " + topDirName);
@@ -2749,6 +2780,60 @@ function error(txt) {
     errorCount++;
     console.error(txt);
     print("ERROR: " + txt);
+}
+
+function generateRDF(item, index) {
+    index = index || "index.html";
+    var rdfContent = '<?xml version="1.0"?>\n' +
+        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
+        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
+        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
+        '  <RDF:Description RDF:about="urn:root">\n' +
+        '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
+        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
+        '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
+        '    <MAF:indexfilename RDF:resource="' + sbConvCommon.escapeHTML(index) + '"/>\n' +
+        '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
+        '  </RDF:Description>\n' +
+        '</RDF:RDF>\n';
+    return rdfContent;
+}
+
+function generateBookmarkIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<meta http-equiv="refresh" content="0;URL=' + sbConvCommon.escapeHTML(item.source) + '">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        (item.icon ? '<link rel="shortcut icon" href="' + sbConvCommon.escapeHTML(item.icon) + '">\n' : "") +
+        '</head>\n' +
+        '</html>\n';
+    return indexContent;
+}
+
+function generateSeparatorIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        '</head>\n' +
+        '<body>Separator</body>\n' +
+        '</html>\n';
+    return indexContent;
+}
+
+function generateFolderIndex(item) {
+    var indexContent = '<!DOCTYPE html>\n' +
+        '<html>\n' +
+        '<head>\n' +
+        '<meta charset="UTF-8">\n' +
+        '<title>' + sbConvCommon.escapeHTML(item.title, true) + '</title>\n' +
+        '</head>\n' +
+        '<body>Folder</body>\n' +
+        '</html>\n';
+    return indexContent;
 }
 
 /**
@@ -2963,9 +3048,7 @@ function getUniqueId(id) {
 
 function getUniqueDir(dir, name) {
     var name = name ? sbConvCommon.validateFileName(name).substring(0, 60) : "untitled";
-
-    // filter out invalid folder names (may create a folder in a different name)
-    name = name.replace(/^[\s]+/, "").replace(/[.\s]+$/, "");
+    name = sbConvCommon.validateFileName(name); // avoid potential bad name such as trailing space
 
     var num = 0, destDir, dirName;
     do {
@@ -2977,6 +3060,27 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
+}
+
+function getUniqueFile(dir, name) {
+    var arr = sbConvCommon.splitFileName(name);
+    var base = sbConvCommon.validateFileName(arr[0]);
+    base = base ? base.substring(0, 60) : "untitled";
+    base = sbConvCommon.validateFileName(base); // avoid potential bad name
+    
+    var ext = sbConvCommon.validateFileName(arr[1]);
+    ext = ext ? ("." + ext) : "";
+
+    var num = 0, destFile, fileName;
+    do {
+        fileName = base;
+        if ( num > 0 ) fileName += "-" + num;
+        fileName += ext;
+        destFile = dir.clone();
+        destFile.append(fileName);
+    }
+    while ( destFile.exists() && ++num < 1024 );
+    return destFile;
 }
 
 function zipDetermineCompresssionLevel(file) {

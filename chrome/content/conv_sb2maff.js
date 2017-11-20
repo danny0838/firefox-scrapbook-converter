@@ -15,6 +15,8 @@ window.addEventListener("load", function () {
             input: document.getElementById("inputPath").value,
             output: document.getElementById("outputPath").value,
             topDirName: document.getElementById("topDirName").value,
+            ignoreSeparator: document.getElementById("ignoreSeparator").checked,
+            ignoreFolder: document.getElementById("ignoreFolder").checked,
             mergeOutput: document.getElementById("mergeOutput").checked,
             generateSubFolders: document.getElementById("generateSubFolders").checked,
         };
