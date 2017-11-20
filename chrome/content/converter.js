@@ -1027,18 +1027,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
                     break;
                 case "maff":
                     // generate index.rdf content
-                    var rdfContent = '<?xml version="1.0"?>\n' +
-                        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
-                        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
-                        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
-                        '  <RDF:Description RDF:about="urn:root">\n' +
-                        '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
-                        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
-                        '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
-                        '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
-                        '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
-                        '  </RDF:Description>\n' +
-                        '</RDF:RDF>\n';
+                    var rdfContent = generateRDF(item, "index.html");
                     var overwriteName = sbConvCommon.timeStampToDate(item.id).valueOf() + "_" + Math.floor(Math.random() * 1000);
 
                     var zipFile = output.clone();
@@ -1547,18 +1536,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
         }
 
         // generate index.rdf content
-        var rdfContent = '<?xml version="1.0"?>\n' +
-            '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
-            '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
-            '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
-            '  <RDF:Description RDF:about="urn:root">\n' +
-            '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
-            '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
-            '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
-            '    <MAF:indexfilename RDF:resource="index.html"/>\n' +
-            '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
-            '  </RDF:Description>\n' +
-            '</RDF:RDF>\n';
+        var rdfContent = generateRDF(item, "index.html");
 
         // add zip file or entry
         if (mergeOutput) {
@@ -2749,6 +2727,23 @@ function error(txt) {
     errorCount++;
     console.error(txt);
     print("ERROR: " + txt);
+}
+
+function generateRDF(item, index) {
+    index = index || "index.html";
+    var rdfContent = '<?xml version="1.0"?>\n' +
+        '<RDF:RDF xmlns:MAF="http://maf.mozdev.org/metadata/rdf#"\n' +
+        '         xmlns:NC="http://home.netscape.com/NC-rdf#"\n' +
+        '         xmlns:RDF="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
+        '  <RDF:Description RDF:about="urn:root">\n' +
+        '    <MAF:originalurl RDF:resource="' + sbConvCommon.escapeHTML(item.source) + '"/>\n' +
+        '    <MAF:title RDF:resource="' + sbConvCommon.escapeHTML(item.title) + '"/>\n' +
+        '    <MAF:archivetime RDF:resource="' + sbConvCommon.timeStampToDate(item.id) + '"/>\n' +
+        '    <MAF:indexfilename RDF:resource="' + sbConvCommon.escapeHTML(index) + '"/>\n' +
+        '    <MAF:charset RDF:resource="' + sbConvCommon.escapeHTML(item.chars) + '"/>\n' +
+        '  </RDF:Description>\n' +
+        '</RDF:RDF>\n';
+    return rdfContent;
 }
 
 /**
