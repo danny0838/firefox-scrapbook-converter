@@ -31,5 +31,5 @@
         <button id="outputPick" class="dialog" label="&pick;" />
     </hbox>
     <checkbox id="includeSubdir" label="&includeSubdir;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
-    <checkbox id="uniqueId" label="&uniqueId;" persist="checked" />
+    <checkbox id="uniqueId" label="&uniqueId;" persist="checked" checked="true" oncommand="if (!this.checked) this.setAttribute('checked', 'false');" />
 </dialog>
