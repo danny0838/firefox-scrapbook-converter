@@ -36,7 +36,7 @@
 <!ENTITY sb2epub.date "E-Book publication date:">
 <!ENTITY sb2epub.source "Source publication:">
 <!ENTITY sb2epub.cover "Cover image:">
-<!ENTITY sb2epub.help "Note: Make sure the source ScrapBook files satisfy epub 3 specification so that the generated epub file will pass validation.">
+<!ENTITY sb2epub.help "Note: Make sure the source ScrapBook files satisfy EPUB 3 specification so that the generated EPUB file will pass validation.">
 
 <!ENTITY sb2maff2.entryPage "Entry page:">
 

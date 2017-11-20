@@ -36,7 +36,7 @@
 <!ENTITY sb2epub.date "電子書出版時間:">
 <!ENTITY sb2epub.source "原始出版品:">
 <!ENTITY sb2epub.cover "封面圖片:">
-<!ENTITY sb2epub.help "注意：請確保 ScrapBook 原始檔案符合 epub 3 標準，以使匯出的 epub 檔案通過驗證。">
+<!ENTITY sb2epub.help "注意：請確保 ScrapBook 原始檔案符合 EPUB 3 標準，以使匯出的 EPUB 檔案通過驗證。">
 
 <!ENTITY sb2maff2.entryPage "入口頁面:">
 

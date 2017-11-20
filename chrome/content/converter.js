@@ -167,7 +167,7 @@ function convert_finish() {
 }
 
 function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId) {
-    print("convert method: .enex --> ScrapBook data");
+    print("convert method: ENEX --> ScrapBook data");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
@@ -522,7 +522,7 @@ function convert_enex2sb(input, output, includeSubdir, includeFileName, uniqueId
 }
 
 function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId) {
-    print("convert method: .maff --> ScrapBook data");
+    print("convert method: MAFF --> ScrapBook data");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("include subfolders: " + (includeSubdir ? "yes" : "no"));
@@ -609,7 +609,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
                     var metaRefresh = '<html><head><meta charset="UTF-8"><meta http-equiv="refresh" content="0;URL=./' + sbConvCommon.escapeHTML(indexLeafName) + '"></head><body></body></html>';
                     sbConvCommon.writeFile(indexFile, metaRefresh, "UTF-8", true);
                 } else {
-                    warn("Converting a maff page with non-index index.html is not supported: '" + item.title + "' (" + item.id + ").");
+                    warn("Converting a MAFF page with non-index index.html is not supported: '" + item.title + "' (" + item.id + ").");
                     return;
                 }
             }
@@ -632,7 +632,7 @@ function convert_maff2sb(input, output, includeSubdir, includeFileName, uniqueId
             extractZip(file, tmpDir);
         } catch(ex) {
             // not zip or corrupted zip
-            error("Invalid maff file: '" + file.path + "', skipped.");
+            error("Invalid MAFF file: '" + file.path + "', skipped.");
             pagesFinish();
             return;
         }
@@ -847,7 +847,7 @@ function convert_html2sb(input, output, includeSubdir, uniqueId) {
 }
 
 function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, importCommentMetadata, importSourcePackFormat, mergeOutput) {
-    print("convert method: ScrapBook data --> .enex");
+    print("convert method: ScrapBook data --> ENEX");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("add tags: " + (addTags || ""));
@@ -1011,7 +1011,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
         if (importSourcePackFormat === "maff") {
             var rdfFile = dir.clone(); rdfFile.append("index.rdf");
             if (rdfFile.exists()) {
-                warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
+                warn("Converting ScrapBook data with index.rdf to MAFF is not supported: '" + rdfFile.path + "'.");
                 specialCheck = false;
             }
         }
@@ -1440,7 +1440,7 @@ function convert_sb2enex(input, output, addTags, folderAsTag, importIndexHTML, i
 }
 
 function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFolders) {
-    print("convert method: ScrapBook data --> .maff");
+    print("convert method: ScrapBook data --> MAFF");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry directory name: " + topDirName);
@@ -1517,7 +1517,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
         // if already exists, throw an error
         var rdfFile = dir.clone(); rdfFile.append("index.rdf");
         if (rdfFile.exists()) {
-            warn("Converting ScrapBook data with index.rdf to maff is not supported: '" + rdfFile.path + "'.");
+            warn("Converting ScrapBook data with index.rdf to MAFF is not supported: '" + rdfFile.path + "'.");
             return;
         }
 
@@ -1574,7 +1574,7 @@ function convert_sb2maff(input, output, topDirName, mergeOutput, generateSubFold
 }
 
 function convert_sb2zip(input, output, topDirName, mergeOutput, generateSubFolders) {
-    print("convert method: ScrapBook data --> .zip");
+    print("convert method: ScrapBook data --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("top directory name: " + topDirName);
@@ -2148,7 +2148,7 @@ function convert_sb2sf(input, output, generateSubFolders) {
 }
 
 function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
-    print("convert method: whole ScrapBook --> .epub");
+    print("convert method: whole ScrapBook --> EPUB");
     print("input directory: " + input.path);
     print("output file: " + output.path);
     print("include all files: " + (includeAllFiles ? "yes" : "no"));
@@ -2620,7 +2620,7 @@ function convert_sb2epub(input, output, includeAllFiles, bookMeta) {
 }
 
 function convert_sb2maff2(input, output, entryPage) {
-    print("convert method: whole ScrapBook --> .maff");
+    print("convert method: whole ScrapBook --> MAFF");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("entry page: " + entryPage);
@@ -2676,7 +2676,7 @@ function convert_sb2maff2(input, output, entryPage) {
 }
 
 function convert_sb2zip2(input, output, topDirName) {
-    print("convert method: whole ScrapBook --> .zip");
+    print("convert method: whole ScrapBook --> ZIP");
     print("input directory: " + input.path);
     print("output directory: " + output.path);
     print("top directory name: " + topDirName);
