@@ -1503,18 +1503,18 @@ function convert_sb2maff(input, output, topDirName, ignoreSeparator, ignoreFolde
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone(), destPath = [];
+            var destDir = output.clone(), destPath = [];
             if (generateSubFolders) {
                 var folder = (item.folder || "").split("\t");
                 folder.forEach(function(subfoldername) {
-                    destFile.append(sbConvCommon.validateFileName(subfoldername));
-                    destPath.push(destFile.leafName);
+                    destDir.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destDir.leafName);
                 });
             }
-            if (!destFile.exists()) {
-                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            if (!destDir.exists()) {
+                destDir.create(dir.DIRECTORY_TYPE, 0700);
             }
-            destFile.append(dir.leafName + ".maff");
+            var destFile = getUniqueFile(destDir, item.title + ".maff");
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
@@ -1673,18 +1673,18 @@ function convert_sb2zip(input, output, topDirName, ignoreSeparator, ignoreFolder
         if (mergeOutput) {
             var zw = zipWritter;
         } else {
-            var destFile = output.clone(), destPath = [];
+            var destDir = output.clone(), destPath = [];
             if (generateSubFolders) {
                 var folder = (item.folder || "").split("\t");
                 folder.forEach(function(subfoldername) {
-                    destFile.append(sbConvCommon.validateFileName(subfoldername));
-                    destPath.push(destFile.leafName);
+                    destDir.append(sbConvCommon.validateFileName(subfoldername));
+                    destPath.push(destDir.leafName);
                 });
             }
-            if (!destFile.exists()) {
-                destFile.create(dir.DIRECTORY_TYPE, 0700);
+            if (!destDir.exists()) {
+                destDir.create(dir.DIRECTORY_TYPE, 0700);
             }
-            destFile.append(dir.leafName + (generateHtz ? ".htz" : ".zip"));
+            var destFile = getUniqueFile(destDir, item.title + (generateHtz ? ".htz" : ".zip"));
             destPath.push(destFile.leafName);
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
             var zw = zipOpen(destFile);
@@ -2153,21 +2153,21 @@ function convert_sb2sf(input, output, ignoreSeparator, ignoreFolder, generateSub
         }
 
         // determine the output file path
-        var destFile = output.clone(), destPath = [];
+        var destDir = output.clone(), destPath = [];
         if (generateSubFolders) {
             var folder = (item.folder || "").split("\t");
             folder.forEach(function(subfoldername) {
-                destFile.append(sbConvCommon.validateFileName(subfoldername));
-                destPath.push(destFile.leafName);
+                destDir.append(sbConvCommon.validateFileName(subfoldername));
+                destPath.push(destDir.leafName);
             });
         }
-        if (!destFile.exists()) {
-            destFile.create(dir.DIRECTORY_TYPE, 0700);
+        if (!destDir.exists()) {
+            destDir.create(dir.DIRECTORY_TYPE, 0700);
         }
 
         if (typeof content === "string") {
             // determine the output filename
-            destFile.append(dir.leafName + ".html");
+            var destFile = getUniqueFile(destDir, item.title + ".html");
             destPath.push(destFile.leafName);
 
             // output
@@ -2178,12 +2178,13 @@ function convert_sb2sf(input, output, ignoreSeparator, ignoreFolder, generateSub
             var { file: indexFile, mime: mime } = content;
             var fileExt = sbConvCommon.splitFileName(indexFile.leafName)[1];
             fileExt = sbConvCommon.getMimePrimaryExtension(mime, fileExt);
-            destFile.append(dir.leafName + "." + fileExt);
+            fileExt = fileExt ? ("." + fileExt) : "";
+            var destFile = getUniqueFile(destDir, item.title + fileExt);
             destPath.push(destFile.leafName);
 
             // output
             verbose("exporting file: '" + item.title + "' --> '" + destPath.join("/") + "'");
-            indexFile.copyTo(destFile.parent, destFile.leafName);
+            indexFile.copyTo(destDir, destFile.leafName);
         }
     };
 
@@ -3059,6 +3060,27 @@ function getUniqueDir(dir, name) {
     while ( destDir.exists() && ++num < 1024 );
     destDir.create(destDir.DIRECTORY_TYPE, 0700);
     return destDir;
+}
+
+function getUniqueFile(dir, name) {
+    var arr = sbConvCommon.splitFileName(name);
+    var base = sbConvCommon.validateFileName(arr[0]);
+    base = base ? base.substring(0, 60) : "untitled";
+    base = sbConvCommon.validateFileName(base); // avoid potential bad name
+    
+    var ext = sbConvCommon.validateFileName(arr[1]);
+    ext = ext ? ("." + ext) : "";
+
+    var num = 0, destFile, fileName;
+    do {
+        fileName = base;
+        if ( num > 0 ) fileName += "-" + num;
+        fileName += ext;
+        destFile = dir.clone();
+        destFile.append(fileName);
+    }
+    while ( destFile.exists() && ++num < 1024 );
+    return destFile;
 }
 
 function zipDetermineCompresssionLevel(file) {
